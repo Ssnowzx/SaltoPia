@@ -482,9 +482,10 @@ ring that fades outward under it, and the same line appears on the place card an
 page's hero. Wine against the pins' gold is the only colour on the map that is neither
 landscape nor interface, which is what makes four of them read at a glance.
 
-The restraint is the design: only a handful of places ever carry one, the pin's own shape
-is untouched, and the ring is faint and slow. A ribbon on every pin would be a carnival,
-and the eye would stop seeing any of them. The labels are short because they are read on
+The restraint is the design: nine of fifteen places carry one and six deliberately do
+not, the pin's own shape is untouched, and the ring is faint and slow. A ribbon on every
+pin would be a carnival, and the eye would stop seeing any of them. They are spread
+across the map rather than clustered, so no corner of the frame is all ribbons. The labels are short because they are read on
 a pin the size of a thumbnail from across the map, and the ring is behind
 `prefers-reduced-motion`.
 

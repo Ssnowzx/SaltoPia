@@ -58,6 +58,7 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A costela que leva seis horas",
     description:
       "Um galpão aberto dos quatro lados na margem oeste, com a costela espetada em vara de ferro inclinada sobre a brasa. Seis horas de fogo baixo e nada mais. A fumaça sai pelo telhado e se vê do outro lado do lago.",
+    offer: "Costela às quintas",
     world: [140, 0, 38],
     camera: [128, 22, 74],
     experiences: [
@@ -71,6 +72,7 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "O lago inteiro aos seus pés",
     description:
       "Uma plataforma de pedra no alto do morro a oeste. Nas manhãs frias a neblina cobre o lago até a ilha, e você fica em cima dela. Chegue antes do sol nascer — depois das nove, o mar de nuvem já foi embora.",
+    offer: "Amanhecer guiado",
     world: [-132, 0, -96],
     camera: [-112, 30, -44],
     experiences: [
@@ -147,6 +149,7 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Campo aberto, gado e um café que dura a manhã inteira",
     description:
       "Meia hora de estrada de chão depois da comunidade, o mato abre e aparece o campo: galpão vermelho, dois silos e a casa branca no meio do pasto. O café colonial sai às nove, com cuca, melado e queijo da própria leiteria.",
+    offer: "Café da fazenda",
     world: [-200, 0, -254],
     camera: [-186, 30, -206],
     experiences: [
@@ -212,6 +215,7 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A pista de pouso do planalto",
     description:
       "No alto do planalto, longe das luzes da comunidade, um pátio de concreto com balizas acesas espera visita. A torre opera desde 2028 e o registro de avistamentos fica aberto na sala de controle — o céu limpo da serra é o melhor do país para isso, e quase toda noite alguém jura ter visto algo.",
+    offer: "Vigília grátis",
     world: [22, 0, -288],
     camera: [26, 30, -224],
     experiences: [
@@ -225,6 +229,7 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A barragem, a queda e a usina centenária",
     description:
       "No fim do lago, o Rio Caveiras passa pela barragem de pedra e despenca ao lado da usina de tijolo que iluminou Lages nos anos 1940. Do deck de madeira na outra margem dá para ouvir a água de longe; embaixo das araucárias, as mesas de piquenique enchem no fim de semana.",
+    offer: "Entrada franca",
     world: [118, 0, -98],
     camera: [92, 30, -56],
     experiences: [
