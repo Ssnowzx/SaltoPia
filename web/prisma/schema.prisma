@@ -1,0 +1,86 @@
+// Serranopolis data model.
+// Backed by MariaDB - the "mysql" provider is the connector that speaks it.
+// Table and column names are snake_case English; reserved words (order, type, rank)
+// are avoided in favour of position / kind.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+/// A point of interest on the 3D neighbourhood map.
+model Place {
+  id          Int    @id @default(autoincrement())
+  slug        String @unique @db.VarChar(96)
+  name        String @db.VarChar(120)
+  tagline     String @db.VarChar(200)
+  description String @db.Text
+
+  /// Badge shown on the map card and on the place hero.
+  crestImage String @map("crest_image") @db.VarChar(255)
+  /// Full-viewport cinematic image at the top of the place page.
+  heroImage  String @map("hero_image") @db.VarChar(255)
+
+  /// World-space anchor the map pin is projected from.
+  worldX Float @map("world_x")
+  worldY Float @map("world_y")
+  worldZ Float @map("world_z")
+
+  /// Camera position the fly-to lands on, framing this place.
+  cameraX Float @map("camera_x")
+  cameraY Float @map("camera_y")
+  cameraZ Float @map("camera_z")
+
+  /// Ordering in menus and listings. Named position because `order` is reserved in SQL.
+  position  Int     @default(0)
+  published Boolean @default(false)
+
+  experiences Experience[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([published, position])
+  @@map("place")
+}
+
+/// Something to do or eat at a place.
+model Experience {
+  id          Int    @id @default(autoincrement())
+  slug        String @db.VarChar(96)
+  name        String @db.VarChar(160)
+  description String @db.Text
+  image       String @db.VarChar(255)
+
+  /// Category of experience. Named kind because `type` is reserved in SQL.
+  kind            ExperienceKind
+  durationMinutes Int?           @map("duration_minutes")
+
+  placeId Int   @map("place_id")
+  place   Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  position  Int     @default(0)
+  published Boolean @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// A slug is unique within its place, not globally - the route is /[place]/experiencias/[experience].
+  @@unique([placeId, slug])
+  @@index([published, position])
+  @@map("experience")
+}
+
+enum ExperienceKind {
+  FOOD
+  TRAIL
+  TOUR
+  EVENT
+  STAY
+
+  @@map("experience_kind")
+}

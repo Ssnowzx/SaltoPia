@@ -1,0 +1,43 @@
+# Local development only. The VPS deployment is a later concern and must be an
+# .env change, not a change to this file.
+services:
+  db:
+    image: mariadb:11.4
+    container_name: serranopolis-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: serranopolis
+      MARIADB_USER: serranopolis
+      MARIADB_PASSWORD: serranopolis
+      MARIADB_ROOT_PASSWORD: serranopolis
+    ports:
+      # 3307 on the host: a native mysqld already owns 127.0.0.1:3306 on this
+      # machine, and it would silently answer instead of this container.
+      - "3307:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      # Runs only on first init of an empty volume.
+      - ./docker/mariadb-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Prisma migrate fails confusingly against a MariaDB that is up but not yet
+      # accepting connections, so the container is not "healthy" until it answers.
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  adminer:
+    image: adminer:5
+    container_name: serranopolis-adminer
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+
+volumes:
+  db-data:

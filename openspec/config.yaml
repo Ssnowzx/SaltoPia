@@ -31,6 +31,15 @@ context: |
   Tailwind CSS v4, three.js, @react-three/fiber, @react-three/drei,
   gsap + @gsap/react (useGSAP), lenis for smooth scroll on content pages.
 
+  DATA: MariaDB accessed through Prisma (provider "mysql" - the connector that
+  speaks MariaDB). Database access is confined to a data layer; no component
+  imports PrismaClient directly. Schema changes go through versioned migrations.
+  Table and column names are snake_case English.
+
+  ENVIRONMENT: local development only for now. A VPS deployment comes later, so
+  no server-specific paths, no assumed reverse proxy, no hardcoded domains -
+  moving to the VPS must be an .env change, not a code change.
+
   3D ASSETS: CC0 low-poly kits (Kenney City Kit, Quaternius, Poly Pizza),
   composed at runtime from a typed layout data file rather than one giant
   pre-baked GLB. Araucaria trees - the signature tree of the Serra - are
