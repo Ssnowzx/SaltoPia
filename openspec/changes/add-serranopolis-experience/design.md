@@ -475,6 +475,19 @@ is anchored between the header and the foot of the window rather than centred on
 window - centred, it ran under the header on a phone held sideways. Its link is focused
 with `preventScroll`, or the browser scrolls the place's name out of the card's top.
 
+### D27 — Offers mark a few pins, never all of them
+
+A place may carry a short `offer`. Its pin takes a wine ribbon over the head and a slow
+ring that fades outward under it, and the same line appears on the place card and on the
+page's hero. Wine against the pins' gold is the only colour on the map that is neither
+landscape nor interface, which is what makes four of them read at a glance.
+
+The restraint is the design: only a handful of places ever carry one, the pin's own shape
+is untouched, and the ring is faint and slow. A ribbon on every pin would be a carnival,
+and the eye would stop seeing any of them. The labels are short because they are read on
+a pin the size of a thumbnail from across the map, and the ring is behind
+`prefers-reduced-motion`.
+
 ### D22 — Light from two temperatures
 
 The key light is warm and aimed at the community; the fill is a cool sky hemisphere.

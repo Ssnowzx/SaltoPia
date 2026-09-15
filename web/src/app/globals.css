@@ -69,6 +69,35 @@ body {
   pointer-events: none;
 }
 
+/*
+ * The ring on a pin that carries an offer. Slow and faint on purpose: it has to catch
+ * the eye across the map without turning the map into a carnival, and only a few pins
+ * ever have one.
+ */
+@keyframes pin-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+}
+
+.pin-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pin-ring {
+    animation: pin-ring 2.8s ease-out infinite;
+  }
+}
+
 /* The place card slides in from the right once the camera has settled. */
 @keyframes card-in {
   from {

@@ -39,9 +39,20 @@ export function PinOverlay({ places, nodes, onSelect }: PinOverlayProps): React.
           }}
           data-visible="false"
           onClick={() => onSelect(place)}
-          aria-label={place.name}
+          aria-label={place.offer ? `${place.name} - ${place.offer}` : place.name}
           className="pin group pointer-events-auto absolute top-0 left-0 flex cursor-pointer flex-col items-center gap-1 border-0 bg-transparent p-0 will-change-transform focus-visible:outline-none"
         >
+          {/* An offer marks its pin with a ribbon and a slow ring. Only a few places
+              carry one, which is what makes them catch the eye; the pin itself is
+              untouched, so a map full of ribbons is not what the visitor sees. */}
+          {place.offer ? (
+            <span
+              aria-hidden="true"
+              className="absolute -top-1 left-1/2 z-10 -translate-x-1/2 -translate-y-full rounded-pill bg-wine px-2.5 py-[3px] font-sans text-[10px] font-bold tracking-[0.1em] whitespace-nowrap text-mist uppercase shadow-[0_4px_10px_rgba(46,36,28,0.35)] ring-2 ring-mist"
+            >
+              {place.offer}
+            </span>
+          ) : null}
           <svg
             width="46"
             height="64"
@@ -49,6 +60,9 @@ export function PinOverlay({ places, nodes, onSelect }: PinOverlayProps): React.
             aria-hidden="true"
             className="origin-bottom drop-shadow-[0_6px_10px_rgba(46,36,28,0.35)] transition-transform duration-200 ease-in-out group-hover:scale-115 group-focus-visible:scale-115"
           >
+            {place.offer ? (
+              <circle cx="27" cy="26" r="16" fill="none" stroke="var(--color-wine)" strokeWidth="2.5" className="pin-ring" />
+            ) : null}
             <path
               d="M27 2C13.2 2 3 12.4 3 26.2 3 44.4 27 72 27 72s24-27.6 24-45.8C51 12.4 40.8 2 27 2z"
               fill="var(--color-gold)"

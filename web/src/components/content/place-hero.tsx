@@ -26,6 +26,11 @@ export function PlaceHero({ place }: PlaceHeroProps): React.ReactElement {
           {place.name}
         </h1>
         <p className="mt-3 max-w-xl font-sans text-sm font-semibold text-mist/90 sm:mt-4 sm:text-lg">{place.tagline}</p>
+        {place.offer ? (
+          <p className="mt-5 rounded-pill bg-wine px-4 py-2 font-sans text-xs font-bold tracking-[0.12em] text-mist uppercase shadow-[0_8px_20px_rgba(0,0,0,0.3)]">
+            {place.offer}
+          </p>
+        ) : null}
       </div>
 
       <a

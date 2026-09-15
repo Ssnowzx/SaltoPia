@@ -35,6 +35,10 @@ model Place {
   cameraY Float @map("camera_y")
   cameraZ Float @map("camera_z")
 
+  /// A short offer the place is running, shown on its pin and card. Null when there is
+  /// none - most places have none, which is what makes the ones that do stand out.
+  offer String? @db.VarChar(40)
+
   /// Ordering in menus and listings. Named position because `order` is reserved in SQL.
   position  Int     @default(0)
   published Boolean @default(false)

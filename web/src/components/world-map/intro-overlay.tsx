@@ -37,6 +37,9 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
             width={1000}
             height={495}
             priority
+            // Sized by the container: `sizes` keeps the optimiser from fetching a
+            // 1000px file for a phone, and the aspect box holds the shape.
+            sizes="(max-width: 640px) 92vw, 1000px"
             className="h-auto w-full"
           />
         </h1>

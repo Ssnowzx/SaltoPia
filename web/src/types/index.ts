@@ -35,6 +35,8 @@ export interface Place {
   readonly description: string;
   readonly crestImage: string;
   readonly heroImage: string;
+  /** A short offer the place is running, or null. Shown on the pin and on the card. */
+  readonly offer: string | null;
   /** Where the map pin is anchored in world space. */
   readonly worldPosition: WorldPosition;
   /** Where the camera lands when flying to this place. */

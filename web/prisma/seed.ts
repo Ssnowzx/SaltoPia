@@ -25,6 +25,8 @@ interface PlaceSeed {
   name: string;
   tagline: string;
   description: string;
+  /** Kept short: it is read on a pin the size of a thumbnail, from across the map. */
+  offer?: string;
   world: [number, number, number];
   camera: [number, number, number];
   experiences: ReadonlyArray<{
@@ -94,6 +96,7 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Uva que amadurece no frio",
     description:
       "Na encosta leste, mil e duzentos metros acima do mar, a uva amadurece devagar e a geada faz parte do plano. As parreiras descem o morro em fileiras até a cantina de pedra.",
+    offer: "Taça cortesia",
     world: [150, 0, -44],
     camera: [138, 24, -4],
     experiences: [
@@ -131,6 +134,7 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Piscina, lareira e o lago na janela",
     description:
       "A casa laranja de dois andares na beira do lago, com a piscina no gramado, painéis solares no telhado e a lareira acesa metade do ano. De manhã a geada deixa o gramado branco até o sol subir — e é por isso que as pessoas vêm.",
+    offer: "3 noites, paga 2",
     world: [20, 0, 120],
     camera: [26, 20, 156],
     experiences: [
@@ -181,6 +185,7 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Roda-gigante, carrossel e carrinho bate-bate na encosta",
     description:
       "O parque de diversões da comunidade, no alto da encosta leste: a roda-gigante dá a volta com o lago inteiro aos pés, o carrossel de 1950 veio restaurado do interior de São Paulo e o pavilhão de bate-bate abre até tarde. Quiosques de pastel, churros e quentão na alameda.",
+    offer: "Sábado 2 por 1",
     world: [178, 0, 64],
     camera: [164, 26, 108],
     experiences: [
@@ -194,6 +199,7 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Truta, pinhão e o melhor pôr do sol da orla",
     description:
       "O restaurante da orla, com o deck de madeira avançando sobre a água entre a praça e a pousada. Truta da serra grelhada, entrevero de pinhão e vinho de altitude, com os barcos atracando no píer ao lado da mesa.",
+    offer: "Menu do pôr do sol",
     world: [27, 0, 74],
     camera: [46, 16, 98],
     experiences: [
@@ -254,6 +260,7 @@ async function main(): Promise<void> {
         cameraX,
         cameraY,
         cameraZ,
+        offer: place.offer ?? null,
         position: index,
         published: true,
         experiences: { deleteMany: {}, create: experiences },
@@ -265,6 +272,7 @@ async function main(): Promise<void> {
         description: place.description,
         crestImage: `/images/crests/${place.slug}.svg`,
         heroImage: `/images/heroes/${place.slug}.webp`,
+        offer: place.offer ?? null,
         worldX,
         worldY,
         worldZ,

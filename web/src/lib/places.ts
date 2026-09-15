@@ -51,6 +51,7 @@ function toPlace(record: PlaceRecord): Place {
     description: record.description,
     crestImage: record.crestImage,
     heroImage: record.heroImage,
+    offer: record.offer,
     worldPosition: { x: record.worldX, y: record.worldY, z: record.worldZ },
     cameraPosition: { x: record.cameraX, y: record.cameraY, z: record.cameraZ },
     experiences: record.experiences.map((experience) =>

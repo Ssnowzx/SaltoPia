@@ -53,6 +53,11 @@ export function PlaceCard({ place, onClose }: PlaceCardProps): React.ReactElemen
         </h2>
       </div>
       <div className="px-6 py-5 text-center sm:px-7 sm:py-6">
+        {place.offer ? (
+          <p className="mx-auto mb-4 w-fit rounded-pill bg-wine px-3.5 py-1.5 font-sans text-[11px] font-bold tracking-[0.1em] text-mist uppercase">
+            {place.offer}
+          </p>
+        ) : null}
         <p className="font-sans text-sm font-semibold text-teal">{place.tagline}</p>
         <p className="mt-3 line-clamp-3 font-sans text-sm leading-relaxed text-bark sm:line-clamp-4">{place.description}</p>
         <div className="mt-5 flex flex-col items-center gap-3 sm:mt-6">
