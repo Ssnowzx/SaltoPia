@@ -10,6 +10,8 @@ import { LAKE, ROAD, UFO_PORT, VEHICLES, WORLD_COLORS } from "@/lib/world/consta
 import { createSailboatGeometry, createYachtGeometry, wheel } from "@/lib/world/props";
 import { CAR_CURVE, SAILBOAT_CURVE, YACHT_CURVE, surfaceHeightAt } from "@/lib/world/roads";
 import { smoothstep, terrainHeightAt } from "@/lib/world/terrain";
+import { CAROUSEL, FERRIS_WHEEL, createCarouselGeometry, createFerrisWheelGeometry } from "@/lib/world/attractions";
+import { siteAt } from "@/lib/world/sites";
 import { LANDING, RADAR, SAUCER_HOVER, createBeamGeometry, createRadarDishGeometry, createSaucerGeometry } from "@/lib/world/ufo-port";
 
 import { useWorldMaterials } from "./world-materials-context";
@@ -44,6 +46,9 @@ function createPickupGeometry(): BufferGeometry {
   return merge(parts);
 }
 
+/** How fast the rides turn, radians per second. */
+const RIDES = { wheelSpeed: 0.22, carouselSpeed: 0.55 } as const;
+
 /** Positions a mesh on a curve at arc-length fraction `t`, facing along it. */
 function placeOnCurve(mesh: Mesh, curve: CatmullRomCurve3, t: number, heightAt: (x: number, z: number) => number, scratch: Vector3): void {
   const clamped = Math.min(1, Math.max(0, t));
@@ -74,6 +79,16 @@ export function Vehicles(): React.ReactElement {
     [],
   );
   const radarDish = useMemo(() => createRadarDishGeometry(), []);
+  const ferrisWheel = useMemo(() => createFerrisWheelGeometry(), []);
+  const carousel = useMemo(() => createCarouselGeometry(), []);
+  const park = useMemo(() => {
+    const site = siteAt("parque-caveiras");
+    const ground = terrainHeightAt(site.x, site.z);
+    return {
+      wheel: [site.x + FERRIS_WHEEL.x, ground + FERRIS_WHEEL.y, site.z + FERRIS_WHEEL.z] as const,
+      carousel: [site.x + CAROUSEL.x, ground + CAROUSEL.y, site.z + CAROUSEL.z] as const,
+    };
+  }, []);
   const portGround = useMemo(() => terrainHeightAt(UFO_PORT.x, UFO_PORT.z), []);
   const { flat: material } = useWorldMaterials();
 
@@ -84,6 +99,8 @@ export function Vehicles(): React.ReactElement {
   const landingRef = useRef<Mesh>(null);
   const radarRef = useRef<Mesh>(null);
   const beamRef = useRef<Mesh<BufferGeometry, MeshBasicMaterial>>(null);
+  const wheelRef = useRef<Mesh>(null);
+  const carouselRef = useRef<Mesh>(null);
   const scratch = useMemo(() => new Vector3(), []);
 
   const carLength = useMemo(() => CAR_CURVE.getLength(), []);
@@ -107,6 +124,10 @@ export function Vehicles(): React.ReactElement {
       placeOnCurve(sailboatRef.current, SAILBOAT_CURVE, ((elapsed * VEHICLES.boatSpeed * 0.7) / sailboatLength) % 1, onWater, scratch);
       sailboatRef.current.rotation.z = 0.08 + Math.sin(elapsed * 0.9) * 0.04;
     }
+
+    // The fairground rides turn.
+    if (wheelRef.current) wheelRef.current.rotation.z = -elapsed * RIDES.wheelSpeed;
+    if (carouselRef.current) carouselRef.current.rotation.y = elapsed * RIDES.carouselSpeed;
 
     // The radar sweeps; the beam breathes.
     if (radarRef.current) radarRef.current.rotation.y = elapsed * 0.45;
@@ -148,6 +169,8 @@ export function Vehicles(): React.ReactElement {
       <mesh ref={sailboatRef} geometry={sailboat} material={material} castShadow />
       <mesh ref={saucerRef} geometry={saucer} material={material} castShadow />
       <mesh ref={landingRef} geometry={saucer} material={material} castShadow />
+      <mesh ref={wheelRef} geometry={ferrisWheel} material={material} position={[...park.wheel]} castShadow />
+      <mesh ref={carouselRef} geometry={carousel} material={material} position={[...park.carousel]} castShadow />
       <mesh ref={radarRef} geometry={radarDish} material={material} position={[UFO_PORT.x + RADAR.x, portGround + RADAR.y, UFO_PORT.z + RADAR.z]} castShadow />
       <mesh ref={beamRef} geometry={beam} material={beamMaterial} position={[UFO_PORT.x, portGround + 0.6, UFO_PORT.z]} />
     </group>

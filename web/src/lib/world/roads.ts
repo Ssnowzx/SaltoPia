@@ -84,8 +84,16 @@ function pushVertex(sink: Sink, x: number, y: number, z: number, color: Color, s
 }
 
 /**
- * Appends a draped ribbon along a curve. Each quad is wound (left0, right0, left1),
- * (right0, right1, left1), which gives a +Y face normal whichever way the curve runs.
+ * Appends a draped ribbon along a curve.
+ *
+ * Each sample gets one perpendicular, from the tangent through it, and the quads either
+ * side of a sample share its two edge vertices exactly. Built segment by segment, with
+ * each quad squared to its own chord, consecutive quads met at an angle on every bend:
+ * a wedge of gap on the outside, a wedge of overlap on the inside, and through the gaps
+ * the pale shoulder showed as a ladder of rungs down every curve.
+ *
+ * Each quad is wound (left0, right0, left1), (right0, right1, left1), which gives a +Y
+ * face normal whichever way the curve runs.
  */
 function appendRibbon(curve: CatmullRomCurve3, options: RibbonOptions, sink: Sink): void {
   const length = curve.getLength();
@@ -100,41 +108,47 @@ function appendRibbon(curve: CatmullRomCurve3, options: RibbonOptions, sink: Sin
     options.heightAt ? options.heightAt(x, z) + options.lift : surfaceHeightAt(x, z) + options.lift;
   const foamAt = options.foamAt ?? (() => 0);
 
-  for (let index = 0; index < samples.length - 1; index += 1) {
-    const current = samples[index];
-    const next = samples[index + 1];
-    const tangentX = next.x - current.x;
-    const tangentZ = next.z - current.z;
+  // The perpendicular at each sample, from the tangent through it.
+  const perps = samples.map((sample, index) => {
+    const before = samples[Math.max(0, index - 1)];
+    const after = samples[Math.min(samples.length - 1, index + 1)];
+    const tangentX = after.x - before.x;
+    const tangentZ = after.z - before.z;
     const magnitude = Math.hypot(tangentX, tangentZ) || 1;
-    const perpX = tangentZ / magnitude;
-    const perpZ = -tangentX / magnitude;
+    return [tangentZ / magnitude, -tangentX / magnitude] as const;
+  });
 
-    const centre0 = [current.x + perpX * offset, current.z + perpZ * offset] as const;
-    const centre1 = [next.x + perpX * offset, next.z + perpZ * offset] as const;
-    const half0 = widthAt(current.x, current.z) / 2;
-    const half1 = widthAt(next.x, next.z) / 2;
+  const edge = (index: number, lateral: number): readonly [number, number] => {
+    const sample = samples[index];
+    const [perpX, perpZ] = perps[index];
+    const half = widthAt(sample.x, sample.z) / 2;
+    return [sample.x + perpX * (offset + half * -lateral), sample.z + perpZ * (offset + half * -lateral)];
+  };
+
+  for (let index = 0; index < samples.length - 1; index += 1) {
+    const centre0 = samples[index];
+    const centre1 = samples[index + 1];
 
     for (let lane = 0; lane < lanes; lane += 1) {
       const a = -1 + (2 * lane) / lanes;
       const b = -1 + (2 * (lane + 1)) / lanes;
 
-      const left0 = [centre0[0] + perpX * half0 * -a, centre0[1] + perpZ * half0 * -a] as const;
-      const right0 = [centre0[0] + perpX * half0 * -b, centre0[1] + perpZ * half0 * -b] as const;
-      const left1 = [centre1[0] + perpX * half1 * -a, centre1[1] + perpZ * half1 * -a] as const;
-      const right1 = [centre1[0] + perpX * half1 * -b, centre1[1] + perpZ * half1 * -b] as const;
+      const left0 = edge(index, a);
+      const right0 = edge(index, b);
+      const left1 = edge(index + 1, a);
+      const right1 = edge(index + 1, b);
 
       const mid = (a + b) / 2;
-      const color0 = options.colorAt(centre0[0], centre0[1], mid);
-      const color1 = options.colorAt(centre1[0], centre1[1], mid);
-      const surface0 = options.surfaceAt(centre0[0], centre0[1]);
-      const surface1 = options.surfaceAt(centre1[0], centre1[1]);
-      const foam0 = foamAt(centre0[0], centre0[1]);
-      const foam1 = foamAt(centre1[0], centre1[1]);
+      const color0 = options.colorAt(centre0.x, centre0.z, mid);
+      const color1 = options.colorAt(centre1.x, centre1.z, mid);
+      const surface0 = options.surfaceAt(centre0.x, centre0.z);
+      const surface1 = options.surfaceAt(centre1.x, centre1.z);
+      const foam0 = foamAt(centre0.x, centre0.z);
+      const foam1 = foamAt(centre1.x, centre1.z);
 
       pushVertex(sink, left0[0], surface(left0[0], left0[1]), left0[1], color0, surface0, depth, foam0);
       pushVertex(sink, right0[0], surface(right0[0], right0[1]), right0[1], color0, surface0, depth, foam0);
       pushVertex(sink, left1[0], surface(left1[0], left1[1]), left1[1], color1, surface1, depth, foam1);
-
       pushVertex(sink, right0[0], surface(right0[0], right0[1]), right0[1], color0, surface0, depth, foam0);
       pushVertex(sink, right1[0], surface(right1[0], right1[1]), right1[1], color1, surface1, depth, foam1);
       pushVertex(sink, left1[0], surface(left1[0], left1[1]), left1[1], color1, surface1, depth, foam1);
@@ -144,19 +158,31 @@ function appendRibbon(curve: CatmullRomCurve3, options: RibbonOptions, sink: Sin
 
 function appendDisc(x: number, z: number, radius: number, lift: number, color: Color, surface: SurfaceKey, sink: Sink): void {
   const segments = 20;
-  const centreY = surfaceHeightAt(x, z) + lift;
+  // In rings, so the disc follows the ground. As one fan of chords from the centre, a
+  // lawn on a rise bridged straight over the road graded through it and showed on top.
+  const rings = Math.max(1, Math.ceil(radius / 2.5));
+  const at = (ring: number, index: number): readonly [number, number] => {
+    const angle = (index / segments) * Math.PI * 2;
+    const r = (ring / rings) * radius;
+    return [x + Math.cos(angle) * r, z + Math.sin(angle) * r];
+  };
+  const push = (px: number, pz: number): void => pushVertex(sink, px, surfaceHeightAt(px, pz) + lift, pz, color, surface, 0, 0);
 
-  for (let index = 0; index < segments; index += 1) {
-    const a0 = (index / segments) * Math.PI * 2;
-    const a1 = ((index + 1) / segments) * Math.PI * 2;
-    const x0 = x + Math.cos(a0) * radius;
-    const z0 = z + Math.sin(a0) * radius;
-    const x1 = x + Math.cos(a1) * radius;
-    const z1 = z + Math.sin(a1) * radius;
-
-    pushVertex(sink, x, centreY, z, color, surface, 0, 0);
-    pushVertex(sink, x1, surfaceHeightAt(x1, z1) + lift, z1, color, surface, 0, 0);
-    pushVertex(sink, x0, surfaceHeightAt(x0, z0) + lift, z0, color, surface, 0, 0);
+  for (let ring = 0; ring < rings; ring += 1) {
+    for (let index = 0; index < segments; index += 1) {
+      const inner0 = at(ring, index);
+      const inner1 = at(ring, index + 1);
+      const outer0 = at(ring + 1, index);
+      const outer1 = at(ring + 1, index + 1);
+      push(inner0[0], inner0[1]);
+      push(outer1[0], outer1[1]);
+      push(outer0[0], outer0[1]);
+      if (ring > 0) {
+        push(inner0[0], inner0[1]);
+        push(inner1[0], inner1[1]);
+        push(outer1[0], outer1[1]);
+      }
+    }
   }
 }
 
@@ -218,12 +244,19 @@ function toGeometry(sink: Sink, unitsPerTile: number, upright = false): BufferGe
   return geometry;
 }
 
-/** Drawing order, as lift above the graded ground. */
+/**
+ * Drawing order, as lift above the graded ground.
+ *
+ * The steps are 0.15 apart. At 0.06 the shoulder and the carriageway sat within the
+ * depth buffer's precision of each other at the hub's distance, and which one won was
+ * decided quad by quad - a ladder of pale rungs down every curve, on the demo machine
+ * and in headless Chromium alike. A quarter of a unit is still invisible as a step.
+ */
 const LAYER = {
   shoulder: ROAD.lift,
-  track: ROAD.lift + 0.03,
-  carriageway: ROAD.lift + 0.06,
-  line: ROAD.lift + 0.09,
+  track: ROAD.lift + 0.15,
+  carriageway: ROAD.lift + 0.3,
+  line: ROAD.lift + 0.45,
 } as const;
 
 /** How high the bridge parapets stand above the deck. */

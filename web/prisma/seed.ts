@@ -176,6 +176,31 @@ const PLACES: readonly PlaceSeed[] = [
     ],
   },
   {
+    slug: "parque-caveiras",
+    name: "Parque Caveiras",
+    tagline: "Roda-gigante, carrossel e carrinho bate-bate na encosta",
+    description:
+      "O parque de diversões da comunidade, no alto da encosta leste: a roda-gigante dá a volta com o lago inteiro aos pés, o carrossel de 1950 veio restaurado do interior de São Paulo e o pavilhão de bate-bate abre até tarde. Quiosques de pastel, churros e quentão na alameda.",
+    world: [178, 0, 64],
+    camera: [164, 26, 108],
+    experiences: [
+      { slug: "volta-na-roda-gigante", name: "Volta na roda-gigante", description: "Doze minutos e três voltas, com o pôr do sol batendo no lago lá embaixo.", kind: "TOUR", durationMinutes: 15 },
+      { slug: "noite-de-luzes", name: "Noite de luzes", description: "Sábado à noite o parque acende as lâmpadas da alameda e a banda toca no coreto.", kind: "EVENT", durationMinutes: 180 },
+    ],
+  },
+  {
+    slug: "deck-do-lago",
+    name: "Deck do Lago",
+    tagline: "Truta, pinhão e o melhor pôr do sol da orla",
+    description:
+      "O restaurante da orla, com o deck de madeira avançando sobre a água entre a praça e a pousada. Truta da serra grelhada, entrevero de pinhão e vinho de altitude, com os barcos atracando no píer ao lado da mesa.",
+    world: [27, 0, 74],
+    camera: [46, 16, 98],
+    experiences: [
+      { slug: "jantar-no-deck", name: "Jantar no deck", description: "Mesa sobre a água, truta na brasa e a garrafa da vinícola do lado de cá do lago.", kind: "FOOD", durationMinutes: 120 },
+    ],
+  },
+  {
     slug: "porto-de-ovnis",
     name: "Porto de OVNIs",
     tagline: "A pista de pouso do planalto",

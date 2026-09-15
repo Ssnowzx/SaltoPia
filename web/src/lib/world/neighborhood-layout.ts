@@ -13,6 +13,7 @@ import {
   createStoneWallGeometry,
 } from "./builders";
 import { LAKE, TERRAIN, UFO_PORT, WORLD_COLORS, WORLD_SEED } from "./constants";
+import { createAmusementParkGeometry, createRestaurantGeometry } from "./attractions";
 import { createFarmGeometry } from "./farms";
 import { CHALET_SITES, SITES, siteAt } from "./sites";
 import {
@@ -110,7 +111,9 @@ export type ModelKey =
   | "ufoPort"
   | "farmRed"
   | "farmOchre"
-  | "farmTimber";
+  | "farmTimber"
+  | "amusementPark"
+  | "restaurant";
 
 /** Which shading a model wants: foliage reads better soft, everything built reads flat. */
 export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
@@ -169,6 +172,8 @@ export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
   farmRed: "flat",
   farmOchre: "flat",
   farmTimber: "flat",
+  amusementPark: "flat",
+  restaurant: "flat",
 };
 
 const HOUSE_BASE: Omit<BuildingSpec, "wallColor" | "roofColor"> = {
@@ -245,6 +250,8 @@ export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = 
   farmRed: () => createFarmGeometry(WORLD_COLORS.barnRed),
   farmOchre: () => createFarmGeometry(WORLD_COLORS.barnOchre),
   farmTimber: () => createFarmGeometry(WORLD_COLORS.timber),
+  amusementPark: () => createAmusementParkGeometry(),
+  restaurant: () => createRestaurantGeometry(),
 };
 
 /** One object placed in the world. Y comes from the terrain, or the waterline for boats. */
@@ -309,6 +316,8 @@ const FOOTPRINT: Readonly<Partial<Record<ModelKey, number>>> = {
   farmRed: 26,
   farmOchre: 26,
   farmTimber: 26,
+  amusementPark: 30,
+  restaurant: 9,
   lakeHouse: 8.4,
   houseWhitewash: 3.6,
   houseYellow: 3.6,
@@ -389,11 +398,11 @@ const AUTHORED_HOUSES: readonly Placement[] = [
   placed("lakeHouse", 30, 86, Math.PI * 0.95),
   placed("lakeHouse", 44, 40, Math.PI * 0.9),
   placed("lakeHouse", 70, -14, Math.PI * 0.75),
-  placed("cabana", 22, 124, 2.8),
+  placed("cabana", 20, 116, 2.8),
   placed("cabana", 34, 60, 2.6),
   placed("cabana", 54, -10, 2.4),
   // Behind the road, stepping back up the slope and out along it in both directions.
-  placed("houseYellow", 64, 120, 3.0),
+  placed("houseYellow", 62, 112, 3.0),
   placed("houseTimber", 116, 114, 2.9),
   placed("houseMint", 78, 104, 3.0),
   placed("houseYellow", 100, 88, 3.1),
@@ -453,6 +462,8 @@ const SITE_LANDMARKS: readonly Placement[] = ([
   ["farmRed", "fazenda-do-cedro"],
   ["farmOchre", "fazenda-santa-barbara"],
   ["farmTimber", "fazenda-dos-pinheiros"],
+  ["amusementPark", "parque-caveiras"],
+  ["restaurant", "deck-do-lago"],
 ] as ReadonlyArray<readonly [ModelKey, string]>).map(([model, slug]) => {
   const site = siteAt(slug);
   return placed(model, site.x, site.z, site.rotationY);

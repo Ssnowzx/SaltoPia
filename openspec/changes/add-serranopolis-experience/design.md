@@ -365,6 +365,10 @@ a little, the ground came through its edges on every bump; lifted more, it float
 every crest. The ribbons are then drawn in layers (all shoulders, all tracks and yards,
 all carriageways, all lines) so a junction is a carriageway crossing a carriageway.
 
+The layers sit 0.15 apart. At 0.06 the shoulder and the carriageway fell within the
+depth buffer's precision of each other at the hub's distance, and which one showed was
+decided quad by quad - a ladder of pale rungs down every curve.
+
 Paved surfaces map inside a single atlas tile. The atlas lookup wraps with `fract()`,
 and at each wrap the derivative jumps, the GPU picks the coarsest mip and samples the
 neighbouring tile - a dark seam across every street every couple of metres.
@@ -387,6 +391,13 @@ strip that narrow was a sawtooth along every diagonal stretch of shore.
 The terrain itself is smooth-shaded. Flat-shaded, every slope was a zig-zag of light
 and dark triangles: a wall of facets along the channel bank, a ladder of pale rungs down
 any road on an embankment. Buildings, trees and the backdrop hills keep their facets.
+
+### D23 — Attractions for partners
+
+Two more places, built to be sold: Parque Caveiras, a fairground on the east slope
+whose Ferris wheel and carousel are live meshes that turn, and Deck do Lago, a timber
+restaurant on the shore with its deck on piles over the water. Both are sites like any
+other - pad, clearing, driveway, pin, seeded copy - so nothing about them is special-cased.
 
 ### D22 — Light from two temperatures
 

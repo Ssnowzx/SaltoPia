@@ -52,6 +52,11 @@ export const SITES: readonly Site[] = [
   { slug: "fazenda-do-cedro", x: -200, z: -254, rotationY: 0.06, pad: 32, clearing: 36 },
   { slug: "fazenda-santa-barbara", x: -60, z: -266, rotationY: -0.04, pad: 32, clearing: 36 },
   { slug: "fazenda-dos-pinheiros", x: 206, z: -262, rotationY: 0.08, pad: 32, clearing: 36 },
+  // The attractions. The fairground is out on the east slope, past the last houses, so
+  // the wheel stands against the sky; the restaurant's deck reaches over the water
+  // between the square and the pousada, its door on the shore street.
+  { slug: "parque-caveiras", x: 178, z: 64, rotationY: 0, pad: 32, clearing: 34 },
+  { slug: "deck-do-lago", x: 27, z: 74, rotationY: Math.PI / 2, pad: 6, clearing: 12 },
 ];
 
 const BY_SLUG: ReadonlyMap<string, Site> = new Map(SITES.map((site) => [site.slug, site]));

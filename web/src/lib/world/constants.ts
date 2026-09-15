@@ -245,8 +245,8 @@ export const CAMERA = {
   /** From the south, high enough to see over the community to the lake and island. */
   // Far enough back to hold the whole spread: the places run from the pousada at the
   // south end to the dam in the north, and a tighter frame cut the southern half off.
-  initialPosition: [44, 88, 210] as const,
-  target: [44, 2, -46] as const,
+  initialPosition: [44, 92, 220] as const,
+  target: [44, 2, -45] as const,
   minDistance: 40,
   maxDistance: 290,
   /** No top-down view: the town is composed for a low, cinematic angle. */

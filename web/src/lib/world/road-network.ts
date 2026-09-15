@@ -137,6 +137,10 @@ export const DRIVEWAYS: readonly Driveway[] = [
   { points: [[-60, -244], [-60, -246]], width: ROAD_WIDTHS.drivewayWidth, surface: "track", yard: [-60, -245], yardRadius: 6 },
   { points: [[-190, -240], [-196, -235]], width: ROAD_WIDTHS.drivewayWidth, surface: "track", yard: [-200, -232], yardRadius: 6 },
   { points: [[202, -241], [205, -240]], width: ROAD_WIDTHS.drivewayWidth, surface: "track", yard: [206, -240], yardRadius: 6 },
+  // Parque Caveiras, on past the galpao to the fairground gate.
+  { points: [[110, 53], [136, 62], [160, 76], [176, 86]], width: ROAD_WIDTHS.drivewayWidth, surface: "street", yard: [180, 89], yardRadius: 6 },
+  // Deck do Lago, a step off the shore street.
+  { points: [[37, 74], [34, 74]], width: ROAD_WIDTHS.drivewayWidth, surface: "street", yard: [32.5, 74], yardRadius: 3 },
   // The UFO port's gate.
   { points: [[22, -256], [22, -258]], width: ROAD_WIDTHS.trackWidth, surface: "track", yard: [22, -259], yardRadius: 5 },
 ];
