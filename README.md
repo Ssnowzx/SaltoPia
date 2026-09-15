@@ -97,8 +97,10 @@ field on every run and deletes places it no longer carries.
 
 ## Images
 
-Place heroes and experience photographs are generated from the briefs in
-`docs/image-prompts.md` and dropped into `web/public/images/`. The crests are SVGs drawn
+Place heroes, experience photographs and each place's gallery of six are generated from
+the briefs in `docs/image-prompts.md` and dropped into `web/public/images/`. A gallery is
+just a folder — `public/images/places/<slug>/01.webp` … `06.webp` — which the page reads
+at build time, so adding a picture is dropping a file in. The crests are SVGs drawn
 from the pin glyphs, built by `npm run build:crests`. Nothing is fetched at runtime.
 
 The optimiser caches by URL, so after replacing an image in `public/` remove

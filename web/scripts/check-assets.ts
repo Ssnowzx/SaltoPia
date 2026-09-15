@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
@@ -37,6 +37,18 @@ async function main(): Promise<void> {
       check(`${place.slug}/${experience.slug}`, experience.image);
     }
   }
+
+  // Galleries are optional, so a thin one is reported rather than failed: the pictures
+  // arrive in batches and a page has to work before the last one does.
+  const thin: string[] = [];
+  let pictures = 0;
+  for (const place of places) {
+    const directory = join(publicDir, "images", "places", place.slug);
+    const found = existsSync(directory) ? readdirSync(directory).filter((name) => name.endsWith(".webp")).length : 0;
+    pictures += found;
+    if (found < 6) thin.push(`${place.slug} (${found}/6)`);
+  }
+  console.log(`galleries: ${pictures} pictures${thin.length > 0 ? `, still thin: ${thin.join(", ")}` : ""}`);
 
   const checked = places.length * 2 + places.reduce((count, place) => count + place.experiences.length, 0);
   if (missing.length > 0) {

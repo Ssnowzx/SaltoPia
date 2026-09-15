@@ -8,6 +8,10 @@ code change (after a hard refresh; the dev server caches optimised images by URL
 
 - hero of a place: `web/public/images/heroes/<slug>.webp` — 16:9, **2560×1440**
 - photo of an experience: `web/public/images/experiences/<slug>.webp` — 4:3, **1920×1440**
+- **gallery of a place**: `web/public/images/places/<slug>/01.webp` … `06.webp` — 4:3,
+  **1920×1440**. Six per place. The folders already exist, one per slug; drop the files in
+  and the page fills itself, numbered in the order you want them shown. The first one is
+  drawn large, so give it the widest view of the set.
 
 Ask for the largest the generator will give and save at those sizes or above. A hero
 fills the whole window, so on a Retina laptop it is drawn across roughly 3000 pixels: a
@@ -191,3 +195,131 @@ cold mornings. The places are imagined; the landscape is not.
 - **mirante-do-salto** — Morning on a timber walkway and deck facing a waterfall spilling from a small stone dam, spray catching the sun, a rainbow in the mist, dark basalt rocks, araucarias above, a person at the railing with a coffee.
 - **trilha-da-usina** — A guided walk along an old penstock (a large riveted steel pipe) from a stone dam down to a red-brick 1940s powerhouse, a guide's hand on a big iron valve wheel, moss and ferns, morning light.
 - **piquenique-a-beira-do-rio** — A picnic on a wooden table under araucarias by a river: a wicker basket, cured cheese, salami, homemade bread, a checked cloth, the river and a small waterfall blurred behind, dappled light.
+
+---
+
+## GALLERIES (4:3 → `web/public/images/places/<slug>/01.webp` … `06.webp`)
+
+Six per place. Paste PHOTO, then the place's own block above for the setting, then one
+line from its list. Number the files in the order you want them shown; the first is drawn
+large, so it should be the widest view.
+
+### praca-do-pinhao — Praça do Pinhão
+1. The whole square from across the water at golden hour: bandstand, café umbrellas, the pier, people walking the promenade.
+2. The white octagonal bandstand close up, green roof, a couple sitting on its steps, araucarias behind.
+3. A café table under a red umbrella with two cups of coffee and a paper cone of pinhão, the lake out of focus behind.
+4. The timber pier from its end looking back at the square, a moored boat in the foreground, evening light.
+5. The stone chapel's slate spire against a pink dusk sky, seen over the square's trees.
+6. Children feeding birds on the paving, long shadows, a bench and a lamppost in frame.
+
+### galpao-do-fogo — Galpão do Fogo de Chão
+1. The whole galpão on its green slope at dusk, open sides glowing from the fire inside, smoke rising, cars in the yard.
+2. The fogo de chão pit from above: ribs on iron skewers planted in a circle around embers.
+3. A carver's hands slicing costela onto a wooden board, coarse salt, steam.
+4. The long timber table inside, full of people eating, lanterns overhead, dust in the light.
+5. The woodpile and the axe by the wall, split araucaria logs stacked head-high.
+6. A gourd of chimarrão being passed between two pairs of hands by the fire.
+
+### mirante-da-neblina — Mirante da Neblina
+1. The lookout deck from behind at dawn, the whole bay and the island below, mist on the water.
+2. The valley filled with low cloud, only araucaria crowns above it, first light.
+3. The deck's timber railing in close focus with the lake far below and out of focus.
+4. The wooden steps climbing the hill through grass, dew, a walker ahead.
+5. A thermos and two enamel cups on the railing, hands warming around one.
+6. The sun breaking over the far hills, the lookout silhouetted against it.
+
+### bosque-das-araucarias — Bosque das Araucárias
+1. The wooded island from the water at golden hour, stilt cabins on the shore, a moored sailboat.
+2. Looking straight up the trunk of a giant araucaria to its flat crown against the sky.
+3. The trail under the pines, dappled light, ferns, fallen cones on the path.
+4. A stilt cabin's veranda over the water, a hammock, boots by the door.
+5. A guide's hand holding an open pinha, the seeds visible inside.
+6. The short pier at dusk with a lantern lit, the bay beyond going dark.
+
+### vinicola-de-altitude — Vinícola de Altitude
+1. The winery and its vineyard rows from above at golden hour, the lake and the dam below.
+2. Rows of vines on the slope with autumn-red leaves, trellis posts receding.
+3. Five glasses of red on a stone counter, cheese board, big window with hills behind.
+4. Oak barrels in a cool stone cellar, a single hanging lamp.
+5. Hands cupping a bunch of dark grapes still on the vine, dew on the skins.
+6. The winery's terrace at dusk, a table set for two, the valley below in shadow.
+
+### ctg-porteira-do-tropeiro — CTG Porteira do Tropeiro
+1. The CTG at evening: long timber hall, deep porch, the big gate of rough posts, pickups in the gravel yard.
+2. A gaita (accordion) player on the low stage, lit warm, couples blurred dancing in front.
+3. Boots and bombachas mid-step on the plank floor, motion blur in the skirts.
+4. Saddles and bridles hanging on the tack wall, leather worn smooth.
+5. The porteira's posts close up at sunset, the pasture beyond.
+6. A circle of people outside around a small fire, ponchos, chimarrão, night coming on.
+
+### estacao-velha — Estação Velha
+1. The station and its platform roof from the track side, morning light down the platform.
+2. The brick station house's tall arched windows, paint peeling on the frames.
+3. The old rails ending in weeds, sleepers half buried in grass.
+4. The Saturday market under the zinc roof: cheese wheels, cuca, jars of melato, sellers in aprons.
+5. A hand weighing cured cheese on an old balance scale.
+6. The station clock and the empty waiting bench, low sun through the posts.
+
+### pousada-da-geada — Pousada da Geada
+1. The whole inn from the lawn at sunset, dark-red timber, white trims, the lake glittering behind.
+2. Frost on the grass in the early morning with the inn behind, mist on the lake.
+3. A room's interior: stone fireplace lit, wool blanket over an armchair, doors open to a balcony.
+4. The balcony view over the water at dawn, a coffee cup on the rail.
+5. Breakfast laid out: cuca, cheese, bread, a jug of milk, a checked cloth.
+6. The pool and the lawn chairs with the araucarias and the lake behind, late light.
+
+### fazenda-do-cedro — Fazenda do Cedro
+1. The whole farm from the air at golden hour: red barn, two silos, white farmhouse, paddocks, rolling coxilhas.
+2. The red barn's front with its hayloft door open, a ladder against it.
+3. Cattle grazing on the high pasture with araucarias on the skyline, long shadows.
+4. The café colonial laid on the veranda: cuca, melado, cheese, milk, chimarrão.
+5. Two riders crossing the pasture at golden hour, a dog running alongside.
+6. Round hay bales in the field with the silos behind, dust in the evening light.
+
+### fazenda-santa-barbara — Fazenda Santa Bárbara
+1. The historic farm from above at late afternoon: ochre barn, silos, the 1912 farmhouse, paddocks with cattle.
+2. The farmhouse's wooden veranda with its old chairs, shutters, climbing plant.
+3. Inside: wide floorboards, a wood stove, framed sepia photographs on the wall.
+4. The tropeiro's galpão with old harness and ox yokes hanging.
+5. Late afternoon in the milking barn, a child learning to milk into a tin bucket.
+6. The farm's gate and dirt track at dusk, araucarias lining it.
+
+### fazenda-dos-pinheiros — Fazenda dos Pinheiros
+1. The farm among centuries-old araucarias from above, golden hour, the pinheiral dense behind.
+2. Inside the pinheiral: enormous trunks, shafts of light, mist at ground level.
+3. A woven basket of brown pinhão on the ground, gloved hands gathering.
+4. A huge pinha split open on a stump, seeds spilling.
+5. The timber barn and the two silos with the pine forest behind.
+6. A worker climbing the slope with a full sack over the shoulder, cold morning breath.
+
+### parque-caveiras — Parque Caveiras
+1. The whole fairground at dusk from the slope above, every light just on, the lake below.
+2. The Ferris wheel from directly underneath, gondolas against a deep blue sky.
+3. The carousel turning in a long exposure, horses smeared into ribbons of colour.
+4. The bumper-car floor from the side, sparks at the ceiling grid, cars mid-collision.
+5. A food kiosk's counter: churros and quentão, steam, a striped awning.
+6. Strings of warm bulbs over the crowded midway, families in coats, night.
+
+### deck-do-lago — Deck do Lago
+1. The restaurant and its deck from the water at blue hour, string lights on, the hall behind.
+2. A table on the deck laid for dinner, candle, wine, the lake surface just beyond the rail.
+3. Grilled trout on a wooden board, lemon, herbs, close and shallow.
+4. The timber hall's interior: bar counter, bottles, warm light, window onto the water.
+5. The jetty at sunset with a moored rowing boat, the far shore gold.
+6. A waiter carrying plates along the deck, umbrellas and diners out of focus.
+
+### ovni-porto — Ovni Porto
+1. The whole port at dusk from the hillside: concrete apron, painted target, beacons lit, control tower, the saucer on its beam.
+2. The painted target on the apron from directly above, ring and cross, floor lights recessed.
+3. The landed saucer on its three legs with the boarding gantry, beacon masts behind.
+4. Inside the control tower cab: radio set, logbook of sightings open, binoculars, dusk through the glass.
+5. The radar dish against a violet sky, a beacon lamp glowing beside it.
+6. A night vigil on the apron: people wrapped in blankets under the Milky Way, a red lantern.
+
+### salto-caveiras — Salto do Rio Caveiras
+1. The falls and the dam from the lookout deck in morning light, spray catching the sun.
+2. The water going over the stone crest, close and fast, a rainbow in the mist.
+3. The red-brick powerhouse with its tall arched windows, moss on the stone, the gorge below.
+4. Inside the powerhouse: the old turbine and a big iron valve wheel, riveted steel.
+5. The timber footbridge across the gorge, seen from below, basalt boulders and ferns.
+6. A picnic table under araucarias by the river, a basket, cheese and bread, the falls blurred behind.

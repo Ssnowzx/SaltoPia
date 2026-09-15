@@ -8,6 +8,7 @@ import { ExperienceBlock, PlaceGallery, PlaceStory } from "@/components/content/
 import { placeTheme } from "@/components/content/place-theme";
 import { Reveal } from "@/components/content/reveal";
 import { ShareBlock } from "@/components/content/share-block";
+import { galleryFor } from "@/lib/gallery";
 import { getPlaceBySlug, getPlaces } from "@/lib/places";
 
 /**
@@ -53,6 +54,11 @@ export default async function PlacePage({ params }: PlacePageProps): Promise<Rea
   const [place, places] = await Promise.all([getPlaceBySlug(slug), getPlaces()]);
   if (!place) notFound();
 
+  // The place's own folder if it has one; otherwise what the page already has, so a
+  // place with no gallery yet still shows something rather than nothing.
+  const folder = galleryFor(place.slug);
+  const pictures = folder.length > 0 ? folder : [place.heroImage, ...place.experiences.map((experience) => experience.image)];
+
   return (
     <ContentShell places={places}>
       <div style={placeTheme(place.accent)}>
@@ -71,7 +77,7 @@ export default async function PlacePage({ params }: PlacePageProps): Promise<Rea
         ) : null}
 
         <Reveal>
-          <PlaceGallery place={place} caption={place.tagline} />
+          <PlaceGallery place={place} caption={place.description} pictures={pictures} />
         </Reveal>
 
         <Reveal>

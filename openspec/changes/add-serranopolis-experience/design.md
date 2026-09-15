@@ -504,6 +504,13 @@ district, which is what makes its place pages hold together over 7800 pixels.
 The gallery and the experience grid both lay out from their own length, because a place
 with one experience was leaving a hole where a row was expected.
 
+A place's gallery is a folder, `public/images/places/<slug>/`, read at build time rather
+than listed in the database. Pictures arrive in batches and are named by whoever makes
+them; ninety rows of nothing but a path would turn the seed, which is for words, into a
+file of filenames. A place with an empty folder falls back to the pictures it already has,
+so a page works before the last photograph does, and `check:assets` reports a thin gallery
+instead of failing on one.
+
 ### D22 — Light from two temperatures
 
 The key light is warm and aimed at the community; the fill is a cool sky hemisphere.
