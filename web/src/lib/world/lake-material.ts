@@ -80,11 +80,12 @@ const FRAGMENT_SHADER = /* glsl */ `
     vec3 N = normalize(vec3((h1 - h2) * 0.4, 1.0, (h2 - h1) * 0.3));
     vec3 V = normalize(cameraPosition - vWorldPosition);
 
-    // The reflection is kept partial: a lake that goes fully to sky colour at a
-    // grazing angle turns pale, and the turquoise is the point.
-    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.6);
+    // The turquoise is the point, so the reflection only tints the far edge - a
+    // physically fuller Fresnel washes the whole sheet out at this camera angle,
+    // which is what it did before.
+    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 4.0);
     vec3 base = mix(uShallow, uDeep, vDepth);
-    vec3 color = mix(base, uSky, clamp(fresnel * 0.55, 0.0, 0.55));
+    vec3 color = mix(base, uSky, clamp(fresnel * 0.3, 0.0, 0.3));
 
     vec3 R = reflect(-V, N);
     float glitter = pow(max(dot(R, normalize(uSunDirection)), 0.0), 140.0);

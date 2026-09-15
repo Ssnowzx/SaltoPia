@@ -13,11 +13,11 @@
 /** Scene colours. Brand tokens live in globals.css; these are the world's own palette. */
 export const WORLD_COLORS = {
   /** Highland grass in full light. */
-  grass: "#86ad5a",
+  grass: "#8fb554",
   /** Grass in shade, and the darker patches between fields. */
   grassDeep: "#5f8a45",
   /** Mown lawns around the houses. */
-  lawn: "#9dc36a",
+  lawn: "#a5cc66",
   /** Dry highland straw on exposed ground. */
   straw: "#cfb884",
   /** Sand on the lake shore. */
@@ -29,8 +29,8 @@ export const WORLD_COLORS = {
   /** Basalt in shadow. */
   rockDark: "#5e615d",
   /** Forest on the far hills - olive, going tan on the tops, like the plateau in the photo. */
-  forest: "#6c8a48",
-  hilltop: "#9a9b5e",
+  forest: "#6f9145",
+  hilltop: "#9fa855",
   /** Araucaria foliage. */
   canopy: "#2f6b4d",
   /** Araucaria foliage in shade. */
@@ -38,9 +38,9 @@ export const WORLD_COLORS = {
   /** Conifer mass behind the town. */
   conifer: "#3a7a52",
   /** Broadleaf native trees. */
-  foliage: "#5d9a4e",
+  foliage: "#7ea346",
   /** Broadleaf trees turning in the cold. */
-  foliageWarm: "#9fae4a",
+  foliageWarm: "#b5bd4e",
   /** Palm fronds. */
   palm: "#5f9a4e",
   /** Araucaria bark. */
@@ -120,18 +120,18 @@ export const WORLD_COLORS = {
 
 /** Sky gradient stops - sunset over the reservoir: blue overhead, gold at the sun. */
 export const SKY_COLORS = {
-  high: "#6f9dc2",
-  mid: "#dcbfa0",
-  low: "#f2c56d",
-  haze: "#f0d5a5",
+  high: "#e8732a",
+  mid: "#f0a03c",
+  low: "#f7d264",
+  haze: "#f4dca4",
 } as const;
 
 /** The lake's shading. */
 export const LAKE_COLORS = {
-  deep: "#1f8f9c",
-  shallow: "#4ec3c6",
+  deep: "#22b3b8",
+  shallow: "#6fe0d8",
   /** What the surface reflects at a grazing angle - the pale sky near the horizon. */
-  reflection: "#cfe6df",
+  reflection: "#bfeee6",
   /** The sun's glitter path. */
   glitter: "#ffe6a0",
 } as const;
@@ -152,13 +152,13 @@ export const LAKE = {
   /** Lake bed height. */
   floor: -3.4,
   /** Centre and radii of the basin, before the shoreline noise. */
-  centre: { x: 8, z: -52 },
-  radiusX: 62,
-  radiusZ: 34,
+  centre: { x: 8, z: -46 },
+  radiusX: 76,
+  radiusZ: 40,
   /** The channel that carries the lake to the dam on the east side. */
-  channel: { x: 67, z: -41, halfWidth: 8, halfDepth: 6 },
+  channel: { x: 80, z: -38, halfWidth: 8, halfDepth: 6 },
   /** The island in the middle. */
-  island: { x: 4, z: -50, radiusX: 15, radiusZ: 10, height: 2.6 },
+  island: { x: 2, z: -46, radiusX: 17, radiusZ: 11, height: 2.6 },
 } as const;
 
 /** The river below the dam. */
@@ -167,8 +167,8 @@ export const RIVER = {
   floor: -7.5,
   halfWidth: 4.5,
   /** Where the water leaves the dam crest and where it reaches river level. */
-  fallsStartX: 75,
-  fallsEndX: 81,
+  fallsStartX: 88,
+  fallsEndX: 94,
 } as const;
 
 /** Where a road or rail deck sits when it crosses water. */
@@ -188,8 +188,8 @@ export const ROAD = {
 
 /** Atmospheric depth. The far hills dissolve into this. */
 export const FOG = {
-  near: 210,
-  far: 640,
+  near: 300,
+  far: 820,
 } as const;
 
 /** The railway. */
@@ -250,8 +250,8 @@ export const CAMERA = {
   near: 0.5,
   far: 1400,
   /** From the south, high enough to see over the community to the lake and island. */
-  initialPosition: [0, 46, 152] as const,
-  target: [0, 8, -30] as const,
+  initialPosition: [0, 48, 118] as const,
+  target: [0, 2, -40] as const,
   minDistance: 30,
   maxDistance: 230,
   /** No top-down view: the town is composed for a low, cinematic angle. */

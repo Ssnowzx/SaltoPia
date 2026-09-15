@@ -588,28 +588,78 @@ export function chimneyTopFor(spec: BuildingSpec): readonly [number, number, num
   return [spec.width * 0.28, wallTop + spec.roofHeight * 1.5, spec.depth * 0.18];
 }
 
-/** A framed window with glass, recessed into a wall facing +Z at (x, sillY, frontZ). */
-function windowParts(x: number, sillY: number, frontZ: number, width: number, height: number): BufferGeometry[] {
+/**
+ * An opening in a wall, built in the wall's own frame: centred on x = 0, facing +Z,
+ * with the wall's outer face at z = 0. The caller rotates and translates it onto
+ * whichever wall it belongs to.
+ *
+ * Building openings in wall-local coordinates is what stops the placement arithmetic
+ * from compounding: an earlier version built them at the front wall's z and then
+ * rotated, which left every side window floating half the building's depth out in
+ * mid-air.
+ */
+function windowParts(width: number, height: number, sillY: number): BufferGeometry[] {
   const frame = WORLD_COLORS.timberDark;
   return [
-    box(width, height, 0.1, WORLD_COLORS.frostBlue, x, sillY + height / 2, frontZ - 0.02, 0, "glass"),
-    box(width + 0.16, 0.08, 0.14, frame, x, sillY + height + 0.04, frontZ, 0, "planks"),
-    box(width + 0.16, 0.1, 0.18, WORLD_COLORS.whitewash, x, sillY - 0.05, frontZ + 0.02, 0, "plaster"),
-    box(0.08, height, 0.14, frame, x - width / 2 - 0.04, sillY + height / 2, frontZ, 0, "planks"),
-    box(0.08, height, 0.14, frame, x + width / 2 + 0.04, sillY + height / 2, frontZ, 0, "planks"),
-    box(0.05, height, 0.12, frame, x, sillY + height / 2, frontZ + 0.01, 0, "planks"),
+    // Glass, recessed behind the wall face.
+    box(width, height, 0.1, WORLD_COLORS.frostBlue, 0, sillY + height / 2, -0.05, 0, "glass"),
+    // Lintel, sill and jambs, proud of it.
+    box(width + 0.16, 0.08, 0.14, frame, 0, sillY + height + 0.04, 0.02, 0, "planks"),
+    box(width + 0.22, 0.1, 0.2, WORLD_COLORS.whitewash, 0, sillY - 0.05, 0.04, 0, "plaster"),
+    box(0.08, height, 0.14, frame, -width / 2 - 0.04, sillY + height / 2, 0.02, 0, "planks"),
+    box(0.08, height, 0.14, frame, width / 2 + 0.04, sillY + height / 2, 0.02, 0, "planks"),
+    // Glazing bar.
+    box(0.05, height, 0.12, frame, 0, sillY + height / 2, 0.03, 0, "planks"),
   ];
 }
 
-/** A door with frame and a step, in a wall facing +Z. */
-function doorParts(x: number, frontZ: number, width: number, height: number): BufferGeometry[] {
+/** A door in the wall's own frame, same convention as `windowParts`. */
+function doorParts(width: number, height: number): BufferGeometry[] {
   return [
-    box(width, height, 0.1, WORLD_COLORS.timberDark, x, height / 2, frontZ - 0.02, 0, "planks"),
-    box(width + 0.18, 0.09, 0.14, WORLD_COLORS.timber, x, height + 0.04, frontZ, 0, "planks"),
-    box(0.09, height, 0.14, WORLD_COLORS.timber, x - width / 2 - 0.045, height / 2, frontZ, 0, "planks"),
-    box(0.09, height, 0.14, WORLD_COLORS.timber, x + width / 2 + 0.045, height / 2, frontZ, 0, "planks"),
-    box(width + 0.5, 0.14, 0.5, WORLD_COLORS.stone, x, 0.07, frontZ + 0.25, 0, "stone"),
+    box(width, height, 0.1, WORLD_COLORS.timberDark, 0, height / 2, -0.05, 0, "planks"),
+    box(width + 0.18, 0.09, 0.14, WORLD_COLORS.timber, 0, height + 0.04, 0.02, 0, "planks"),
+    box(0.09, height, 0.14, WORLD_COLORS.timber, -width / 2 - 0.045, height / 2, 0.02, 0, "planks"),
+    box(0.09, height, 0.14, WORLD_COLORS.timber, width / 2 + 0.045, height / 2, 0.02, 0, "planks"),
+    box(width + 0.5, 0.14, 0.5, WORLD_COLORS.stone, 0, 0.07, 0.3, 0, "stone"),
   ];
+}
+
+/** Which wall an opening sits on. */
+type Wall = "front" | "back" | "left" | "right";
+
+/**
+ * Moves an opening from the wall-local frame onto one of a box's four walls.
+ *
+ * @param parts - Geometry from `windowParts` or `doorParts`.
+ * @param wall - Which wall to place it on.
+ * @param along - Position along that wall, from its centre.
+ * @param width - The building's width (its X extent).
+ * @param depth - The building's depth (its Z extent).
+ */
+function onWall(
+  parts: readonly BufferGeometry[],
+  wall: Wall,
+  along: number,
+  width: number,
+  depth: number,
+): BufferGeometry[] {
+  // rotateY maps +Z to the wall's outward normal; the offset is half the extent the
+  // wall faces along, so the opening lands exactly on the face and nowhere else.
+  const placement: Readonly<Record<Wall, { rotation: number; x: number; z: number; alongX: boolean }>> = {
+    front: { rotation: 0, x: 0, z: depth / 2, alongX: true },
+    back: { rotation: Math.PI, x: 0, z: -depth / 2, alongX: true },
+    right: { rotation: Math.PI / 2, x: width / 2, z: 0, alongX: false },
+    left: { rotation: -Math.PI / 2, x: -width / 2, z: 0, alongX: false },
+  };
+
+  const { rotation, x, z, alongX } = placement[wall];
+
+  for (const part of parts) {
+    if (rotation !== 0) part.rotateY(rotation);
+    part.translate(alongX ? x + along : x, 0, alongX ? z : z + along);
+  }
+
+  return [...parts];
 }
 
 /**
@@ -645,32 +695,39 @@ export function createBuildingGeometry(spec: BuildingSpec): BufferGeometry {
   if (spec.windows === true) {
     const windowWidth = Math.min(0.95, spec.width * 0.18);
     const windowHeight = Math.min(1.15, spec.height * 0.4);
-    const count = Math.max(2, Math.floor(spec.width / 2.4));
+    const across = Math.max(2, Math.floor(spec.width / 2.4));
+    const along = Math.max(1, Math.floor(spec.depth / 2.6));
 
     for (let storey = 0; storey < stories; storey += 1) {
       const sill = storey * spec.height + spec.height * 0.42;
-      for (let index = 0; index < count; index += 1) {
-        const x = -spec.width / 2 + (spec.width / (count + 1)) * (index + 1);
-        const isDoor = storey === 0 && count % 2 === 1 && index === (count - 1) / 2;
-        if (isDoor) {
-          parts.push(...doorParts(x, frontZ, windowWidth * 0.95, spec.height * 0.68));
-        } else {
-          parts.push(...windowParts(x, sill, frontZ, windowWidth, windowHeight));
-        }
+
+      // Front: evenly spaced openings, the middle one a door on the ground floor.
+      for (let index = 0; index < across; index += 1) {
+        const offset = -spec.width / 2 + (spec.width / (across + 1)) * (index + 1);
+        const isDoor = storey === 0 && across % 2 === 1 && index === (across - 1) / 2;
+        parts.push(
+          ...onWall(
+            isDoor ? doorParts(windowWidth * 0.95, spec.height * 0.68) : windowParts(windowWidth, windowHeight, sill),
+            "front",
+            offset,
+            spec.width,
+            spec.depth,
+          ),
+        );
       }
-    }
 
-    // Side windows, one per storey.
-    for (let storey = 0; storey < stories; storey += 1) {
-      const sill = storey * spec.height + spec.height * 0.42;
-      for (const side of [-1, 1]) {
-        const sideWindow = windowParts(0, sill, spec.depth / 2 + 0.03, windowWidth, windowHeight);
-        for (const part of sideWindow) {
-          part.rotateY((side * Math.PI) / 2);
-          part.translate((side * spec.width) / 2, 0, 0);
-          part.translate(0, 0, -(spec.depth / 2 + 0.03) * 0);
+      // Back: windows only.
+      for (let index = 0; index < across; index += 1) {
+        const offset = -spec.width / 2 + (spec.width / (across + 1)) * (index + 1);
+        parts.push(...onWall(windowParts(windowWidth, windowHeight, sill), "back", offset, spec.width, spec.depth));
+      }
+
+      // Both side walls, spaced along the depth.
+      for (const wall of ["left", "right"] as const) {
+        for (let index = 0; index < along; index += 1) {
+          const offset = -spec.depth / 2 + (spec.depth / (along + 1)) * (index + 1);
+          parts.push(...onWall(windowParts(windowWidth, windowHeight, sill), wall, offset, spec.width, spec.depth));
         }
-        parts.push(...sideWindow);
       }
     }
   }

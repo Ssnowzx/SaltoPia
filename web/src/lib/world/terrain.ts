@@ -58,12 +58,12 @@ export function isOnLake(x: number, z: number): boolean {
 
 /** The river's course below the dam, as it leaves the valley to the east. */
 export const RIVER_COURSE: ReadonlyArray<readonly [number, number]> = [
-  [72, -41],
-  [82, -40.5],
-  [94, -35],
-  [108, -23],
-  [124, -8],
-  [142, 8],
+  [85, -38],
+  [95, -37.5],
+  [106, -32],
+  [118, -20],
+  [132, -6],
+  [148, 10],
 ];
 
 function distanceToSegment(px: number, pz: number, ax: number, az: number, bx: number, bz: number): number {
@@ -112,8 +112,8 @@ const FLAT_PADS: readonly FlatPad[] = [
   { x: 86, z: 22, radius: 9, falloff: 6 },
   { x: 34, z: -4, radius: 12, falloff: 6 },
   { x: -80, z: -28, radius: 7, falloff: 5 },
-  { x: 82, z: -30, radius: 8, falloff: 5 },
-  { x: 86, z: -50, radius: 6, falloff: 4 },
+  { x: 95, z: -27, radius: 8, falloff: 5 },
+  { x: 99, z: -47, radius: 6, falloff: 4 },
   { x: 4, z: 34, radius: 26, falloff: 8 },
 ];
 
@@ -156,7 +156,7 @@ function naturalHeightAt(x: number, z: number): number {
   // The river below the dam.
   const river = riverDistance(x, z);
   const riverFloor = riverSurfaceHeightAt(x) - (RIVER.level - RIVER.floor);
-  const riverTrench = smoothstep(RIVER.halfWidth + 6, RIVER.halfWidth * 0.9, river) * smoothstep(73, 77, x);
+  const riverTrench = smoothstep(RIVER.halfWidth + 6, RIVER.halfWidth * 0.9, river) * smoothstep(86, 90, x);
   ground += (riverFloor - ground) * riverTrench;
 
   return ground;
@@ -217,7 +217,7 @@ function surfaceColorAt(x: number, z: number, height: number): Color {
   base.lerp(lakeBed, smoothstep(LAKE.level + 0.2, LAKE.floor, height));
 
   const river = riverDistance(x, z);
-  base.lerp(sand, (1 - smoothstep(RIVER.halfWidth + 1, RIVER.halfWidth + 5, river)) * smoothstep(73, 77, x) * 0.7);
+  base.lerp(sand, (1 - smoothstep(RIVER.halfWidth + 1, RIVER.halfWidth + 5, river)) * smoothstep(86, 90, x) * 0.7);
 
   return base;
 }

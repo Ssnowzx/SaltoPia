@@ -538,7 +538,7 @@ export function createBosqueSignGeometry(): BufferGeometry {
 // ---------------------------------------------------------------------------------
 
 /** The composite's origin: the usina's yard, on the south bank below the dam. */
-export const SALTO_ORIGIN = { x: 82, z: -22 } as const;
+export const SALTO_ORIGIN = { x: 95, z: -19 } as const;
 
 const USINA_SPEC: BuildingSpec = {
   width: 8,
@@ -554,7 +554,7 @@ const USINA_SPEC: BuildingSpec = {
 };
 
 /** The dam's crest, where the water spills. */
-const DAM = { x: 74.5, z: LAKE.channel.z, spillwayHalfDepth: 4, abutmentDepth: 3.5 } as const;
+const DAM = { x: 87.5, z: LAKE.channel.z, spillwayHalfDepth: 4, abutmentDepth: 3.5 } as const;
 
 /**
  * The dam across the channel with its spillway and abutments, the penstock down to the
@@ -571,7 +571,7 @@ export function createSaltoGeometry(): BufferGeometry {
   const parts: BufferGeometry[] = [];
 
   // The usina, facing the yard.
-  const [usinaX, usinaY, usinaZ] = local(82, -30);
+  const [usinaX, usinaY, usinaZ] = local(95, -27);
   parts.push(place(createBuildingGeometry(USINA_SPEC), usinaX, usinaY, usinaZ));
   for (let index = 0; index < 3; index += 1) {
     const x = usinaX - 2.6 + index * 2.6;
@@ -599,7 +599,7 @@ export function createSaltoGeometry(): BufferGeometry {
   parts.push(box(1.2, 1.2, 1.2, WORLD_COLORS.metal, usinaX - 3.2, usinaY + 3.0, usinaZ - 2.2, 0, "metal"));
 
   // The transformer yard.
-  const [yardX, yardY, yardZ] = local(76, -24);
+  const [yardX, yardY, yardZ] = local(89, -21);
   parts.push(place(createFenceGeometry(6), yardX - 3, yardY, yardZ - 3));
   parts.push(place(createFenceGeometry(6), yardX - 3, yardY, yardZ + 3));
   for (const dx of [-1.5, 0, 1.5]) {
@@ -608,7 +608,7 @@ export function createSaltoGeometry(): BufferGeometry {
   }
 
   // The lookout deck on the north bank, railed toward the falls.
-  const [deckX, deckY, deckZ] = local(86, -50);
+  const [deckX, deckY, deckZ] = local(99, -47);
   parts.push(box(7, 0.4, 5, WORLD_COLORS.timber, deckX, deckY + 0.5, deckZ, 0, "planks"));
   for (const [dx, dz] of [[-3.2, -2.2], [3.2, -2.2], [-3.2, 2.2], [3.2, 2.2]] as const) {
     parts.push(post(0.14, 0.16, 0.7, 5, WORLD_COLORS.timberDark, deckX + dx, deckY, deckZ + dz, "planks"));
@@ -623,20 +623,20 @@ export function createSaltoGeometry(): BufferGeometry {
   parts.push(box(1.4, 0.6, 0.06, WORLD_COLORS.whitewash, deckX + 3.0, deckY + 2.1, deckZ - 3.2, 0, "planks"));
 
   // Picnic tables.
-  for (const [x, z, rotation] of [[90, -54, 0.3], [84, -56, -0.4], [92, -48, 1.2]] as const) {
+  for (const [x, z, rotation] of [[103, -51, 0.3], [97, -53, -0.4], [105, -45, 1.2]] as const) {
     const [px, py, pz] = local(x, z);
     parts.push(place(createPicnicTableGeometry(), px, py, pz, rotation));
   }
 
   // Railings along the footbridge.
-  const deckHeight = (z: number): number => Math.max(terrainHeightAt(86, z), 1.5 + 0.6) - originY;
+  const deckHeight = (z: number): number => Math.max(terrainHeightAt(99, z), 1.5 + 0.6) - originY;
   for (const side of [-1, 1]) {
-    for (let z = -47; z <= -33; z += 2.3) {
-      const [bx, , bz] = local(86, z);
+    for (let z = -44; z <= -30; z += 2.3) {
+      const [bx, , bz] = local(99, z);
       parts.push(post(0.06, 0.07, 1.0, 4, WORLD_COLORS.timberDark, bx + side * 1.0, deckHeight(z) + 0.22, bz, "planks"));
     }
-    const [railX, , railZ] = local(86, -40);
-    parts.push(box(0.08, 0.08, 14.4, WORLD_COLORS.timber, railX + side * 1.0, deckHeight(-40) + 1.16, railZ, 0, "planks"));
+    const [railX, , railZ] = local(99, -37);
+    parts.push(box(0.08, 0.08, 14.4, WORLD_COLORS.timber, railX + side * 1.0, deckHeight(-37) + 1.16, railZ, 0, "planks"));
   }
 
   return merge(parts);
@@ -662,6 +662,6 @@ export const SMOKE_SOURCES: readonly SmokeSource[] = [
   { x: 86 + wineryChimneyX, z: 22 + wineryChimneyZ, heightAboveGround: wineryChimneyTop, intensity: 0.6 },
   { x: -52 + GALPAO_PIT.x, z: -2 + GALPAO_PIT.z, heightAboveGround: 0.9, intensity: 1.3 },
   { x: -40 + CTG_PIT.x, z: 36 + CTG_PIT.z, heightAboveGround: 0.8, intensity: 0.9 },
-  { x: 82.5, z: -43, heightAboveGround: RIVER.level + 1.4 - terrainHeightAt(82.5, -43), intensity: 1.5 },
-  { x: 84.5, z: -38.5, heightAboveGround: RIVER.level + 1.4 - terrainHeightAt(84.5, -38.5), intensity: 1.3 },
+  { x: 95.5, z: -40, heightAboveGround: RIVER.level + 1.4 - terrainHeightAt(95.5, -40), intensity: 1.5 },
+  { x: 97.5, z: -35.5, heightAboveGround: RIVER.level + 1.4 - terrainHeightAt(97.5, -35.5), intensity: 1.3 },
 ];

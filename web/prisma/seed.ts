@@ -81,8 +81,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A ilha no meio do lago",
     description:
       "A ilha é um bosque de araucárias que já estavam ali muito antes da represa. Chega-se de barco, a partir do píer da praça; na margem sul há duas cabanas em palafita e um píer próprio, e a trilha dá a volta na ilha em meia hora.",
-    world: [4, 0, -50],
-    camera: [6, 24, -18],
+    world: [2, 0, -46],
+    camera: [4, 26, -8],
     experiences: [
       { slug: "travessia-de-barco", name: "Travessia de barco", description: "Dez minutos de lancha do píer da praça até a ilha, com o sol batendo na água.", kind: "TOUR", durationMinutes: 30 },
       { slug: "trilha-da-ilha", name: "Trilha da ilha", description: "A volta completa por baixo das araucárias, com guia que sabe a idade de cada uma.", kind: "TRAIL", durationMinutes: 45 },
@@ -143,8 +143,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A barragem, a queda e a usina centenária",
     description:
       "No fim do lago, o Rio Caveiras passa pela barragem de pedra e despenca ao lado da usina de tijolo que iluminou Lages nos anos 1940. Do deck de madeira na outra margem dá para ouvir a água de longe; embaixo das araucárias, as mesas de piquenique enchem no fim de semana.",
-    world: [78, 0, -41],
-    camera: [60, 30, -8],
+    world: [92, 0, -38],
+    camera: [70, 30, -2],
     experiences: [
       { slug: "mirante-do-salto", name: "Deck do Salto", description: "A passarela sobre o rio e o deck de frente para a queda. Vá de manhã, quando o sol bate na água.", kind: "TOUR", durationMinutes: 40 },
       { slug: "trilha-da-usina", name: "Trilha da usina", description: "Da barragem ao conduto forçado e à casa de máquinas, com guia que conhece cada válvula.", kind: "TRAIL", durationMinutes: 60 },

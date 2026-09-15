@@ -27,7 +27,7 @@ export type Waypoint = readonly [number, number];
 
 /** Whether a point sits on a bridge deck over the river below the dam. */
 export function isOnBridge(x: number, z: number): boolean {
-  return x > 73 && riverDistance(x, z) < RIVER.halfWidth + 3;
+  return x > 86 && riverDistance(x, z) < RIVER.halfWidth + 3;
 }
 
 /** Height of a road or rail surface: the terrain, except over the river, where a deck holds. */
@@ -93,7 +93,7 @@ export const DRIVEWAYS: readonly Driveway[] = [
   { points: [[84, 66], [86, 69]], width: ROAD.drivewayWidth, surface: "street", yard: [86, 71], yardRadius: 3.5 },
   // The collector east: to the winery, then on to the dam and the usina.
   { points: [[58, 36], [70, 26], [80, 26]], width: ROAD.drivewayWidth, surface: "track", yard: [82, 26], yardRadius: 3.5 },
-  { points: [[70, 26], [78, 8], [84, -12], [82, -20]], width: ROAD.drivewayWidth, surface: "track", yard: [82, -22], yardRadius: 3.5 },
+  { points: [[70, 26], [84, 6], [95, -10], [95, -18]], width: ROAD.drivewayWidth, surface: "track", yard: [95, -19], yardRadius: 3.5 },
   // Mirante da Neblina - the trail up the west hill.
   { points: [[-54, 30], [-68, 20], [-78, 4], [-82, -14], [-80, -20]], width: ROAD.trailWidth, surface: "track", yard: [-80, -21], yardRadius: 3 },
 ];
@@ -106,9 +106,9 @@ export const PATHS: readonly (readonly Waypoint[])[] = [
 
 /** The footbridge below the dam, from the usina bank to the lookout deck. */
 export const FOOTBRIDGE: readonly Waypoint[] = [
-  [86, -33],
-  [86, -40.5],
-  [86, -47],
+  [99, -30],
+  [99, -37.5],
+  [99, -44],
 ];
 
 /** The railway, along the south edge past the station's platform. */
@@ -457,12 +457,15 @@ export function createRailGeometry(): BufferGeometry {
  * material can shade the middle darker.
  */
 export function createLakeSurfaceGeometry(): BufferGeometry {
-  const minX = LAKE.centre.x - LAKE.radiusX - 20;
-  const maxX = LAKE.channel.x + LAKE.channel.halfWidth + 4;
-  const minZ = LAKE.centre.z - LAKE.radiusZ - 14;
-  const maxZ = LAKE.centre.z + LAKE.radiusZ + 14;
-  const columns = 90;
-  const rows = 60;
+  // The margin has to clear the shoreline's wobble, or the grid's own edge shows as a
+  // straight cut across the far shore - which is exactly what it did at 14 units.
+  const margin = Math.max(LAKE.radiusX, LAKE.radiusZ) * 0.35 + 16;
+  const minX = LAKE.centre.x - LAKE.radiusX - margin;
+  const maxX = Math.max(LAKE.centre.x + LAKE.radiusX, LAKE.channel.x + LAKE.channel.halfWidth) + margin;
+  const minZ = LAKE.centre.z - LAKE.radiusZ - margin;
+  const maxZ = LAKE.centre.z + LAKE.radiusZ + margin;
+  const columns = 110;
+  const rows = 78;
 
   const grid = new PlaneGeometry(maxX - minX, maxZ - minZ, columns, rows);
   grid.rotateX(-Math.PI / 2);
@@ -552,13 +555,13 @@ export function createWaterfallFoamGeometry(): BufferGeometry {
   const parts: BufferGeometry[] = [];
   const centreZ = RIVER_COURSE[1][1];
   const puffs: ReadonlyArray<readonly [number, number, number]> = [
-    [82.5, 0.55, -3.6],
-    [83.5, 0.7, -1.2],
-    [84.5, 0.6, 1.4],
-    [83.0, 0.5, 3.4],
-    [86.5, 0.45, -2.4],
-    [87.0, 0.4, 1.0],
-    [89.0, 0.35, -0.6],
+    [95.5, 0.55, -3.6],
+    [96.5, 0.7, -1.2],
+    [97.5, 0.6, 1.4],
+    [96.0, 0.5, 3.4],
+    [99.5, 0.45, -2.4],
+    [100.0, 0.4, 1.0],
+    [102.0, 0.35, -0.6],
   ];
   for (const [x, radius, dz] of puffs) {
     parts.push(blob(radius * 2.2, WORLD_COLORS.foam, x, RIVER.level + 0.3, centreZ + dz, 0.32, 1, "foliage"));

@@ -30,6 +30,7 @@ import {
   createVinicolaGeometry,
 } from "./landmarks";
 import { createRandom } from "./noise";
+import { SHIRT_COLORS, createParasolGeometry, createPersonGeometry, createSeatedPersonGeometry } from "./people";
 import {
   createAFrameGeometry,
   createKayakGeometry,
@@ -83,6 +84,13 @@ export type ModelKey =
   | "sailboatMoored"
   | "yachtMoored"
   | "kayak"
+  | "personA"
+  | "personB"
+  | "personC"
+  | "personD"
+  | "personSeated"
+  | "parasolRed"
+  | "parasolTeal"
   | "fence"
   | "stoneWall"
   | "lamppost"
@@ -130,6 +138,13 @@ export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
   sailboatMoored: "flat",
   yachtMoored: "flat",
   kayak: "smooth",
+  personA: "smooth",
+  personB: "smooth",
+  personC: "smooth",
+  personD: "smooth",
+  personSeated: "smooth",
+  parasolRed: "flat",
+  parasolTeal: "flat",
   fence: "flat",
   stoneWall: "flat",
   lamppost: "flat",
@@ -195,6 +210,13 @@ export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = 
   sailboatMoored: () => createSailboatGeometry(WORLD_COLORS.whitewash),
   yachtMoored: () => createYachtGeometry(),
   kayak: () => createKayakGeometry(WORLD_COLORS.lantern),
+  personA: () => createPersonGeometry(SHIRT_COLORS[0]),
+  personB: () => createPersonGeometry(SHIRT_COLORS[1]),
+  personC: () => createPersonGeometry(SHIRT_COLORS[2]),
+  personD: () => createPersonGeometry(SHIRT_COLORS[5]),
+  personSeated: () => createSeatedPersonGeometry(SHIRT_COLORS[3]),
+  parasolRed: () => createParasolGeometry(WORLD_COLORS.ember),
+  parasolTeal: () => createParasolGeometry(WORLD_COLORS.coretoGreen),
   fence: () => createFenceGeometry(8),
   stoneWall: () => createStoneWallGeometry(9),
   lamppost: () => createLamppostGeometry(),
@@ -259,7 +281,7 @@ const HOUSES: readonly Placement[] = [
 /** Chalets along the far shore, facing the water. */
 const FAR_SHORE_CHALETS: readonly Placement[] = [-44, -34, -24, -14, -4, 6, 16, 26, 36, 46, 56].map((x, index) => {
   const models: readonly ModelKey[] = ["aFrameShingle", "aFrameSlate", "aFrameTile"];
-  return placed(models[index % 3], x + (index % 2) * 1.5, -94 + (index % 3) * 1.4, (index % 2 === 0 ? 0.08 : -0.06));
+  return placed(models[index % 3], x * 1.15 + (index % 2) * 1.5, -90 + (index % 3) * 1.6, index % 2 === 0 ? 0.08 : -0.06, 1.25);
 });
 
 /**
@@ -289,14 +311,44 @@ export const LANDMARKS: readonly Placement[] = [
   ...HOUSES,
   ...FAR_SHORE_CHALETS,
 
-  // The island: cabins on stilts and its pier.
-  placed("stiltCabin", -6, -42),
-  placed("stiltCabin", 14, -44),
-  placed("pier", 4, -41),
+  // The island's south shore: cabins standing out over the water on their stilts,
+  // with a pier between them - the whole point of a stilt cabin is that it is wet.
+  placed("stiltCabin", -8, -34.5),
+  placed("stiltCabin", 12, -35.5, 0.2),
+  placed("pier", 2, -35, Math.PI),
 
   // The square's pier and the inn's.
   placed("pier", 0, -13, Math.PI),
   placed("pier", 34, -15, Math.PI),
+
+  // People, where people actually are: the square, the promenade, the piers, the
+  // shopfronts, the station platform and the picnic tables at the falls.
+  ...(
+    [
+      [2.5, 4, 0.2], [-3, 5, 2.4], [4.5, 6.5, 1.1], [-5, 2, 3.0],
+      [6, -8, 0.4], [-7, -9, 2.7], [1, -11, 0.1], [-1.5, -9.5, 1.6],
+      [-10, 20, 0.3], [-4, 19.5, 2.9], [3, 20, 1.2], [9, 19.5, 3.1],
+      [31, -13, 0.5], [36, -12, 2.6], [40, -9, 1.4],
+      [86, 73, 0.2], [90, 73.5, 2.8],
+      [101, -51, 0.9], [97, -53, 2.2], [105, -46, 0.3],
+      [-40, 44, 1.0], [-36, 45, 2.4],
+      [-52, 4, 0.7], [-48, 5, 2.9],
+    ] as ReadonlyArray<readonly [number, number, number]>
+  ).map(([x, z, rotation], index) => {
+    const models: readonly ModelKey[] = ["personA", "personB", "personC", "personD"];
+    return placed(models[index % 4], x, z, rotation);
+  }),
+  placed("personSeated", 6.6, 5.2, 2.6),
+  placed("personSeated", -6.2, 4.4, 1.2),
+  placed("personSeated", 101, -52.4, 0.4),
+  placed("personSeated", 32, -14.6, 3.0),
+
+  // Parasols along the lakeside promenade.
+  placed("parasolRed", -8, -7),
+  placed("parasolTeal", -4, -8.5),
+  placed("parasolRed", 5, -9),
+  placed("parasolTeal", 30, -12),
+  placed("parasolRed", 39, -11),
 
   // Boats moored and pulled up.
   afloat("sailboatMoored", -4, -25, 0.4),
@@ -307,6 +359,14 @@ export const LANDMARKS: readonly Placement[] = [
   afloat("kayak", -3, -35, 0.4),
   afloat("kayak", 18, -35, 2.2),
   afloat("kayak", -30, -24, 0.9),
+  afloat("sailboatMoored", -22, -33, 1.2),
+  afloat("sailboatMoored", 24, -30, 2.4),
+  afloat("sailboatMoored", -14, -45, 0.7),
+  afloat("yachtMoored", -34, -40, 1.9, 0.85),
+  afloat("yachtMoored", 30, -46, 0.6, 0.95),
+  afloat("kayak", 26, -22, 1.8),
+  afloat("kayak", -18, -20, 0.2),
+  afloat("kayak", 34, -40, 2.6),
 
   // Palms along the shore, thickest around the inn and the square.
   placed("palm", 27, -9, 0, 1.05),
@@ -354,10 +414,10 @@ export const LANDMARKS: readonly Placement[] = [
   placed("stoneWall", 100, 40, 0.2),
 
   // Boulders in the plunge pool and along the falls.
-  placed("rock", 84, -44.5, 0.4, 2.0),
-  placed("rock", 88, -36.5, 1.2, 1.8),
-  placed("rock", 80, -46, 2.1, 1.6),
-  placed("rock", 79, -35, 0.7, 1.7),
+  placed("rock", 97, -41.5, 0.4, 2.0),
+  placed("rock", 101, -33.5, 1.2, 1.8),
+  placed("rock", 93, -43, 2.1, 1.6),
+  placed("rock", 92, -32, 0.7, 1.7),
 ];
 
 /** Lawns around the houses and the inn. */
@@ -385,9 +445,9 @@ const CLEARINGS: readonly Clearing[] = [
   { x: 96, z: 21, radius: 10 },
   { x: 34, z: -4, radius: 14 },
   { x: -80, z: -28, radius: 8 },
-  { x: 82, z: -28, radius: 10 },
-  { x: 86, z: -50, radius: 7 },
-  { x: 88, z: -52, radius: 7 },
+  { x: 95, z: -25, radius: 10 },
+  { x: 99, z: -47, radius: 7 },
+  { x: 101, z: -49, radius: 7 },
   // The approach the camera flies down to the falls stays open.
   { x: 62, z: -12, radius: 12 },
   { x: 70, z: -30, radius: 9 },
@@ -395,9 +455,10 @@ const CLEARINGS: readonly Clearing[] = [
   { x: 16, z: 22, radius: 7 },
   { x: 70, z: 46, radius: 6 },
   ...HOUSES.map((house) => ({ x: house.x, z: house.z, radius: house.model === "lakeHouse" ? 9 : 6 })),
-  ...FAR_SHORE_CHALETS.map((chalet) => ({ x: chalet.x, z: chalet.z, radius: 4.2 })),
-  { x: -6, z: -42, radius: 4 },
-  { x: 14, z: -44, radius: 4 },
+  ...FAR_SHORE_CHALETS.map((chalet) => ({ x: chalet.x, z: chalet.z, radius: 5.2 })),
+  { x: -8, z: -34.5, radius: 5 },
+  { x: 12, z: -35.5, radius: 5 },
+  { x: 2, z: -35, radius: 5 },
 ];
 
 function isInClearing(x: number, z: number, extra = 0): boolean {

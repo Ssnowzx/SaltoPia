@@ -265,6 +265,23 @@ A-frame chalets on the far shore, a big sun with rays).
 reservoir is the real place, and a community by a lake with an island is a composition
 the reference site does not have.
 
+### D13 — Openings are built in the wall's own frame
+
+Windows and doors are authored centred on x = 0, facing +Z, with the wall's outer face
+at z = 0, and a single `onWall` helper rotates and translates them onto whichever of a
+box's four walls they belong to.
+
+*Why:* the previous version built each opening at the *front* wall's z and then rotated
+it onto the side walls. Rotating a point already offset along +Z moves that offset onto
+±X, and the code then added half the width on top - so every side window ended up half
+the building's depth out in mid-air. On a shop 5 units deep that is a pane of glass
+floating 2.5 units off the facade, visible across the whole map.
+
+The lesson generalises: placement arithmetic composes badly when the source frame
+already carries an offset. Building in a neutral local frame and transforming once
+removes the whole class of error, and it is why every opening now also gets a back wall
+and both side walls for free.
+
 ## Risks / Trade-offs
 
 - **WebGL unavailable or unstable on the demo machine** → The static fallback is a spec
