@@ -100,7 +100,12 @@ field on every run and deletes places it no longer carries.
 Place heroes, experience photographs and each place's gallery of six are generated from
 the briefs in `docs/image-prompts.md` and dropped into `web/public/images/`. A gallery is
 just a folder — `public/images/places/<slug>/01.webp` … `06.webp` — which the page reads
-at build time, so adding a picture is dropping a file in. The crests are SVGs drawn
+at build time, so adding a picture is dropping a file in.
+
+The generator cannot exceed 1280×720, so every photograph on the pages is an enlargement.
+Run `npm run images:sharpen` after adding or replacing any of them: it puts back the edge
+the enlargement smeared, skips what it has already done, and clears the image cache that
+would otherwise keep serving the old file. The crests are SVGs drawn
 from the pin glyphs, built by `npm run build:crests`. Nothing is fetched at runtime.
 
 The optimiser caches by URL, so after replacing an image in `public/` remove

@@ -13,11 +13,27 @@ code change (after a hard refresh; the dev server caches optimised images by URL
   and the page fills itself, numbered in the order you want them shown. The first one is
   drawn large, so give it the widest view of the set.
 
-Ask for the largest the generator will give and save at those sizes or above. A hero
-fills the whole window, so on a Retina laptop it is drawn across roughly 3000 pixels: a
-1600-wide file is stretched to nearly twice its size and reads as a photograph taken on
-an old phone. The files in the repository were enlarged from 1600 to buy some of that
-back, which cannot add detail the original never had.
+Ask for the largest the generator will give and save at those sizes or above. A hero fills
+the whole window, so on a Retina laptop it is drawn across roughly 3000 pixels, and a file
+half that size reads as a photograph taken on an old phone.
+
+**The generator tops out at 1280x720 and 1152x864**, whatever the prompt asks for, so the
+files in the repository are that frame enlarged. The measured round trip confirms it: they
+lose almost nothing when knocked down to 1280 and back, which means the detail above 1280
+was interpolated, not photographed.
+
+That ceiling is the generator's, but half of what it costs is recoverable. Enlarging smears
+the edges that were there, and an unsharp mask puts them back, so **after dropping new files
+in, run:**
+
+```bash
+cd web && npm run images:sharpen
+```
+
+It sharpens anything it has not already sharpened - heroes, experiences and galleries alike
+- and empties the dev server's image cache, which keys on the URL and not on the file
+behind it. Without that last step a replaced photograph changes nothing on screen, however
+hard the page is refreshed.
 
 The setting is real: the Salto do Rio Caveiras, outside Lages, Santa Catarina — a small
 1940s dam and brick powerhouse on the Caveiras river, araucaria pines, rolling coxilhas,

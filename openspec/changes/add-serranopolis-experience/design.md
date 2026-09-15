@@ -521,6 +521,14 @@ file of filenames. A place with an empty folder falls back to the pictures it al
 so a page works before the last photograph does, and `check:assets` reports a thin gallery
 instead of failing on one.
 
+The photographs are enlargements and cannot stop being enlargements: the generator tops out
+at 1280x720, and a file knocked down to 1280 and back loses almost nothing, which is what an
+interpolated image does. Enlarging does smear the edges that were photographed, though, so
+the pictures pass through an unsharp mask on the way in. It is a separate step rather than
+part of the page because it is destructive - sharpening a sharpened file twice gives the
+crunch of an over-processed photograph - so each result is recorded by digest and the pass
+skips it next time.
+
 ### D22 — Light from two temperatures
 
 The key light is warm and aimed at the community; the fill is a cool sky hemisphere.
