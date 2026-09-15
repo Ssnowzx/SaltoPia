@@ -11,11 +11,14 @@ import { CAMERA, DRIFT, FLIGHT } from "@/lib/world/constants";
 import type { Place } from "@/types";
 
 /**
- * Camera behaviour for the hub: bounded orbit, idle drift, and flights to a place.
+ * Camera behaviour for the hub: a bounded arc, idle drift, and flights to a place.
  *
- * All three are here rather than spread across the scene because they contend for the
- * same camera - a flight has to suspend drift, and drift has to know when the visitor
- * last touched anything. Splitting them up is how they end up fighting.
+ * The world is built to be seen from the south, like the reference, so the orbit is
+ * held to an arc rather than a full circle. Drift is a slow sway inside that arc from
+ * wherever the visitor left the camera.
+ *
+ * All three behaviours live here because they contend for the same camera - a flight
+ * has to suspend drift, and drift has to know when the visitor last touched anything.
  */
 
 interface CameraRigProps {
@@ -29,6 +32,13 @@ interface CameraRigProps {
   readonly onFlightStart?: () => void;
 }
 
+/** Keeps the drift from pressing against the azimuth stops. */
+const DRIFT_MARGIN = 0.03;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 export function CameraRig({
   focus,
   reducedMotion,
@@ -38,26 +48,30 @@ export function CameraRig({
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const { camera } = useThree();
 
-  /** Timestamp of the visitor's last interaction, in seconds of clock time. */
+  /** Clock time of the visitor's last gesture, in seconds. */
   const lastInteractionRef = useRef(0);
   /** The tween currently moving the camera, so a new flight can supersede it. */
   const flightRef = useRef<gsap.core.Timeline | null>(null);
+  /** Where the sway is centred and when it began, set each time drift resumes. */
+  const driftRef = useRef<{ base: number; startedAt: number } | null>(null);
 
-  // Register interaction so drift knows to stand down.
+  // Only gestures count as interaction. The `change` event also fires for the drift
+  // itself, and listening to it would make the drift cancel its own next frame.
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls) return;
 
     const markInteraction = (): void => {
       lastInteractionRef.current = performance.now() / 1000;
+      driftRef.current = null;
     };
 
     controls.addEventListener("start", markInteraction);
-    controls.addEventListener("change", markInteraction);
+    controls.addEventListener("end", markInteraction);
 
     return () => {
       controls.removeEventListener("start", markInteraction);
-      controls.removeEventListener("change", markInteraction);
+      controls.removeEventListener("end", markInteraction);
     };
   }, []);
 
@@ -68,6 +82,7 @@ export function CameraRig({
 
     // A flight already running is cancelled from where it is, not queued - world-map spec.
     flightRef.current?.kill();
+    driftRef.current = null;
 
     const destination = new Vector3(
       focus.cameraPosition.x,
@@ -131,15 +146,28 @@ export function CameraRig({
     };
   }, [focus, reducedMotion, camera, onFlightStart, onFlightEnd]);
 
-  // Idle drift. Resumes only after the visitor has been still, and never during a flight.
+  // Idle drift: resumes after the visitor has been still, never during a flight.
   useFrame(() => {
     const controls = controlsRef.current;
     if (!controls) return;
 
+    const now = performance.now() / 1000;
     const idle =
-      performance.now() / 1000 - lastInteractionRef.current > DRIFT.resumeAfterSeconds;
+      !reducedMotion &&
+      flightRef.current === null &&
+      now - lastInteractionRef.current > DRIFT.resumeAfterSeconds;
 
-    controls.autoRotate = !reducedMotion && idle && flightRef.current === null;
+    if (idle) {
+      driftRef.current ??= { base: controls.getAzimuthalAngle(), startedAt: now };
+      const { base, startedAt } = driftRef.current;
+      const sway = Math.sin((now - startedAt) * DRIFT.speed) * DRIFT.amplitude;
+      controls.setAzimuthalAngle(
+        clamp(base + sway, CAMERA.minAzimuthAngle + DRIFT_MARGIN, CAMERA.maxAzimuthAngle - DRIFT_MARGIN),
+      );
+    } else {
+      driftRef.current = null;
+    }
+
     controls.update();
   });
 
@@ -155,7 +183,8 @@ export function CameraRig({
       maxDistance={CAMERA.maxDistance}
       minPolarAngle={CAMERA.minPolarAngle}
       maxPolarAngle={CAMERA.maxPolarAngle}
-      autoRotateSpeed={DRIFT.speed * 60}
+      minAzimuthAngle={CAMERA.minAzimuthAngle}
+      maxAzimuthAngle={CAMERA.maxAzimuthAngle}
       target={[CAMERA.target[0], CAMERA.target[1], CAMERA.target[2]]}
     />
   );

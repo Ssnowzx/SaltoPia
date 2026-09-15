@@ -189,8 +189,9 @@ itself, and it preserves the reference's warm-sky-over-cool-land contrast.
 | `bosque-das-araucarias` | Bosque das Araucárias | Araucária forest trail |
 | `estacao-velha` | Estação Velha | The old railway station, now a market |
 | `pousada-da-geada` | Pousada da Geada | Rural inn with a lit hearth |
+| `salto-caveiras` | Salto do Rio Caveiras | The falls over two basalt ledges beside the 1940s brick powerhouse - Lages' own Salto, rebuilt here |
 
-Eight rather than the reference's ten: enough to fill the map legibly, few enough that each
+Nine rather than the reference's ten: enough to fill the map legibly, few enough that each
 gets a genuinely written page instead of filler.
 
 ### D8 — Fallback is built first, not last
@@ -211,6 +212,34 @@ each place page's cinematic hero, the marquee motifs, and the fallback map.
 at, and identity is what they are uniformly bad at. Every generated asset is specified by a
 prompt kept in the repository, so the art is reproducible rather than a one-off nobody can
 regenerate.
+
+### D10 — The camera is held to an arc, not a full orbit
+
+The reference does not let the visitor orbit the city all the way round, and after
+building a full orbit here it became clear why: from behind, the back of the serra, the
+edge of the terrain and the ends of the railway are all in view, and none of them is
+worth building for. The world is composed to be seen from the south.
+
+The orbit is therefore limited to an azimuth arc of ±0.72 rad around the front, with
+polar and distance bounds. Idle drift is a slow sinusoidal sway inside that arc from
+wherever the visitor left the camera, rather than a continuous rotation that would press
+against the stops.
+
+*Why:* it keeps every frame a frame someone composed, and it removes an entire class of
+edge-of-world artefacts instead of papering over them. The `world-map` spec already
+requires the camera never to lose the neighbourhood from frame; an arc is the direct
+way to satisfy it.
+
+### D11 — Roads as one loop and one driveway per landmark
+
+The first road network — a ring, a circuit and connecting spokes — read as a tangle:
+three concentric structures with short connectors, roads overlapping, and a road running
+between a house and the barn. It was replaced with one street around the square and one
+driveway per landmark, each ending in a round yard in front of the place it serves.
+
+*Why:* a road that goes somewhere and stops there is legible; a road that merely
+connects two other roads is noise. The pickup drives the loop; nothing else needs a
+vehicle on it.
 
 ## Risks / Trade-offs
 

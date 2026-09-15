@@ -208,6 +208,39 @@ const PLACES: readonly PlaceSeed[] = [
       },
     ],
   },
+  {
+    slug: "salto-caveiras",
+    name: "Salto do Rio Caveiras",
+    tagline: "A cachoeira e a usina centenária",
+    description:
+      "O Rio Caveiras despenca em dois degraus de basalto ao lado da usina de tijolo que iluminou Lages nos anos 1940. Do mirante de madeira na outra margem dá para ouvir a água de longe; embaixo das araucárias, as mesas de piquenique enchem no fim de semana.",
+    world: [48, 2, -66],
+    camera: [16, 24, -28],
+    experiences: [
+      {
+        slug: "mirante-do-salto",
+        name: "Mirante do Salto",
+        description:
+          "A passarela sobre o rio e o deck de frente para a queda. Vá de manhã, quando o sol bate na água.",
+        kind: "TOUR",
+        durationMinutes: 40,
+      },
+      {
+        slug: "trilha-da-usina",
+        name: "Trilha da usina",
+        description: "Da represa ao conduto forçado e à casa de máquinas, com guia que conhece cada válvula.",
+        kind: "TRAIL",
+        durationMinutes: 60,
+      },
+      {
+        slug: "piquenique-a-beira-do-rio",
+        name: "Piquenique à beira do rio",
+        description: "Cesta com queijo, salame e pão de casa, mesa reservada debaixo das araucárias.",
+        kind: "FOOD",
+        durationMinutes: 90,
+      },
+    ],
+  },
 ];
 
 async function main(): Promise<void> {

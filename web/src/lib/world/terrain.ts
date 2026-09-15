@@ -1,6 +1,6 @@
 import { BufferAttribute, BufferGeometry, Color, PlaneGeometry } from "three";
 
-import { TERRAIN, WATER_LEVEL, WORLD_COLORS, WORLD_SEED } from "./constants";
+import { RIVER, TERRAIN, WATER_LEVEL, WORLD_COLORS, WORLD_SEED } from "./constants";
 import { fractalNoise2D } from "./noise";
 
 /**
@@ -12,23 +12,60 @@ import { fractalNoise2D } from "./noise";
  * terrain that later moves.
  */
 
-/** Smoothstep between two edges, clamped. */
+/** Smoothstep between two edges, clamped. Edges may be reversed. */
 export function smoothstep(edge0: number, edge1: number, value: number): number {
   const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
   return t * t * (3 - 2 * t);
 }
 
-/** Half-width of the river's water surface. */
-export const RIVER_HALF_WIDTH = 4.2;
-
 /** Where the river's centre line sits at a given depth into the valley. */
 export function riverCentreX(z: number): number {
-  return 46 + 4.5 * Math.sin(z * 0.045 + 0.6);
+  return 50 + 4.5 * Math.sin(z * 0.045 + 0.6);
 }
 
 /** Horizontal distance from a point to the river's centre line. */
 export function distanceToRiver(x: number, z: number): number {
   return Math.abs(x - riverCentreX(z));
+}
+
+/**
+ * Half-width of the water surface along the river's course: a stream through town,
+ * a wide sheet over the falls, a plunge pool below, a reservoir above, and a lake
+ * where it leaves the valley to the south.
+ */
+export function riverHalfWidthAt(z: number): number {
+  const base = RIVER.halfWidth;
+  const falls = smoothstep(-60, -66, z) * (1 - smoothstep(-78, -82, z));
+  const pool = smoothstep(-50, -60, z) * (1 - smoothstep(-64, -68, z));
+  const reservoir = smoothstep(RIVER.reservoir.startZ, RIVER.reservoir.fullZ, z);
+  const lake =
+    smoothstep(RIVER.lake.startZ, RIVER.lake.fullZ, z) * (1 - smoothstep(RIVER.lake.taperZ, RIVER.lake.endZ, z));
+
+  return Math.max(
+    base,
+    base + falls * (RIVER.fallsHalfWidth - base),
+    base + pool * (RIVER.poolHalfWidth - base),
+    base + reservoir * (RIVER.reservoirHalfWidth - base),
+    base + lake * (RIVER.lakeHalfWidth - base),
+  );
+}
+
+/** How much wider than the water the trench blends out into the banks. */
+export function riverBankReachAt(z: number): number {
+  return riverHalfWidthAt(z) + 7;
+}
+
+/**
+ * How far the valley floor has stepped up onto the plateau at a given depth: two
+ * basalt ledges, which is how the Salto do Rio Caveiras actually falls.
+ */
+function scarpAt(z: number): number {
+  return 7 * smoothstep(-66, -70, z) + 5 * smoothstep(-73.5, -77, z);
+}
+
+/** Height of the water surface at a given depth: valley level, rising over the scarp. */
+export function riverBedHeightAt(z: number): number {
+  return WATER_LEVEL + scarpAt(z);
 }
 
 /** The hilltop the Mirante da Neblina stands on. */
@@ -45,13 +82,17 @@ interface FlatPad {
 
 /** One pad per landmark. Coordinates match the places seeded into the database. */
 const FLAT_PADS: readonly FlatPad[] = [
-  { x: 0, z: 0, radius: 15, falloff: 9 },
-  { x: -28, z: 14, radius: 10, falloff: 6 },
-  { x: -20, z: -18, radius: 11, falloff: 6 },
+  { x: 0, z: 0, radius: 22, falloff: 8 },
+  { x: 0, z: -31, radius: 8, falloff: 5 },
+  { x: 28, z: 2, radius: 11, falloff: 5 },
+  { x: -28, z: 14, radius: 11, falloff: 6 },
+  { x: -20, z: -18, radius: 12, falloff: 6 },
   { x: 26, z: 46, radius: 13, falloff: 6 },
   { x: 30, z: -30, radius: 8, falloff: 6 },
-  { x: 14, z: 30, radius: 9, falloff: 6 },
+  { x: 14, z: 30, radius: 10, falloff: 6 },
   { x: 2, z: -46, radius: 7, falloff: 5 },
+  { x: 28, z: -60, radius: 7, falloff: 4 },
+  { x: 64, z: -58, radius: 6, falloff: 4 },
 ];
 
 function distance(x0: number, z0: number, x1: number, z1: number): number {
@@ -61,37 +102,39 @@ function distance(x0: number, z0: number, x1: number, z1: number): number {
 /**
  * Ground height before any levelling.
  *
- * The valley is a bowl: flat where the town sits, rising to a rim, with a low ridge
- * across the back that the mountain peaks stand on. A river trench is carved down the
- * east side, and a single hill carries the lookout.
+ * The valley is a bowl: flat where the town sits, rising to a rim. Across the back the
+ * floor steps up onto a plateau under the peaks, and the river comes down that step as
+ * the waterfall. A single hill carries the lookout.
  */
 function naturalHeightAt(x: number, z: number): number {
   const half = TERRAIN.size / 2;
   const radius = Math.sqrt(x * x + z * z) / half;
 
-  // The bowl rim.
-  const bowl = smoothstep(0.42, 1.02, radius) * 34;
-
-  // The ridge the peaks sit on. The peaks themselves are separate meshes - a smooth
-  // ramp alone reads as a hazy plateau, and the silhouette is what says mountains.
-  const ridge = smoothstep(60, 150, -z) * 10;
-
-  // The lookout's hill.
+  // The bowl rises to the north and the sides only. The south stays low and open, so
+  // nothing climbs into the foreground between the camera and the town - the reference
+  // keeps water in front for the same reason.
+  const bowl = smoothstep(0.45, 1.02, radius) * 30 * (1 - smoothstep(10, 70, z));
+  const ridge = smoothstep(60, 150, -z) * 6;
   const hill =
     MIRANTE_HILL.height *
     (1 - smoothstep(4, MIRANTE_HILL.radius, distance(x, z, MIRANTE_HILL.x, MIRANTE_HILL.z)));
 
-  // Rolling ground, damped across the town so roads and buildings sit sensibly.
   const townDamping = 0.35 + 0.65 * smoothstep(28, 72, Math.sqrt(x * x + z * z));
   const rolling = (fractalNoise2D(x * 0.018, z * 0.018, WORLD_SEED) - 0.5) * 7 * townDamping;
-
-  // A softer secondary layer, to break up the regularity of the first.
   const detail = (fractalNoise2D(x * 0.06, z * 0.06, WORLD_SEED + 7, 3) - 0.5) * 1.6;
 
-  // The river trench.
-  const trench = smoothstep(RIVER_HALF_WIDTH + 7, 0, distanceToRiver(x, z)) * 5.2;
+  const ground = bowl + ridge + hill + rolling + detail + scarpAt(z);
 
-  return bowl + ridge + hill + rolling + detail - trench;
+  // The river trench: the floor is pulled down to below the water surface and blends
+  // back to natural ground at the banks. Anchoring it to the water rather than
+  // subtracting a fixed depth is what keeps the river visible on the plateau.
+  // Flat across the whole water surface, sloping only in the bank zone beyond it -
+  // otherwise a wide lake shows water only in a strip down its middle.
+  const halfWidth = riverHalfWidthAt(z);
+  const wideness = smoothstep(RIVER.halfWidth, RIVER.lakeHalfWidth, halfWidth);
+  const bedFloor = riverBedHeightAt(z) - (3.2 + wideness * 1.8);
+  const trench = smoothstep(riverBankReachAt(z), halfWidth * 0.92, distanceToRiver(x, z));
+  return ground + (bedFloor - ground) * trench;
 }
 
 /** Natural height at each pad's centre, so pads level to real ground rather than to zero. */
@@ -121,28 +164,39 @@ export function terrainHeightAt(x: number, z: number): number {
   return height;
 }
 
+/** Steepness of the ground at a point - drives where bare rock shows through. */
+function slopeAt(x: number, z: number): number {
+  const step = 0.9;
+  const dx = terrainHeightAt(x + step, z) - terrainHeightAt(x - step, z);
+  const dz = terrainHeightAt(x, z + step) - terrainHeightAt(x, z - step);
+  return Math.hypot(dx, dz) / (2 * step);
+}
+
 /** How exposed a point is - drives the grass/straw/rock blend. */
 function surfaceColorAt(x: number, z: number, height: number): Color {
   const grass = new Color(WORLD_COLORS.grass);
   const grassDeep = new Color(WORLD_COLORS.grassDeep);
   const straw = new Color(WORLD_COLORS.straw);
   const rock = new Color(WORLD_COLORS.rock);
+  const rockDark = new Color(WORLD_COLORS.rockDark);
+  const sand = new Color("#d9c89c");
 
-  // Patchiness across the fields, so the grass is not one flat sheet.
   const patch = fractalNoise2D(x * 0.045, z * 0.045, WORLD_SEED + 31, 3);
   const base = grassDeep.clone().lerp(grass, patch);
 
-  // Dry straw on the higher, more exposed ground.
-  const dryness = smoothstep(16, 32, height);
-  base.lerp(straw, dryness * 0.7);
+  const dryness = smoothstep(30, 48, height);
+  base.lerp(straw, dryness * 0.6);
 
-  // Bare basalt on the ridges.
-  const exposure = smoothstep(32, 46, height);
+  const exposure = smoothstep(38, 52, height);
   base.lerp(rock, exposure);
+  base.lerp(rockDark, smoothstep(0.75, 1.5, slopeAt(x, z)) * 0.85);
 
-  // Damp ground in the river trench.
-  const wetness = smoothstep(1.2, WATER_LEVEL, height);
-  base.lerp(grassDeep, wetness * 0.6);
+  // Sandy banks where the water widens, damp ground elsewhere along it.
+  const bed = riverBedHeightAt(z);
+  const shore = smoothstep(riverBankReachAt(z), riverHalfWidthAt(z) + 1, distanceToRiver(x, z));
+  const wideness = smoothstep(RIVER.halfWidth + 1, RIVER.lakeHalfWidth, riverHalfWidthAt(z));
+  base.lerp(sand, shore * wideness * 0.85);
+  base.lerp(grassDeep, smoothstep(bed + 3.4, bed, height) * 0.5 * (1 - wideness));
 
   return base;
 }
@@ -152,19 +206,10 @@ function surfaceColorAt(x: number, z: number, height: number): Color {
  *
  * Colours are baked per vertex rather than sampled from a texture: it keeps the payload
  * at zero, and at this art direction the flat-shaded facets are the look, not a
- * compromise.
- *
- * @returns A geometry ready for a vertex-coloured, flat-shaded material.
+ * compromise. A repeating grass texture is multiplied over it by the material.
  */
 export function createTerrainGeometry(): BufferGeometry {
-  const geometry = new PlaneGeometry(
-    TERRAIN.size,
-    TERRAIN.size,
-    TERRAIN.segments,
-    TERRAIN.segments,
-  );
-
-  // PlaneGeometry is built in the XY plane; lay it flat so Y becomes height.
+  const geometry = new PlaneGeometry(TERRAIN.size, TERRAIN.size, TERRAIN.segments, TERRAIN.segments);
   geometry.rotateX(-Math.PI / 2);
 
   const positions = geometry.attributes.position as BufferAttribute;

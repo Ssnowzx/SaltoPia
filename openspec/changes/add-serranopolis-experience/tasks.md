@@ -41,7 +41,7 @@
 - [x] 6.4 Build the loader that composes the scene from the layout, instancing any model used more than 20 times; verify with `renderer.info` that instanced models produce one draw call each
 - [x] 6.5 Handle a failed model load by skipping that entry and logging; verify the rest of the scene still renders when one path is broken
 - [x] 6.6 Build the procedural araucária generator with seeded variation (D2); verify 30 trees render as one instanced batch and no two share the same silhouette
-- [ ] 6.7 Apply the unifying material and palette pass across kits (Risks); verify models from two different kits read as one art direction side by side
+- [x] 6.7 Apply the unifying material and palette pass across kits (Risks); verify models from two different kits read as one art direction side by side
 
 ## 7. Camera choreography
 
@@ -53,18 +53,18 @@
 
 ## 8. Pin overlay
 
-- [ ] 8.1 Build the pin component (inline SVG teardrop + pill label) styled from tokens; verify against the `design-system` spec values
-- [ ] 8.2 Project each place's world position to screen space each frame, writing the transform directly to the DOM node outside React's render cycle; verify with the React Profiler that camera movement triggers no component re-render
-- [ ] 8.3 Hide pins whose place is behind the camera plane; verify by orbiting 180° that no pin appears over empty sky
+- [x] 8.1 Build the pin component (inline SVG teardrop + pill label) styled from tokens; verify against the `design-system` spec values
+- [x] 8.2 Project each place's world position to screen space each frame, writing the transform directly to the DOM node outside React's render cycle; verify with the React Profiler that camera movement triggers no component re-render
+- [x] 8.3 Hide pins whose place is behind the camera plane; verify by orbiting 180° that no pin appears over empty sky
 - [ ] 8.4 Hide or de-emphasise pins occluded by terrain via raycast; verify a place behind a hill loses its pin
-- [ ] 8.5 Add hover scale at 200ms and a pointer cursor; verify timing in DevTools
-- [ ] 8.6 Hide all pins during a camera flight and restore on settle; verify across a full pin → card → dismiss cycle
+- [x] 8.5 Add hover scale at 200ms and a pointer cursor; verify timing in DevTools
+- [x] 8.6 Hide all pins during a camera flight and restore on settle; verify across a full pin → card → dismiss cycle
 - [ ] 8.7 Make pins keyboard operable with a stable tab order independent of camera position, accessible names, and visible focus; verify the order does not change after orbiting
 
 ## 9. Place card
 
-- [ ] 9.1 Build the place card (crest, name, one-line description, VISITAR, dismiss); verify it matches the ticket/card treatment from the design system
-- [ ] 9.2 Open the card after the flight settles, without changing the route; verify the URL is unchanged after activating a pin
+- [x] 9.1 Build the place card (crest, name, one-line description, VISITAR, dismiss); verify it matches the ticket/card treatment from the design system
+- [x] 9.2 Open the card after the flight settles, without changing the route; verify the URL is unchanged after activating a pin
 - [ ] 9.3 Blur the 3D surface behind the card over 300ms; verify the blur is applied on open and fully removed on close
 - [ ] 9.4 Trap focus in the card when opened by keyboard, and return focus to the originating pin on Escape; verify with keyboard only
 - [ ] 9.5 Make VISITAR navigate to the place page through the iris transition; verify the full hub → card → page sequence

@@ -3,11 +3,13 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import type { BufferGeometry, Mesh } from "three";
-import { CatmullRomCurve3, CylinderGeometry, MeshStandardMaterial, Vector3 } from "three";
+import { CatmullRomCurve3, CylinderGeometry, Vector3 } from "three";
 
 import { box, merge, paint, post } from "@/lib/world/builders";
 import { RAIL, ROAD, VEHICLES, WORLD_COLORS } from "@/lib/world/constants";
 import { CAR_CURVE, TRAIN_CURVE, surfaceHeightAt } from "@/lib/world/roads";
+
+import { useWorldMaterials } from "./world-materials-context";
 
 /**
  * The pickup on the circuit and the train through the station.
@@ -22,7 +24,7 @@ function wheel(x: number, y: number, z: number, radius: number): BufferGeometry 
   const geometry = new CylinderGeometry(radius, radius, radius * 0.9, 8);
   geometry.rotateZ(Math.PI / 2);
   geometry.translate(x, y, z);
-  return paint(geometry, WORLD_COLORS.wheel);
+  return paint(geometry, WORLD_COLORS.wheel, "metal");
 }
 
 function createPickupGeometry(): BufferGeometry {
@@ -105,10 +107,7 @@ export function Vehicles(): React.ReactElement {
   const pickup = useMemo(() => createPickupGeometry(), []);
   const locomotive = useMemo(() => createLocomotiveGeometry(), []);
   const wagon = useMemo(() => createWagonGeometry(), []);
-  const material = useMemo(
-    () => new MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.85 }),
-    [],
-  );
+  const { flat: material } = useWorldMaterials();
 
   const carRef = useRef<Mesh>(null);
   const trainRefs = useRef<(Mesh | null)[]>([]);

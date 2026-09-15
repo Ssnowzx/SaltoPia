@@ -4,6 +4,7 @@ import { WORLD_COLORS, WORLD_SEED } from "./constants";
 import { merge } from "./builders";
 import { fractalNoise2D } from "./noise";
 import { smoothstep, terrainHeightAt } from "./terrain";
+import { SURFACE } from "./textures";
 
 /**
  * The serra across the back of the valley.
@@ -36,11 +37,15 @@ const PEAKS: readonly PeakSpec[] = [
   { x: 20, z: -104, radius: 24, height: 12 },
   { x: 64, z: -98, radius: 26, height: 14 },
   { x: 100, z: -100, radius: 24, height: 11 },
-  // Shoulders, closing the valley on both sides.
+  // Shoulders, closing the valley on both sides all the way down to the camera's arc.
   { x: -140, z: -70, radius: 32, height: 17 },
   { x: -142, z: -22, radius: 28, height: 13 },
+  { x: -146, z: 24, radius: 30, height: 14 },
+  { x: -140, z: 68, radius: 28, height: 12 },
   { x: 140, z: -62, radius: 30, height: 16 },
   { x: 142, z: -8, radius: 26, height: 12 },
+  { x: 146, z: 30, radius: 30, height: 14 },
+  { x: 140, z: 72, radius: 28, height: 12 },
 ];
 
 /** Roughens a cone with noise and colours it by height. Duplicate vertices at the apex
@@ -71,9 +76,11 @@ function createPeakGeometry(peak: PeakSpec, seed: number): BufferGeometry {
 
     positions.setXYZ(index, x + noiseX * jitter, y + noiseY * peak.height * 0.06, z + noiseZ * jitter);
 
-    const color = rockDark.clone().lerp(rock, smoothstep(0.1, 0.45, normalised));
-    color.lerp(rockLight, smoothstep(0.45, 0.72, normalised));
-    color.lerp(frost, smoothstep(0.74, 0.92, normalised));
+    // Dark basalt low, snow from well below the summit - the reference's peaks are
+    // mostly white with grey flanks, and at map distance that contrast is the mountain.
+    const color = rockDark.clone().lerp(rock, smoothstep(0.05, 0.4, normalised));
+    color.lerp(rockLight, smoothstep(0.35, 0.6, normalised));
+    color.lerp(frost, smoothstep(0.55, 0.8, normalised));
 
     colors[index * 3] = color.r;
     colors[index * 3 + 1] = color.g;
@@ -82,6 +89,7 @@ function createPeakGeometry(peak: PeakSpec, seed: number): BufferGeometry {
 
   positions.needsUpdate = true;
   geometry.setAttribute("color", new BufferAttribute(colors, 3));
+  geometry.setAttribute("surface", new BufferAttribute(new Float32Array(positions.count).fill(SURFACE.stone), 1));
 
   // Stand on the terrain, sunk a little so the foot never shows a gap.
   geometry.translate(peak.x, terrainHeightAt(peak.x, peak.z) + peak.height / 2 - 2.5, peak.z);

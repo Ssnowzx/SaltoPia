@@ -53,6 +53,31 @@ body {
 }
 
 /*
+ * Map pins. Position is written straight to the node by the projector; only their
+ * visibility is styled here, so hiding during a flight fades rather than pops.
+ */
+.pin {
+  transition: opacity var(--duration-panel) var(--ease-ui);
+}
+
+.pin[data-visible="false"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The place card slides in from the right once the camera has settled. */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translate(28px, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
+/*
  * Iris page transition — design.md D4.
  * The incoming page is revealed by a circle growing from nothing to full viewport.
  * The outgoing page deliberately does not animate, so the effect reads as an aperture

@@ -12,14 +12,15 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 
 import { WORLD_COLORS } from "./constants";
 import { createRandom } from "./noise";
+import { SURFACE, type SurfaceKey } from "./textures";
 
 /**
  * Procedural geometry primitives for everything standing on the terrain.
  *
  * These are the "models" the neighbourhood layout refers to. They are built in code
  * rather than loaded from files - see design.md D1, revised. Each builder returns a
- * single merged, vertex-coloured geometry so one material can draw it, which is what
- * makes instancing possible further up.
+ * single merged geometry carrying a vertex colour and a surface id per vertex, so one
+ * atlas material can draw it, which is what makes instancing possible further up.
  *
  * Every part is built at the origin facing +Z, with Y up and the base at y = 0.
  */
@@ -28,11 +29,15 @@ import { createRandom } from "./noise";
 // Merge plumbing
 // ---------------------------------------------------------------------------------
 
-/** Attaches a flat vertex colour to every vertex of a geometry. */
-export function paint(geometry: BufferGeometry, hex: string): BufferGeometry {
+/** How many world units one atlas tile spans when projected onto a surface. */
+const TEXTURE_UNITS_PER_TILE = 2.2;
+
+/** Attaches a flat vertex colour and a surface id to every vertex of a geometry. */
+export function paint(geometry: BufferGeometry, hex: string, surface: SurfaceKey = "plain"): BufferGeometry {
   const color = new Color(hex);
   const count = geometry.attributes.position.count;
   const colors = new Float32Array(count * 3);
+  const surfaces = new Float32Array(count).fill(SURFACE[surface]);
 
   for (let index = 0; index < count; index += 1) {
     colors[index * 3] = color.r;
@@ -41,27 +46,87 @@ export function paint(geometry: BufferGeometry, hex: string): BufferGeometry {
   }
 
   geometry.setAttribute("color", new BufferAttribute(colors, 3));
+  geometry.setAttribute("surface", new BufferAttribute(surfaces, 1));
   return geometry;
 }
 
 /**
- * Brings a geometry to the common shape every part must share before merging:
- * non-indexed, with position, normal, uv and color.
+ * Projects UVs onto each triangle from whichever axis it faces most - box mapping.
  *
- * three's primitives are indexed and carry UVs; hand-built geometry like the gable roof
- * below is neither. `mergeGeometries` refuses the mix - it needs the index attribute
- * present on all parts or on none, and the same attribute names throughout.
+ * Primitive UVs stretch one tile over a whole face regardless of size; projecting from
+ * world units instead gives every wall the same brick size, which is what makes the
+ * atlas read as material rather than as decal.
+ */
+function applyBoxProjectionUVs(geometry: BufferGeometry): void {
+  const positions = geometry.attributes.position;
+  const uvs = new Float32Array(positions.count * 2);
+  const scale = 1 / TEXTURE_UNITS_PER_TILE;
+
+  for (let index = 0; index + 2 < positions.count; index += 3) {
+    const ax = positions.getX(index);
+    const ay = positions.getY(index);
+    const az = positions.getZ(index);
+    const bx = positions.getX(index + 1) - ax;
+    const by = positions.getY(index + 1) - ay;
+    const bz = positions.getZ(index + 1) - az;
+    const cx = positions.getX(index + 2) - ax;
+    const cy = positions.getY(index + 2) - ay;
+    const cz = positions.getZ(index + 2) - az;
+
+    const normalX = Math.abs(by * cz - bz * cy);
+    const normalY = Math.abs(bz * cx - bx * cz);
+    const normalZ = Math.abs(bx * cy - by * cx);
+
+    for (let vertex = 0; vertex < 3; vertex += 1) {
+      const x = positions.getX(index + vertex);
+      const y = positions.getY(index + vertex);
+      const z = positions.getZ(index + vertex);
+      let u: number;
+      let v: number;
+
+      if (normalY >= normalX && normalY >= normalZ) {
+        u = x;
+        v = z;
+      } else if (normalX >= normalZ) {
+        u = z;
+        v = y;
+      } else {
+        u = x;
+        v = y;
+      }
+
+      uvs[(index + vertex) * 2] = u * scale;
+      uvs[(index + vertex) * 2 + 1] = v * scale;
+    }
+  }
+
+  geometry.setAttribute("uv", new BufferAttribute(uvs, 2));
+}
+
+/**
+ * Brings a geometry to the common shape every part must share before merging:
+ * non-indexed, with position, normal, uv, color and surface.
+ *
+ * `mergeGeometries` refuses a mix of indexed and non-indexed parts, and needs the same
+ * attribute names throughout.
  */
 function normaliseForMerge(geometry: BufferGeometry): BufferGeometry {
   const flat = geometry.index ? geometry.toNonIndexed() : geometry;
 
-  if (!flat.attributes.uv) {
-    const count = flat.attributes.position.count;
-    flat.setAttribute("uv", new Float32BufferAttribute(new Float32Array(count * 2), 2));
-  }
+  applyBoxProjectionUVs(flat);
 
   if (!flat.attributes.normal) {
     flat.computeVertexNormals();
+  }
+
+  if (!flat.attributes.surface) {
+    const count = flat.attributes.position.count;
+    flat.setAttribute("surface", new BufferAttribute(new Float32Array(count).fill(SURFACE.plain), 1));
+  }
+
+  if (!flat.attributes.color) {
+    const count = flat.attributes.position.count;
+    flat.setAttribute("color", new BufferAttribute(new Float32Array(count * 3).fill(1), 3));
   }
 
   return flat;
@@ -93,11 +158,12 @@ export function box(
   y: number,
   z: number,
   rotationY = 0,
+  surface: SurfaceKey = "plain",
 ): BufferGeometry {
   const geometry = new BoxGeometry(width, height, depth);
   if (rotationY !== 0) geometry.rotateY(rotationY);
   geometry.translate(x, y, z);
-  return paint(geometry, color);
+  return paint(geometry, color, surface);
 }
 
 /** A vertical cylinder standing on (x, y, z). */
@@ -110,10 +176,11 @@ export function post(
   x: number,
   y: number,
   z: number,
+  surface: SurfaceKey = "plain",
 ): BufferGeometry {
   const geometry = new CylinderGeometry(radiusTop, radiusBottom, height, segments);
   geometry.translate(x, y + height / 2, z);
-  return paint(geometry, color);
+  return paint(geometry, color, surface);
 }
 
 /** A cone standing on (x, y, z), apex up. */
@@ -125,10 +192,11 @@ export function cone(
   x: number,
   y: number,
   z: number,
+  surface: SurfaceKey = "plain",
 ): BufferGeometry {
   const geometry = new ConeGeometry(radius, height, segments);
   geometry.translate(x, y + height / 2, z);
-  return paint(geometry, color);
+  return paint(geometry, color, surface);
 }
 
 /** A tilted cylinder from (x, y, z) leaning in direction `angle` by `tilt` radians. */
@@ -141,13 +209,33 @@ export function leaningPost(
   z: number,
   angle: number,
   tilt: number,
+  surface: SurfaceKey = "plain",
 ): BufferGeometry {
-  const geometry = new CylinderGeometry(radius, radius * 1.15, length, 5);
+  const geometry = new CylinderGeometry(radius, radius * 1.15, length, 6);
   geometry.translate(0, length / 2, 0);
   geometry.rotateZ(-tilt);
   geometry.rotateY(angle);
   geometry.translate(x, y, z);
-  return paint(geometry, color);
+  return paint(geometry, color, surface);
+}
+
+/** A cylinder lying along Z, centred at (x, y, z) - a pipe, a log, a barrel on its side. */
+export function pipe(
+  radius: number,
+  length: number,
+  segments: number,
+  color: string,
+  x: number,
+  y: number,
+  z: number,
+  rotationY = 0,
+  surface: SurfaceKey = "plain",
+): BufferGeometry {
+  const geometry = new CylinderGeometry(radius, radius, length, segments);
+  geometry.rotateX(Math.PI / 2);
+  if (rotationY !== 0) geometry.rotateY(rotationY);
+  geometry.translate(x, y, z);
+  return paint(geometry, color, surface);
 }
 
 /** A low-poly blob - the basis for foliage tufts, clouds and smoke. */
@@ -159,11 +247,52 @@ export function blob(
   z: number,
   scaleY = 1,
   detail = 0,
+  surface: SurfaceKey = "plain",
 ): BufferGeometry {
   const geometry = new IcosahedronGeometry(radius, detail);
   geometry.scale(1, scaleY, 1);
   geometry.translate(x, y, z);
-  return paint(geometry, color);
+  return paint(geometry, color, surface);
+}
+
+/** A half-cylinder shell lying along X - an awning or a barrel vault. */
+export function awning(
+  width: number,
+  radius: number,
+  color: string,
+  x: number,
+  y: number,
+  z: number,
+  surface: SurfaceKey = "plain",
+): BufferGeometry {
+  const geometry = new CylinderGeometry(radius, radius, width, 10, 1, true, 0, Math.PI);
+  geometry.rotateZ(Math.PI / 2);
+  geometry.rotateY(Math.PI / 2);
+  geometry.translate(x, y, z);
+  return paint(geometry, color, surface);
+}
+
+/** A rectangular arch: a box with a half-round top, standing on (x, y, z), facing +Z. */
+export function arch(
+  width: number,
+  height: number,
+  depth: number,
+  color: string,
+  x: number,
+  y: number,
+  z: number,
+  surface: SurfaceKey = "plain",
+): BufferGeometry {
+  const straight = height - width / 2;
+  const body = new BoxGeometry(width, straight, depth);
+  body.translate(0, straight / 2, 0);
+  const top = new CylinderGeometry(width / 2, width / 2, depth, 12, 1, false, 0, Math.PI);
+  top.rotateX(Math.PI / 2);
+  top.translate(0, straight, 0);
+  const parts = [paint(body, color, surface), paint(top, color, surface)];
+  const merged = merge(parts);
+  merged.translate(x, y, z);
+  return merged;
 }
 
 // ---------------------------------------------------------------------------------
@@ -183,10 +312,6 @@ export type AraucariaVariant = "mature" | "young";
  *
  * Young trees are different - a pyramid of tiered whorls - so both are built, and the
  * forest mixes them. See design.md D2.
- *
- * @param variant - Life stage.
- * @param height - Total height in world units.
- * @param seed - Varies branch angles so no two trees from one seed match.
  */
 export function createAraucariaGeometry(
   variant: AraucariaVariant = "mature",
@@ -198,37 +323,31 @@ export function createAraucariaGeometry(
 
   if (variant === "young") {
     const trunkHeight = height * 0.92;
-    parts.push(post(0.1, 0.26, trunkHeight, 6, WORLD_COLORS.bark, 0, 0, 0));
+    parts.push(post(0.1, 0.26, trunkHeight, 6, WORLD_COLORS.bark, 0, 0, 0, "bark"));
 
-    // Tiered whorls all the way up, each smaller than the last - the pyramid.
-    const whorls = 5;
-    for (let tier = 0; tier < whorls; tier += 1) {
+    for (let tier = 0; tier < 5; tier += 1) {
       const y = height * (0.22 + tier * 0.16);
       const reach = height * (0.3 - tier * 0.05);
-      const branches = 6;
       const offset = random() * Math.PI;
 
-      for (let index = 0; index < branches; index += 1) {
-        const angle = offset + (index / branches) * Math.PI * 2;
-        parts.push(leaningPost(0.05, reach, WORLD_COLORS.bark, 0, y, 0, angle, Math.PI * 0.4));
+      for (let index = 0; index < 6; index += 1) {
+        const angle = offset + (index / 6) * Math.PI * 2;
+        parts.push(leaningPost(0.05, reach, WORLD_COLORS.bark, 0, y, 0, angle, Math.PI * 0.4, "bark"));
 
         const tipX = Math.cos(angle) * reach * Math.sin(Math.PI * 0.4);
         const tipZ = -Math.sin(angle) * reach * Math.sin(Math.PI * 0.4);
         const tipY = y + reach * Math.cos(Math.PI * 0.4);
-        parts.push(blob(reach * 0.34, WORLD_COLORS.canopy, tipX, tipY, tipZ, 0.55));
+        parts.push(blob(reach * 0.34, WORLD_COLORS.canopy, tipX, tipY, tipZ, 0.55, 1, "foliage"));
       }
     }
 
-    parts.push(cone(0.55, 1.6, 6, WORLD_COLORS.canopyDark, 0, trunkHeight - 0.4, 0));
+    parts.push(cone(0.55, 1.6, 6, WORLD_COLORS.canopyDark, 0, trunkHeight - 0.4, 0, "foliage"));
     return merge(parts);
   }
 
   const trunkHeight = height * 0.74;
-  parts.push(post(0.24, 0.55, trunkHeight, 7, WORLD_COLORS.bark, 0, 0, 0));
+  parts.push(post(0.24, 0.55, trunkHeight, 7, WORLD_COLORS.bark, 0, 0, 0, "bark"));
 
-  // Two whorls near the top. Branches leave the trunk a little above horizontal and
-  // carry a tuft at the tip; the upper whorl is shorter, which closes the crown into
-  // the candelabra shape.
   const whorls = [
     { y: trunkHeight * 0.86, count: 6, reach: height * 0.3, lift: 0.34, tuft: height * 0.085 },
     { y: trunkHeight, count: 7, reach: height * 0.36, lift: 0.42, tuft: height * 0.1 },
@@ -241,71 +360,52 @@ export function createAraucariaGeometry(
       const angle = offset + (index / whorl.count) * Math.PI * 2 + (random() - 0.5) * 0.25;
       const tilt = Math.PI / 2 - whorl.lift;
 
-      parts.push(leaningPost(0.07, whorl.reach, WORLD_COLORS.bark, 0, whorl.y, 0, angle, tilt));
+      parts.push(leaningPost(0.07, whorl.reach, WORLD_COLORS.bark, 0, whorl.y, 0, angle, tilt, "bark"));
 
-      // Where the branch ends, in the same frame leaningPost uses.
       const horizontal = whorl.reach * Math.sin(tilt);
       const tipX = Math.cos(angle) * horizontal;
       const tipZ = -Math.sin(angle) * horizontal;
       const tipY = whorl.y + whorl.reach * Math.cos(tilt);
 
-      // The tuft: a flattened blob, with a smaller darker one on top so the brush of
-      // needles reads as having depth rather than as a single green disc.
-      parts.push(blob(whorl.tuft, WORLD_COLORS.canopy, tipX, tipY, tipZ, 0.5));
+      parts.push(blob(whorl.tuft, WORLD_COLORS.canopy, tipX, tipY, tipZ, 0.5, 1, "foliage"));
       parts.push(
-        blob(whorl.tuft * 0.62, WORLD_COLORS.canopyDark, tipX, tipY + whorl.tuft * 0.36, tipZ, 0.6),
+        blob(whorl.tuft * 0.62, WORLD_COLORS.canopyDark, tipX, tipY + whorl.tuft * 0.36, tipZ, 0.6, 1, "foliage"),
       );
     }
   }
 
-  // The crown's centre.
-  parts.push(blob(height * 0.11, WORLD_COLORS.canopy, 0, trunkHeight + height * 0.05, 0, 0.55));
+  parts.push(blob(height * 0.11, WORLD_COLORS.canopy, 0, trunkHeight + height * 0.05, 0, 0.55, 1, "foliage"));
 
   return merge(parts);
 }
 
-/**
- * A generic conifer, for the forest mass behind the town.
- *
- * Deliberately a different silhouette from the araucaria - stacked cones, apex up - so
- * that the araucarias stay legible as a distinct species rather than blending into a
- * uniform green.
- *
- * @param height - Total height in world units.
- */
+/** A generic conifer, for the forest mass behind the town. */
 export function createConiferGeometry(height = 9): BufferGeometry {
   const trunkHeight = height * 0.22;
-  const parts = [post(0.16, 0.24, trunkHeight, 5, WORLD_COLORS.bark, 0, 0, 0)];
+  const parts = [post(0.16, 0.24, trunkHeight, 5, WORLD_COLORS.bark, 0, 0, 0, "bark")];
 
   for (let tier = 0; tier < 3; tier += 1) {
     const tierHeight = height * (0.42 - tier * 0.07);
     const radius = height * (0.23 - tier * 0.055);
     parts.push(
-      cone(radius, tierHeight, 7, WORLD_COLORS.conifer, 0, trunkHeight + height * (0.16 + tier * 0.21) - tierHeight / 2, 0),
+      cone(radius, tierHeight, 8, WORLD_COLORS.conifer, 0, trunkHeight + height * (0.16 + tier * 0.21) - tierHeight / 2, 0, "foliage"),
     );
   }
 
   return merge(parts);
 }
 
-/**
- * A broadleaf native tree - a rounded crown on a short trunk. The Serra is not only
- * araucaria; the campo is dotted with these, and their round mass gives the araucaria
- * silhouettes something to read against.
- *
- * @param height - Total height in world units.
- * @param seed - Varies the crown.
- */
+/** A broadleaf native tree - a rounded, softly shaded crown on a short trunk. */
 export function createBroadleafGeometry(height = 6, seed = 1): BufferGeometry {
   const random = createRandom(seed);
   const trunkHeight = height * 0.42;
   const crown = random() > 0.6 ? WORLD_COLORS.foliageWarm : WORLD_COLORS.foliage;
-  const parts = [post(0.16, 0.3, trunkHeight, 6, WORLD_COLORS.bark, 0, 0, 0)];
+  const parts = [post(0.16, 0.3, trunkHeight, 6, WORLD_COLORS.bark, 0, 0, 0, "bark")];
 
   const radius = height * 0.36;
-  parts.push(blob(radius, crown, 0, trunkHeight + radius * 0.8, 0, 0.9, 1));
-  parts.push(blob(radius * 0.7, crown, radius * 0.5, trunkHeight + radius * 0.6, radius * 0.2, 0.9, 1));
-  parts.push(blob(radius * 0.65, crown, -radius * 0.45, trunkHeight + radius * 0.9, -radius * 0.3, 0.9, 1));
+  parts.push(blob(radius, crown, 0, trunkHeight + radius * 0.8, 0, 0.9, 2, "foliage"));
+  parts.push(blob(radius * 0.7, crown, radius * 0.5, trunkHeight + radius * 0.6, radius * 0.2, 0.9, 2, "foliage"));
+  parts.push(blob(radius * 0.65, crown, -radius * 0.45, trunkHeight + radius * 0.9, -radius * 0.3, 0.9, 2, "foliage"));
 
   return merge(parts);
 }
@@ -313,65 +413,54 @@ export function createBroadleafGeometry(height = 6, seed = 1): BufferGeometry {
 /** A low bush. */
 export function createBushGeometry(radius = 1.1): BufferGeometry {
   return merge([
-    blob(radius, WORLD_COLORS.foliage, 0, radius * 0.55, 0, 0.7),
-    blob(radius * 0.7, WORLD_COLORS.foliageWarm, radius * 0.6, radius * 0.45, radius * 0.2, 0.7),
+    blob(radius, WORLD_COLORS.foliage, 0, radius * 0.55, 0, 0.7, 1, "foliage"),
+    blob(radius * 0.7, WORLD_COLORS.foliageWarm, radius * 0.6, radius * 0.45, radius * 0.2, 0.7, 1, "foliage"),
   ]);
+}
+
+/** A trimmed hedge along +X from the origin. */
+export function createHedgeGeometry(length = 4, height = 0.9): BufferGeometry {
+  return merge([box(length, height, 0.7, WORLD_COLORS.foliage, length / 2, height / 2, 0, 0, "foliage")]);
 }
 
 // ---------------------------------------------------------------------------------
 // Ground props
 // ---------------------------------------------------------------------------------
 
-/**
- * A basalt outcrop. An icosahedron squashed unevenly reads as rock immediately, and
- * costs 20 triangles.
- *
- * @param radius - Rough size in world units.
- */
+/** A basalt outcrop. */
 export function createRockGeometry(radius = 1.6): BufferGeometry {
   const rock = new IcosahedronGeometry(radius, 0);
   rock.scale(1, 0.62, 0.86);
   rock.translate(0, radius * 0.3, 0);
-  return merge([paint(rock, WORLD_COLORS.rockLight)]);
+  return merge([paint(rock, WORLD_COLORS.rockLight, "stone")]);
 }
 
-/**
- * A run of post-and-rail fence along +X, starting at the origin.
- *
- * @param length - Run length in world units.
- */
+/** A run of post-and-rail fence along +X, starting at the origin. */
 export function createFenceGeometry(length = 8): BufferGeometry {
   const parts: BufferGeometry[] = [];
-  const spacing = 2;
-  const posts = Math.max(2, Math.round(length / spacing) + 1);
+  const posts = Math.max(2, Math.round(length / 2) + 1);
 
   for (let index = 0; index < posts; index += 1) {
-    parts.push(post(0.09, 0.11, 1.25, 4, WORLD_COLORS.timberDark, (index * length) / (posts - 1), 0, 0));
+    parts.push(post(0.09, 0.11, 1.25, 4, WORLD_COLORS.timberDark, (index * length) / (posts - 1), 0, 0, "planks"));
   }
 
-  parts.push(box(length, 0.1, 0.08, WORLD_COLORS.timber, length / 2, 1.05, 0));
-  parts.push(box(length, 0.1, 0.08, WORLD_COLORS.timber, length / 2, 0.6, 0));
+  parts.push(box(length, 0.1, 0.08, WORLD_COLORS.timber, length / 2, 1.05, 0, 0, "planks"));
+  parts.push(box(length, 0.1, 0.08, WORLD_COLORS.timber, length / 2, 0.6, 0, 0, "planks"));
 
   return merge(parts);
 }
 
-/**
- * A taipa - the dry stone wall of the Coxilha Rica, built by the tropeiros to pen
- * cattle across the campos. Along +X, starting at the origin.
- *
- * @param length - Run length in world units.
- */
+/** A taipa - the dry stone wall of the Coxilha Rica. Along +X from the origin. */
 export function createStoneWallGeometry(length = 8): BufferGeometry {
   const parts: BufferGeometry[] = [];
   const random = createRandom(Math.round(length * 7));
 
-  // Coursed as short overlapping blocks so the top reads as laid stone, not a slab.
   let x = 0;
   while (x < length) {
     const blockLength = 1.2 + random() * 0.9;
     const blockHeight = 0.8 + random() * 0.25;
     const color = random() > 0.5 ? WORLD_COLORS.stone : WORLD_COLORS.stoneDark;
-    parts.push(box(Math.min(blockLength, length - x), blockHeight, 0.7, color, x + blockLength / 2, blockHeight / 2, 0));
+    parts.push(box(Math.min(blockLength, length - x), blockHeight, 0.7, color, x + blockLength / 2, blockHeight / 2, 0, 0, "stone"));
     x += blockLength * 0.92;
   }
 
@@ -381,20 +470,43 @@ export function createStoneWallGeometry(length = 8): BufferGeometry {
 /** A lamp post with a lit lantern head. */
 export function createLamppostGeometry(): BufferGeometry {
   return merge([
-    post(0.07, 0.1, 3.4, 5, WORLD_COLORS.metal, 0, 0, 0),
-    box(0.3, 0.06, 0.3, WORLD_COLORS.metal, 0, 3.42, 0),
-    box(0.34, 0.42, 0.34, WORLD_COLORS.lantern, 0, 3.66, 0),
-    cone(0.32, 0.26, 4, WORLD_COLORS.metal, 0, 3.86, 0),
+    post(0.07, 0.1, 3.4, 6, WORLD_COLORS.metal, 0, 0, 0, "metal"),
+    box(0.3, 0.06, 0.3, WORLD_COLORS.metal, 0, 3.42, 0, 0, "metal"),
+    box(0.34, 0.42, 0.34, WORLD_COLORS.lantern, 0, 3.66, 0, 0, "glass"),
+    cone(0.32, 0.26, 4, WORLD_COLORS.metal, 0, 3.86, 0, "metal"),
   ]);
 }
 
 /** A timber bench facing +Z. */
 export function createBenchGeometry(): BufferGeometry {
   return merge([
-    box(1.8, 0.08, 0.5, WORLD_COLORS.timber, 0, 0.5, 0),
-    box(1.8, 0.4, 0.08, WORLD_COLORS.timber, 0, 0.78, -0.24),
-    box(0.1, 0.5, 0.45, WORLD_COLORS.timberDark, -0.75, 0.25, 0),
-    box(0.1, 0.5, 0.45, WORLD_COLORS.timberDark, 0.75, 0.25, 0),
+    box(1.8, 0.08, 0.5, WORLD_COLORS.timber, 0, 0.5, 0, 0, "planks"),
+    box(1.8, 0.4, 0.08, WORLD_COLORS.timber, 0, 0.78, -0.24, 0, "planks"),
+    box(0.1, 0.5, 0.45, WORLD_COLORS.timberDark, -0.75, 0.25, 0, 0, "metal"),
+    box(0.1, 0.5, 0.45, WORLD_COLORS.timberDark, 0.75, 0.25, 0, 0, "metal"),
+  ]);
+}
+
+/** A cafe table with an umbrella. */
+export function createCafeTableGeometry(umbrellaColor: string): BufferGeometry {
+  return merge([
+    post(0.55, 0.55, 0.06, 10, WORLD_COLORS.timber, 0, 0.72, 0, "planks"),
+    post(0.05, 0.07, 0.72, 6, WORLD_COLORS.metal, 0, 0, 0, "metal"),
+    post(0.03, 0.03, 2.3, 5, WORLD_COLORS.metal, 0, 0.78, 0, "metal"),
+    cone(1.15, 0.5, 8, umbrellaColor, 0, 2.6, 0),
+    box(0.4, 0.04, 0.4, WORLD_COLORS.timberDark, 0.85, 0.46, 0, 0, "planks"),
+    box(0.4, 0.04, 0.4, WORLD_COLORS.timberDark, -0.85, 0.46, 0, 0, "planks"),
+  ]);
+}
+
+/** A picnic table with benches either side, along +X. */
+export function createPicnicTableGeometry(): BufferGeometry {
+  return merge([
+    box(2.0, 0.08, 0.8, WORLD_COLORS.timber, 0, 0.76, 0, 0, "planks"),
+    box(2.0, 0.06, 0.34, WORLD_COLORS.timber, 0, 0.46, 0.75, 0, "planks"),
+    box(2.0, 0.06, 0.34, WORLD_COLORS.timber, 0, 0.46, -0.75, 0, "planks"),
+    box(0.08, 0.76, 1.6, WORLD_COLORS.timberDark, -0.8, 0.38, 0, 0, "planks"),
+    box(0.08, 0.76, 1.6, WORLD_COLORS.timberDark, 0.8, 0.38, 0, 0, "planks"),
   ]);
 }
 
@@ -405,10 +517,9 @@ export function createWoodpileGeometry(): BufferGeometry {
 
   rows.forEach((count, row) => {
     for (let index = 0; index < count; index += 1) {
-      const log = new CylinderGeometry(0.22, 0.22, 1.4, 5);
-      log.rotateX(Math.PI / 2);
-      log.translate((index - (count - 1) / 2) * 0.48, 0.22 + row * 0.4, 0);
-      parts.push(paint(log, row % 2 === 0 ? WORLD_COLORS.timberDark : WORLD_COLORS.timber));
+      parts.push(
+        pipe(0.22, 1.4, 6, row % 2 === 0 ? WORLD_COLORS.timberDark : WORLD_COLORS.timber, (index - (count - 1) / 2) * 0.48, 0.22 + row * 0.4, 0, 0, "bark"),
+      );
     }
   });
 
@@ -431,16 +542,10 @@ export function createGableRoofGeometry(width: number, depth: number, height: nu
     }
   };
 
-  // Front gable, normal -Z.
   push([-halfWidth, 0, -halfDepth], [0, height, -halfDepth], [halfWidth, 0, -halfDepth]);
-  // Back gable, normal +Z.
   push([-halfWidth, 0, halfDepth], [halfWidth, 0, halfDepth], [0, height, halfDepth]);
-
-  // Left slope, normal -X/+Y.
   push([-halfWidth, 0, -halfDepth], [-halfWidth, 0, halfDepth], [0, height, halfDepth]);
   push([-halfWidth, 0, -halfDepth], [0, height, halfDepth], [0, height, -halfDepth]);
-
-  // Right slope, normal +X/+Y.
   push([halfWidth, 0, -halfDepth], [0, height, -halfDepth], [0, height, halfDepth]);
   push([halfWidth, 0, -halfDepth], [0, height, halfDepth], [halfWidth, 0, halfDepth]);
 
@@ -454,79 +559,156 @@ export function createGableRoofGeometry(width: number, depth: number, height: nu
 export interface BuildingSpec {
   readonly width: number;
   readonly depth: number;
+  /** Height of one storey. */
   readonly height: number;
   /** Ridge height above the wall top. */
   readonly roofHeight: number;
   readonly wallColor: string;
   readonly roofColor: string;
+  readonly wallSurface?: SurfaceKey;
+  readonly roofSurface?: SurfaceKey;
+  readonly stories?: number;
   /** Adds a chimney. Serra houses have them because the lareira is the point. */
   readonly chimney?: boolean;
   /** Adds a covered veranda along the front (+Z) - the deep varanda of a galpao. */
   readonly veranda?: boolean;
-  /** Adds shuttered windows and a door on the front. */
+  /** Adds framed, glazed windows and a door on the front. */
   readonly windows?: boolean;
+  /** Adds a shop awning over the ground-floor front. */
+  readonly awning?: string;
+  /** Adds a balcony along the upper floor. */
+  readonly balcony?: boolean;
+  /** Adds a blank signboard above the ground floor. */
+  readonly sign?: boolean;
 }
 
 /** Where a building's chimney top ends up, so smoke can be attached to it. */
 export function chimneyTopFor(spec: BuildingSpec): readonly [number, number, number] {
-  return [spec.width * 0.28, spec.height + spec.roofHeight * 1.5, spec.depth * 0.18];
+  const wallTop = spec.height * (spec.stories ?? 1);
+  return [spec.width * 0.28, wallTop + spec.roofHeight * 1.5, spec.depth * 0.18];
+}
+
+/** A framed window with glass, recessed into a wall facing +Z at (x, sillY, frontZ). */
+function windowParts(x: number, sillY: number, frontZ: number, width: number, height: number): BufferGeometry[] {
+  const frame = WORLD_COLORS.timberDark;
+  return [
+    box(width, height, 0.1, WORLD_COLORS.frostBlue, x, sillY + height / 2, frontZ - 0.02, 0, "glass"),
+    box(width + 0.16, 0.08, 0.14, frame, x, sillY + height + 0.04, frontZ, 0, "planks"),
+    box(width + 0.16, 0.1, 0.18, WORLD_COLORS.whitewash, x, sillY - 0.05, frontZ + 0.02, 0, "plaster"),
+    box(0.08, height, 0.14, frame, x - width / 2 - 0.04, sillY + height / 2, frontZ, 0, "planks"),
+    box(0.08, height, 0.14, frame, x + width / 2 + 0.04, sillY + height / 2, frontZ, 0, "planks"),
+    box(0.05, height, 0.12, frame, x, sillY + height / 2, frontZ + 0.01, 0, "planks"),
+  ];
+}
+
+/** A door with frame and a step, in a wall facing +Z. */
+function doorParts(x: number, frontZ: number, width: number, height: number): BufferGeometry[] {
+  return [
+    box(width, height, 0.1, WORLD_COLORS.timberDark, x, height / 2, frontZ - 0.02, 0, "planks"),
+    box(width + 0.18, 0.09, 0.14, WORLD_COLORS.timber, x, height + 0.04, frontZ, 0, "planks"),
+    box(0.09, height, 0.14, WORLD_COLORS.timber, x - width / 2 - 0.045, height / 2, frontZ, 0, "planks"),
+    box(0.09, height, 0.14, WORLD_COLORS.timber, x + width / 2 + 0.045, height / 2, frontZ, 0, "planks"),
+    box(width + 0.5, 0.14, 0.5, WORLD_COLORS.stone, x, 0.07, frontZ + 0.25, 0, "stone"),
+  ];
 }
 
 /**
- * A building: walls, gable roof, and optionally a chimney, windows and a front veranda.
- *
- * @param spec - Dimensions and colours.
+ * A building: walls, gable roof, and optionally storeys, framed windows, a door, a
+ * chimney, a veranda, an awning, a balcony and a signboard.
  */
 export function createBuildingGeometry(spec: BuildingSpec): BufferGeometry {
   const parts: BufferGeometry[] = [];
+  const stories = spec.stories ?? 1;
+  const wallTop = spec.height * stories;
+  const wallSurface = spec.wallSurface ?? "plaster";
+  const roofSurface = spec.roofSurface ?? "tiles";
+  const frontZ = spec.depth / 2 + 0.03;
 
-  parts.push(box(spec.width, spec.height, spec.depth, spec.wallColor, 0, spec.height / 2, 0));
+  parts.push(box(spec.width, wallTop, spec.depth, spec.wallColor, 0, wallTop / 2, 0, 0, wallSurface));
 
-  // Eaves overhang slightly, which is what stops the roof reading as a lid on a box.
+  // A plinth and a cornice bracket the wall, which is what stops it reading as a box.
+  parts.push(box(spec.width + 0.16, 0.35, spec.depth + 0.16, WORLD_COLORS.stoneDark, 0, 0.175, 0, 0, "stone"));
+  parts.push(box(spec.width + 0.2, 0.18, spec.depth + 0.2, spec.wallColor, 0, wallTop - 0.09, 0, 0, wallSurface));
+
   const roof = createGableRoofGeometry(spec.width * 1.12, spec.depth * 1.12, spec.roofHeight);
-  roof.translate(0, spec.height, 0);
-  parts.push(paint(roof, spec.roofColor));
+  roof.translate(0, wallTop, 0);
+  parts.push(paint(roof, spec.roofColor, roofSurface));
+  parts.push(box(0.26, 0.18, spec.depth * 1.14, WORLD_COLORS.tileDark, 0, wallTop + spec.roofHeight, 0, 0, roofSurface));
 
   if (spec.chimney === true) {
     const [chimneyX, chimneyTop, chimneyZ] = chimneyTopFor(spec);
     const chimneyHeight = spec.roofHeight * 1.5;
-    parts.push(
-      box(spec.width * 0.14, chimneyHeight, spec.width * 0.14, WORLD_COLORS.tileDark, chimneyX, chimneyTop - chimneyHeight / 2, chimneyZ),
-    );
+    parts.push(box(spec.width * 0.14, chimneyHeight, spec.width * 0.14, WORLD_COLORS.tileDark, chimneyX, chimneyTop - chimneyHeight / 2, chimneyZ, 0, "brick"));
+    parts.push(box(spec.width * 0.18, 0.12, spec.width * 0.18, WORLD_COLORS.stoneDark, chimneyX, chimneyTop, chimneyZ, 0, "stone"));
   }
 
   if (spec.windows === true) {
-    const sill = spec.height * 0.45;
-    const size = Math.min(0.9, spec.height * 0.3);
-    const frontZ = spec.depth / 2 + 0.03;
-    const count = Math.max(2, Math.floor(spec.width / 2.6));
+    const windowWidth = Math.min(0.95, spec.width * 0.18);
+    const windowHeight = Math.min(1.15, spec.height * 0.4);
+    const count = Math.max(2, Math.floor(spec.width / 2.4));
 
-    for (let index = 0; index < count; index += 1) {
-      const x = -spec.width / 2 + (spec.width / (count + 1)) * (index + 1);
-      // The middle opening on an odd count is the door.
-      if (count % 2 === 1 && index === (count - 1) / 2) {
-        parts.push(box(size * 0.9, spec.height * 0.62, 0.06, WORLD_COLORS.timberDark, x, spec.height * 0.31, frontZ));
-      } else {
-        parts.push(box(size, size, 0.06, WORLD_COLORS.timberDark, x, sill + size / 2, frontZ));
-        parts.push(box(size * 0.4, size * 0.9, 0.05, WORLD_COLORS.tile, x - size * 0.62, sill + size / 2, frontZ + 0.01));
-        parts.push(box(size * 0.4, size * 0.9, 0.05, WORLD_COLORS.tile, x + size * 0.62, sill + size / 2, frontZ + 0.01));
+    for (let storey = 0; storey < stories; storey += 1) {
+      const sill = storey * spec.height + spec.height * 0.42;
+      for (let index = 0; index < count; index += 1) {
+        const x = -spec.width / 2 + (spec.width / (count + 1)) * (index + 1);
+        const isDoor = storey === 0 && count % 2 === 1 && index === (count - 1) / 2;
+        if (isDoor) {
+          parts.push(...doorParts(x, frontZ, windowWidth * 0.95, spec.height * 0.68));
+        } else {
+          parts.push(...windowParts(x, sill, frontZ, windowWidth, windowHeight));
+        }
+      }
+    }
+
+    // Side windows, one per storey.
+    for (let storey = 0; storey < stories; storey += 1) {
+      const sill = storey * spec.height + spec.height * 0.42;
+      for (const side of [-1, 1]) {
+        const sideWindow = windowParts(0, sill, spec.depth / 2 + 0.03, windowWidth, windowHeight);
+        for (const part of sideWindow) {
+          part.rotateY((side * Math.PI) / 2);
+          part.translate((side * spec.width) / 2, 0, 0);
+          part.translate(0, 0, -(spec.depth / 2 + 0.03) * 0);
+        }
+        parts.push(...sideWindow);
       }
     }
   }
 
+  if (spec.awning !== undefined) {
+    parts.push(awning(spec.width * 0.86, 0.9, spec.awning, 0, spec.height * 0.82, frontZ + 0.42));
+  }
+
+  if (spec.sign === true) {
+    parts.push(box(spec.width * 0.7, 0.5, 0.1, WORLD_COLORS.whitewash, 0, spec.height * 0.98, frontZ + 0.05));
+    parts.push(box(spec.width * 0.72, 0.06, 0.14, WORLD_COLORS.timberDark, 0, spec.height * 0.98 + 0.27, frontZ + 0.05, 0, "planks"));
+  }
+
+  if (spec.balcony === true && stories > 1) {
+    const floorY = spec.height;
+    const reach = 0.9;
+    parts.push(box(spec.width * 0.8, 0.14, reach, WORLD_COLORS.stone, 0, floorY, frontZ + reach / 2, 0, "stone"));
+    const railCount = Math.floor((spec.width * 0.8) / 0.4);
+    for (let index = 0; index <= railCount; index += 1) {
+      const x = -spec.width * 0.4 + (index * spec.width * 0.8) / railCount;
+      parts.push(post(0.03, 0.03, 0.9, 4, WORLD_COLORS.metal, x, floorY + 0.07, frontZ + reach - 0.08, "metal"));
+    }
+    parts.push(box(spec.width * 0.8, 0.06, 0.06, WORLD_COLORS.metal, 0, floorY + 0.97, frontZ + reach - 0.08, 0, "metal"));
+  }
+
   if (spec.veranda === true) {
     const deckDepth = spec.depth * 0.42;
-    parts.push(box(spec.width * 1.04, 0.22, deckDepth, WORLD_COLORS.timber, 0, 0.11, spec.depth / 2 + deckDepth / 2));
+    parts.push(box(spec.width * 1.04, 0.22, deckDepth, WORLD_COLORS.timber, 0, 0.11, spec.depth / 2 + deckDepth / 2, 0, "planks"));
 
     const roofY = spec.height * 0.86;
-    const postCount = 4;
-    for (let index = 0; index < postCount; index += 1) {
+    for (let index = 0; index < 4; index += 1) {
       parts.push(
-        post(0.1, 0.1, roofY, 5, WORLD_COLORS.timber, -spec.width * 0.44 + (index * spec.width * 0.88) / (postCount - 1), 0, spec.depth / 2 + deckDepth * 0.85),
+        post(0.1, 0.1, roofY, 6, WORLD_COLORS.timber, -spec.width * 0.44 + (index * spec.width * 0.88) / 3, 0, spec.depth / 2 + deckDepth * 0.85, "planks"),
       );
     }
 
-    parts.push(box(spec.width * 1.08, 0.16, deckDepth * 1.1, spec.roofColor, 0, roofY, spec.depth / 2 + deckDepth / 2));
+    parts.push(box(spec.width * 1.08, 0.16, deckDepth * 1.1, spec.roofColor, 0, roofY, spec.depth / 2 + deckDepth / 2, 0, roofSurface));
+    parts.push(box(spec.width * 1.04, 0.08, 0.08, WORLD_COLORS.timber, 0, 0.95, spec.depth / 2 + deckDepth * 0.85, 0, "planks"));
   }
 
   return merge(parts);

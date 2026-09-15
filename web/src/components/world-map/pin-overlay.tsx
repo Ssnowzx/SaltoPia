@@ -1,0 +1,72 @@
+"use client";
+
+import type { MutableRefObject } from "react";
+
+import type { Place } from "@/types";
+
+import { DEFAULT_PIN_ICON, PIN_ICONS } from "./pin-icons";
+
+/**
+ * The map pins: interface, not scenery.
+ *
+ * Each pin is a button in an absolute layer above the canvas. The projector inside the
+ * canvas writes its screen position into `style.transform` every frame and toggles
+ * `data-visible`; nothing here re-renders while the camera moves. See design.md D3.
+ */
+
+/** The nodes the projector positions, keyed by place slug. */
+export type PinNodes = MutableRefObject<Map<string, HTMLElement>>;
+
+interface PinOverlayProps {
+  readonly places: readonly Place[];
+  readonly nodes: PinNodes;
+  readonly onSelect: (place: Place) => void;
+}
+
+export function PinOverlay({ places, nodes, onSelect }: PinOverlayProps): React.ReactElement {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-label="Pontos de interesse">
+      {places.map((place) => (
+        <button
+          key={place.slug}
+          type="button"
+          ref={(element) => {
+            if (element) {
+              nodes.current.set(place.slug, element);
+            } else {
+              nodes.current.delete(place.slug);
+            }
+          }}
+          data-visible="false"
+          onClick={() => onSelect(place)}
+          aria-label={place.name}
+          className="pin group pointer-events-auto absolute top-0 left-0 flex cursor-pointer flex-col items-center gap-1 border-0 bg-transparent p-0 will-change-transform focus-visible:outline-none"
+        >
+          <svg
+            width="46"
+            height="64"
+            viewBox="0 0 54 75"
+            aria-hidden="true"
+            className="origin-bottom drop-shadow-[0_6px_10px_rgba(46,36,28,0.35)] transition-transform duration-200 ease-in-out group-hover:scale-115 group-focus-visible:scale-115"
+          >
+            <path
+              d="M27 2C13.2 2 3 12.4 3 26.2 3 44.4 27 72 27 72s24-27.6 24-45.8C51 12.4 40.8 2 27 2z"
+              fill="var(--color-ember)"
+              stroke="var(--color-mist)"
+              strokeWidth="2.5"
+            />
+            <circle cx="27" cy="26" r="14" fill="var(--color-mist)" />
+            <g transform="translate(15 14) scale(1)" fill="var(--color-ember)">
+              <path d={PIN_ICONS[place.slug] ?? DEFAULT_PIN_ICON} />
+            </g>
+          </svg>
+          {/* The label appears on hover and focus, as in the reference - nine labels
+              at once would collide where the landmarks sit close together. */}
+          <span className="rounded-pill bg-mist px-2.5 py-1 font-sans text-[11px] font-bold tracking-[0.06em] whitespace-nowrap text-bark uppercase opacity-0 shadow-sm ring-2 ring-transparent transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-visible:ring-ember">
+            {place.name}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}

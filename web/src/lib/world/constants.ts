@@ -19,9 +19,9 @@ export const WORLD_COLORS = {
   /** Basalt catching direct sun. */
   rockLight: "#aeb0a7",
   /** Basalt in shadow, and mountain flanks. */
-  rockDark: "#6f716c",
+  rockDark: "#5e615d",
   /** Frost on the peaks. */
-  frost: "#eef3f6",
+  frost: "#f4f7f8",
   /** Cold highland water. */
   water: "#6fb3c4",
   /** Shallows along the banks. */
@@ -88,14 +88,51 @@ export const WORLD_COLORS = {
   smoke: "#f3ede4",
   /** The sun disc. */
   sun: "#ffe9b0",
+  /** White water on the falls and at the plunge pool. */
+  foam: "#eaf5f7",
+  /** Roof and wall variety, so no two landmarks share a palette. */
+  slate: "#4a5560",
+  paleYellow: "#f1dc9c",
+  mint: "#cfe0d2",
+  shingle: "#5c3f2e",
+  wine: "#7b2d3f",
+  frostBlue: "#5b7f9e",
+  coretoGreen: "#4f8f86",
 } as const;
 
 /** Sky gradient stops - late golden hour over the campos. See design.md D6. */
 export const SKY_COLORS = {
-  high: "#f4cf86",
-  mid: "#f0b26a",
-  low: "#e69357",
-  haze: "#f3e4cb",
+  high: "#e66a33",
+  mid: "#f0a340",
+  low: "#f4cf7a",
+  haze: "#f6e5bc",
+} as const;
+
+/** The river's width along its course. Half-widths, in world units. */
+export const RIVER = {
+  halfWidth: 4.2,
+  /** The sheet of the falls. */
+  fallsHalfWidth: 12,
+  /** The plunge pool below them. */
+  poolHalfWidth: 8,
+  /** The reservoir behind the weir on the plateau. */
+  reservoirHalfWidth: 9,
+  /** The lake the river opens into south of town. */
+  lakeHalfWidth: 17,
+  lake: { startZ: 60, fullZ: 84, taperZ: 108, endZ: 130 },
+  reservoir: { startZ: -80, fullZ: -94 },
+} as const;
+
+/** Map pins. */
+export const PIN = {
+  /** How far above the ground the pin's anchor floats. */
+  anchorHeight: 9,
+} as const;
+
+/** Rendering quality switches, for the presentation machine. */
+export const QUALITY = {
+  postProcessing: true,
+  ambientOcclusion: true,
 } as const;
 
 /** Terrain extent. The neighbourhood sits in a bowl this wide. */
@@ -106,8 +143,21 @@ export const TERRAIN = {
   segments: 160,
 } as const;
 
-/** Water surface height. The river trench is carved deeper than this. */
+/** Water surface height in the valley. The river trench is carved deeper than this. */
 export const WATER_LEVEL = -2.2;
+
+/**
+ * The scarp the river comes over. North of the lip the whole valley floor steps up
+ * onto a plateau; the river descends the step as the waterfall.
+ */
+export const WATERFALL = {
+  /** Where the plateau begins (top of the upper step). */
+  lipZ: -77,
+  /** Where the valley floor resumes (foot of the lower step). */
+  footZ: -66,
+  /** Total height of the two steps. */
+  drop: 12,
+} as const;
 
 /** Where a road or rail deck sits when it crosses the river. */
 export const BRIDGE_DECK_HEIGHT = 0.7;
@@ -115,10 +165,17 @@ export const BRIDGE_DECK_HEIGHT = 0.7;
 /** Roads. */
 export const ROAD = {
   width: 4.4,
+  drivewayWidth: 3.6,
+  trailWidth: 3.0,
+  pathWidth: 2.4,
   /** Lift above the terrain so the ribbon never z-fights with it. */
   lift: 0.16,
-  /** Radius of the ring road around the square. */
-  ringRadius: 11.5,
+} as const;
+
+/** Atmospheric depth. The far edge of the terrain dissolves into this. */
+export const FOG = {
+  near: 260,
+  far: 760,
 } as const;
 
 /** The railway through the old station. */
@@ -133,21 +190,24 @@ export const RAIL = {
 
 /** Clouds drifting over the valley. */
 export const CLOUDS = {
-  count: 12,
-  minHeight: 60,
-  maxHeight: 94,
+  count: 14,
+  minHeight: 62,
+  maxHeight: 100,
   /** Horizontal extent they wander across. */
-  spread: 230,
+  spread: 270,
   /** World units per second. */
   driftSpeed: 1.5,
+  /** Coral clouds against the sunset, like the reference - shaded underneath. */
+  colorTop: "#f2a077",
+  colorBottom: "#d9633c",
 } as const;
 
 /** The bank of mist the Mirante da Neblina looks out over. */
 export const MIST = {
-  count: 9,
-  height: 15,
-  nearZ: -66,
-  farZ: -92,
+  count: 8,
+  height: 25,
+  nearZ: -74,
+  farZ: -96,
 } as const;
 
 /** Vehicles. */
@@ -170,27 +230,38 @@ export const SMOKE = {
 
 /** Camera framing and the bounds that keep the neighbourhood in frame. */
 export const CAMERA = {
-  fov: 46,
+  fov: 48,
   near: 0.5,
-  far: 1200,
-  /** Where the camera sits before the visitor takes control. */
-  initialPosition: [0, 54, 122] as const,
+  far: 1400,
+  /** Where the camera sits before the visitor takes control - far enough that every
+   * landmark, the lake in front and the serra behind share the frame. */
+  initialPosition: [0, 54, 156] as const,
   /** What it looks at. */
-  target: [0, 4, -14] as const,
+  target: [0, 2, -20] as const,
   /** Orbit distance limits. */
-  minDistance: 40,
-  maxDistance: 200,
-  /** Polar angle limits, in radians. Stops the camera going under the terrain or overhead. */
-  minPolarAngle: 0.2,
-  maxPolarAngle: 1.42,
+  minDistance: 32,
+  maxDistance: 230,
+  /** Polar angle limits, in radians. No top-down view: the town is composed for a
+   * low, cinematic angle, and from above the clouds sit between camera and ground. */
+  minPolarAngle: 0.62,
+  maxPolarAngle: 1.32,
+  /**
+   * Azimuth limits, in radians. The world is built to be seen from the south, like
+   * the reference - a full orbit would show the back of the serra and the edge of the
+   * terrain, so the camera is held to an arc.
+   */
+  minAzimuthAngle: -0.72,
+  maxAzimuthAngle: 0.72,
 } as const;
 
-/** Idle drift - the slow bounded orbit that keeps the world from reading as a still image. */
+/** Idle drift - a slow sway within the azimuth arc, so the world never reads as a still. */
 export const DRIFT = {
   /** Seconds of no input before drift resumes. See the world-map spec. */
   resumeAfterSeconds: 3,
-  /** Radians per second. Deliberately slow enough to be felt rather than watched. */
-  speed: 0.018,
+  /** Radians per second of the sway's phase. */
+  speed: 0.09,
+  /** How far the sway carries from where the visitor left the camera, in radians. */
+  amplitude: 0.14,
 } as const;
 
 /** Camera flight to a point of interest. Matches the reference implementation. */

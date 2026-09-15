@@ -102,13 +102,18 @@ exploration.
 - **THEN** focus moves into the card
 - **AND** Escape dismisses it and returns focus to the originating pin
 
-### Requirement: Modal surfaces blur the world
+### Requirement: Modal dialogs blur the world
 
-A card or dialog layered over the neighbourhood SHALL blur the 3D surface behind it over
+A modal dialog layered over the neighbourhood SHALL blur the 3D surface behind it over
 `--duration-panel`, so that the world reads as depth behind the content rather than
-competing with it.
+competing with it. The place card is not modal: the camera has just flown to the place,
+and the card MUST leave the world sharp so the place stays the subject.
 
-#### Scenario: Card or dialog opens over the world
-- **WHEN** a place card or dialog opens on the hub
+#### Scenario: Dialog opens over the world
+- **WHEN** a modal dialog opens on the hub
 - **THEN** the 3D surface behind it animates to a blurred state over `--duration-panel`
-- **AND** the blur is removed when the surface closes
+- **AND** the blur is removed when the dialog closes
+
+#### Scenario: Place card opens over the world
+- **WHEN** a place card opens after a flight
+- **THEN** the 3D surface behind it is not blurred

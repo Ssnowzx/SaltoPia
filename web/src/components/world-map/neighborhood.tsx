@@ -2,19 +2,28 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import type { InstancedMesh } from "three";
-import { Euler, Matrix4, Quaternion, Vector3 } from "three";
+import { Euler, Matrix4, MeshStandardMaterial, Quaternion, Vector3 } from "three";
 
+import { WORLD_COLORS } from "@/lib/world/constants";
 import { createMountainsGeometry } from "@/lib/world/mountains";
 import {
   LANDMARKS,
   MODEL_REGISTRY,
+  MODEL_SHADING,
   type ModelKey,
   type Placement,
   createScatter,
   groundHeightFor,
 } from "@/lib/world/neighborhood-layout";
-import { createRailGeometry, createRiverGeometry, createRoadGeometry } from "@/lib/world/roads";
+import {
+  createRailGeometry,
+  createRiverGeometry,
+  createRoadGeometry,
+  createWaterfallFoamGeometry,
+} from "@/lib/world/roads";
 import { createTerrainGeometry } from "@/lib/world/terrain";
+
+import { useWorldMaterials } from "./world-materials-context";
 
 /**
  * Everything standing in the valley.
@@ -41,6 +50,7 @@ interface InstancedGroupProps {
 /** One instanced batch: every copy of a single model, in a single draw call. */
 function InstancedGroup({ model, placements }: InstancedGroupProps): React.ReactElement | null {
   const meshRef = useRef<InstancedMesh>(null);
+  const materials = useWorldMaterials();
   const geometry = useMemo(() => {
     try {
       return MODEL_REGISTRY[model]();
@@ -68,22 +78,32 @@ function InstancedGroup({ model, placements }: InstancedGroupProps): React.React
   return (
     <instancedMesh
       ref={meshRef}
-      args={[geometry, undefined, placements.length]}
+      args={[geometry, MODEL_SHADING[model] === "smooth" ? materials.smooth : materials.flat, placements.length]}
       castShadow
       receiveShadow
       frustumCulled={false}
-    >
-      <meshStandardMaterial vertexColors flatShading roughness={0.95} metalness={0} />
-    </instancedMesh>
+    />
   );
 }
 
 export function Neighborhood(): React.ReactElement {
+  const materials = useWorldMaterials();
+
   const terrainGeometry = useMemo(() => createTerrainGeometry(), []);
+  const terrainMaterial = useMemo(
+    () => new MeshStandardMaterial({ map: materials.grass, vertexColors: true, flatShading: true, roughness: 1, metalness: 0 }),
+    [materials.grass],
+  );
+  const groundMaterial = useMemo(
+    () => new MeshStandardMaterial({ color: WORLD_COLORS.straw, roughness: 1, metalness: 0 }),
+    [],
+  );
+
   const mountainsGeometry = useMemo(() => createMountainsGeometry(), []);
   const roadGeometry = useMemo(() => createRoadGeometry(), []);
   const railGeometry = useMemo(() => createRailGeometry(), []);
   const riverGeometry = useMemo(() => createRiverGeometry(), []);
+  const foamGeometry = useMemo(() => createWaterfallFoamGeometry(), []);
 
   // Landmarks and scatter are placed the same way; grouping them together means a model
   // used by both still shares one batch.
@@ -105,25 +125,18 @@ export function Neighborhood(): React.ReactElement {
 
   return (
     <group>
-      <mesh geometry={terrainGeometry} receiveShadow>
-        <meshStandardMaterial vertexColors flatShading roughness={1} metalness={0} />
+      {/* Distant ground under the terrain's edge, so the horizon is land dissolving into
+          haze rather than a hard line with nothing beyond it. */}
+      <mesh position={[0, -14, 0]} rotation={[-Math.PI / 2, 0, 0]} material={groundMaterial}>
+        <planeGeometry args={[2400, 2400]} />
       </mesh>
 
-      <mesh geometry={mountainsGeometry} castShadow receiveShadow>
-        <meshStandardMaterial vertexColors flatShading roughness={1} metalness={0} />
-      </mesh>
-
-      <mesh geometry={roadGeometry} receiveShadow>
-        <meshStandardMaterial vertexColors roughness={1} metalness={0} />
-      </mesh>
-
-      <mesh geometry={railGeometry} receiveShadow>
-        <meshStandardMaterial vertexColors roughness={0.8} metalness={0.1} />
-      </mesh>
-
-      <mesh geometry={riverGeometry}>
-        <meshStandardMaterial vertexColors roughness={0.28} metalness={0.05} transparent opacity={0.95} />
-      </mesh>
+      <mesh geometry={terrainGeometry} material={terrainMaterial} receiveShadow />
+      <mesh geometry={mountainsGeometry} material={materials.flat} castShadow receiveShadow />
+      <mesh geometry={roadGeometry} material={materials.flat} receiveShadow />
+      <mesh geometry={railGeometry} material={materials.flat} receiveShadow />
+      <mesh geometry={riverGeometry} material={materials.water} />
+      <mesh geometry={foamGeometry} material={materials.smooth} />
 
       {groups.map(([model, placements]) => (
         <InstancedGroup key={model} model={model} placements={placements} />

@@ -48,7 +48,7 @@ const FRAGMENT_SHADER = /* glsl */ `
 `;
 
 /** Where the sun sits, as a direction from the origin. Low, and behind the peaks. */
-const SUN_DIRECTION = new Vector3(0.16, 0.19, -1).normalize();
+const SUN_DIRECTION = new Vector3(0.02, 0.26, -1).normalize();
 
 interface SkyDomeProps {
   readonly radius?: number;
@@ -90,13 +90,13 @@ export function SkyDome({ radius = 420 }: SkyDomeProps): React.ReactElement {
       </mesh>
 
       <mesh ref={glowRef} position={sunPosition} renderOrder={-1}>
-        <circleGeometry args={[radius * 0.13, 32]} />
-        <meshBasicMaterial color={WORLD_COLORS.sun} transparent opacity={0.22} depthWrite={false} fog={false} />
+        <circleGeometry args={[radius * 0.24, 40]} />
+        <meshBasicMaterial color={WORLD_COLORS.sun} transparent opacity={0.28} depthWrite={false} fog={false} />
       </mesh>
 
       <mesh ref={sunRef} position={sunPosition} renderOrder={-1}>
-        <circleGeometry args={[radius * 0.065, 32]} />
-        <meshBasicMaterial color={WORLD_COLORS.sun} depthWrite={false} fog={false} />
+        <circleGeometry args={[radius * 0.1, 40]} />
+        <meshBasicMaterial color={WORLD_COLORS.sun} depthWrite={false} fog={false} toneMapped={false} />
       </mesh>
     </group>
   );
