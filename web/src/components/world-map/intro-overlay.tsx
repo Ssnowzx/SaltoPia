@@ -28,11 +28,11 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
       {/* The veil the world reads through, once there is a world. */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(246,229,188,0.18)_0%,rgba(246,229,188,0.42)_60%,rgba(246,229,188,0.62)_100%)]"
+        className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(246,229,188,0.46)_0%,rgba(246,229,188,0.6)_55%,rgba(246,229,188,0.72)_100%)]"
       />
 
       <div className="relative flex flex-col items-center">
-        <p className="font-script text-3xl text-teal sm:text-4xl">Bem-vindo a</p>
+        <p className="intro-lede font-script text-3xl text-teal sm:text-4xl">Bem-vindo a</p>
         <h1 className="mt-4 w-full max-w-[760px]">
           <Image
             src="/logo-saltopia.png"
@@ -43,7 +43,10 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
             className="h-auto w-full drop-shadow-[0_18px_34px_rgba(20,14,8,0.42)]"
           />
         </h1>
-        <p className="mt-5 max-w-xl font-sans text-base font-semibold text-bark sm:text-lg">
+        {/* The map is behind this, and dark type on a busy picture is unreadable however
+            dark it is. The halo is the page's own cream, so the text sits on the light
+            it needs without a panel getting in the way of the world. */}
+        <p className="intro-lede mt-5 max-w-xl font-sans text-base font-semibold text-bark sm:text-lg">
           A comunidade do Salto do Rio Caveiras, em Lages — araucárias, lago, fogo de chão e a
           usina que iluminou a cidade.
         </p>
