@@ -74,6 +74,22 @@ makes the town opaque to review and puts a 16 MB download in front of the demo. 
 available as a later optimisation — the layout can be baked into a single GLB without any
 spec changing.
 
+**Revised during implementation (2026-09-14).** The layout's `model` key resolves through a
+registry to a **procedural builder**, not to a downloaded `.glb`. Kenney publishes its kits
+behind a JavaScript-rendered page with no direct link, and Poly Pizza's API requires a key —
+so vendoring CC0 kits was not a step that could be taken without the user fetching files
+themselves.
+
+Building the geometry in code turned out to be the better answer rather than merely the
+available one: the 3D payload drops to zero, there is no licence provenance to defend, and
+the town's composition becomes fully readable source — which is the reason this decision
+existed in the first place. The `world-map` spec is unaffected: it requires composition
+"from a typed layout describing each placed object's model, position, rotation and scale",
+and a builder key satisfies that exactly as a file path would.
+
+The registry keeps one loader-shaped seam, so a CC0 or hand-authored GLB can replace any
+builder later without touching the layout or the scene.
+
 ### D2 — Generate araucária trees procedurally
 
 The araucária is the visual signature of the Serra Catarinense: a bare trunk with a flat,
