@@ -13,7 +13,11 @@ import type { Place } from "@/types";
  */
 
 /** The wordmark, at its natural aspect so the header can scale it by height alone. */
-const LOGO = { src: "/logo-saltopia.png", width: 900, height: 364 } as const;
+/**
+ * The header sits on a flat cream pill, so it takes the cut-out emblem; the card
+ * version would read as a paler box inside the pill. See scripts/build-logo.py.
+ */
+const LOGO = { src: "/logo-saltopia-flat.png", width: 900, height: 370 } as const;
 
 interface SiteHeaderProps {
   readonly places: readonly Place[];

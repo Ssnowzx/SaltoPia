@@ -33,20 +33,22 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
 
       <div className="relative flex flex-col items-center">
         <p className="intro-lede font-script text-3xl text-teal sm:text-4xl">Bem-vindo a</p>
-        <h1 className="mt-4 w-full max-w-[760px]">
+        {/* The card's own margin is part of the picture, so the box is wider than the
+            emblem looks. Sized by what reads, not by the file. */}
+        <h1 className="-mt-6 w-full max-w-[1000px]">
           <Image
             src="/logo-saltopia.png"
             alt="Saltopia - Salto Caveiras, Serra Catarinense"
-            width={900}
-            height={364}
+            width={1000}
+            height={495}
             priority
-            className="h-auto w-full drop-shadow-[0_18px_34px_rgba(20,14,8,0.42)]"
+            className="h-auto w-full"
           />
         </h1>
         {/* The map is behind this, and dark type on a busy picture is unreadable however
             dark it is. The halo is the page's own cream, so the text sits on the light
             it needs without a panel getting in the way of the world. */}
-        <p className="intro-lede mt-5 max-w-xl font-sans text-base font-semibold text-bark sm:text-lg">
+        <p className="intro-lede -mt-2 max-w-xl font-sans text-base font-semibold text-bark sm:text-lg">
           A comunidade do Salto do Rio Caveiras, em Lages — araucárias, lago, fogo de chão e a
           usina que iluminou a cidade.
         </p>

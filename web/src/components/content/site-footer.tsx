@@ -13,7 +13,7 @@ export function SiteFooter({ places }: SiteFooterProps): React.ReactElement {
       <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 py-16 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <a href="/" aria-label="Saltopia - início">
-            <Image src="/logo-saltopia.png" alt="Saltopia" width={900} height={364} className="h-14 w-auto" />
+            <Image src="/logo-saltopia-flat.png" alt="Saltopia" width={900} height={370} className="h-14 w-auto" />
           </a>
           <p className="mt-6 max-w-sm font-sans text-sm leading-relaxed text-mist/80">
             A comunidade do Salto do Rio Caveiras, em Lages, na Serra Catarinense. Araucárias, lago, fogo de chão e a usina que iluminou a cidade.

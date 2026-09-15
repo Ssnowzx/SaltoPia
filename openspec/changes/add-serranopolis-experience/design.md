@@ -431,13 +431,18 @@ and the opening was never seen. A browser-back counts, and so does a navigation 
 referrer is one of our own pages; a reload, a typed address and a fresh visit all open on
 the title.
 
-The wordmark is cut out of the artwork's paper by growing a region out of the sheet
-through unsaturated pixels only: paper is never saturated, painted scenery always is, so
-the emblem's own outline is a wall the growth cannot cross. A colour-distance test was
-tried first and could not see the sheet where the emblem's shadow darkened it - that is
-the pale wedge that kept surviving beside the S - and an unbounded version of the same
-test leaked through a gap between two letters and ate the sun painted inside them. The
-reach is capped for the same reason.
+The wordmark comes in two files, built by `scripts/build-logo.py`, because the artwork
+is printed on a paper card and neither keeping it nor cutting it off works everywhere.
+Over the map the cut-out emblem's own drop shadow reads as a dirty edge; over the
+header's cream pill the card reads as a paler box inside it. So the entry screen takes
+the card, shaped to the emblem and dissolving to transparent - grow the silhouette a
+little, blur it a lot - and the header and footer take the emblem alone.
+
+Both start from the same silhouette: connectivity finds the sheet (a colour key cannot
+tell the paper from the cream inside the banner), then a saturation test takes the torn
+edge and the shadow the emblem casts on it, which a brightness test misses. Paper is
+never saturated and painted scenery always is, so the emblem's outline stops the test
+at its own border.
 
 Type over the world carries a halo in the page's own cream. Dark type on a busy picture
 is unreadable however dark it is, and a panel behind it would have put a box over the
