@@ -355,6 +355,45 @@ Placing it revealed that the hills' gold crown began at 55% of their height - so
 plateau it stands on read as desert up close. The crown now starts at 82%, which also
 greens the whole horizon band.
 
+### D19 — Roads are graded into the terrain, not draped over it
+
+Every road, driveway, yard and car park is data in `road-network.ts`, which imports
+nothing. The terrain reads it and grades the ground under each ribbon - flat across the
+road's width at the road's own level, easing back over a shoulder - along the exact
+curve the ribbon is drawn on. Draping a ribbon over ungraded ground never worked: lifted
+a little, the ground came through its edges on every bump; lifted more, it floated on
+every crest. The ribbons are then drawn in layers (all shoulders, all tracks and yards,
+all carriageways, all lines) so a junction is a carriageway crossing a carriageway.
+
+Paved surfaces map inside a single atlas tile. The atlas lookup wraps with `fract()`,
+and at each wrap the derivative jumps, the GPU picks the coarsest mip and samples the
+neighbouring tile - a dark seam across every street every couple of metres.
+
+### D20 — Hills that carry buildings are terrain
+
+The ridge behind the far shore and the band behind it are bumps in the height function,
+not dome meshes on top of it. A flat pad levels the ground under a dome but not the dome
+itself, so anything placed inside one was buried. The chalet village stands on the ridge
+and the three farms on the band behind it, each reached by the plateau track. Only the
+far band and the shoulders outside the frame remain backdrop meshes.
+
+### D21 — The waterline is shaded per pixel
+
+The reservoir is a river, not a beach: grass runs to the water and the bank is a strip
+of wet earth, drawn in the terrain's fragment shader from the interpolated ground height
+and signed distance to the water. As a vertex colour, at one vertex every 2.4 units, a
+strip that narrow was a sawtooth along every diagonal stretch of shore.
+
+### D22 — Light from two temperatures
+
+The key light is warm and aimed at the community; the fill is a cool sky hemisphere.
+With an orange fill under an orange sky the shadows went olive-brown and the whole frame
+read as one colour. The water reflects the sky gradient by direction - turquoise where
+the eye looks steeply into it, the sunset's gold toward the far shore - with normals
+taken from the ripple field's gradient rather than a difference of unrelated samples.
+The sun disc is HDR so it alone crosses the bloom threshold. AgX tone mapping was tried
+and read washed-out beside ACES.
+
 ## Risks / Trade-offs
 
 - **WebGL unavailable or unstable on the demo machine** → The static fallback is a spec

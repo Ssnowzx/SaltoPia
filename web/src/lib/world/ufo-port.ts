@@ -25,6 +25,12 @@ const APRON_TOP = 2.2;
 
 const APRON_RADIUS = 15;
 
+/** Where the radar dish pivots, so the scene can turn it there. */
+export const RADAR = { x: 30, y: 10.4, z: 19 } as const;
+
+/** The second saucer's landing cycle: where it comes down, and how high it goes. */
+export const LANDING = { x: 14, z: -6, top: 46, bottom: 7.4, periodSeconds: 28 } as const;
+
 /** A glowing lamp head on a mast. */
 function beacon(x: number, z: number, height: number, color: string): BufferGeometry[] {
   return [
@@ -125,23 +131,14 @@ export function createUfoPortGeometry(): BufferGeometry {
   }
 
   // Radar array: a big dish on a truss, and two small ones.
-  const radarX = 30;
-  const radarZ = 19;
+  const radarX = RADAR.x;
+  const radarZ = RADAR.z;
   parts.push(post(1.1, 1.6, 9, 8, WORLD_COLORS.metal, radarX, 0, radarZ, "metal"));
   for (const angle of [0.6, 2.7, 4.5]) {
     parts.push(post(0.3, 0.34, 9.4, 4, WORLD_COLORS.rail, radarX + Math.cos(angle) * 2.4, 0, radarZ + Math.sin(angle) * 2.4, "metal"));
   }
-  // A bowl, not a cone: wide rim over a narrow throat, tipped to face the approach.
-  const bigDish = post(5.6, 1.3, 2.3, 22, WORLD_COLORS.whitewash, 0, 0, 0, "metal");
-  bigDish.rotateX(-0.6);
-  bigDish.rotateY(-0.5);
-  bigDish.translate(radarX, 10.2, radarZ);
-  parts.push(bigDish);
-  const feed = post(0.34, 0.5, 4.2, 6, WORLD_COLORS.metal, 0, 0, 0, "metal");
-  feed.rotateX(-0.6);
-  feed.rotateY(-0.5);
-  feed.translate(radarX, 11.4, radarZ);
-  parts.push(feed);
+  // The big dish is a mesh of its own - see `createRadarDishGeometry` - so it can turn.
+  parts.push(post(0.6, 0.8, 1.4, 8, WORLD_COLORS.slateDark, radarX, 9, radarZ, "metal"));
   parts.push(post(0.4, 0.4, 3.4, 6, WORLD_COLORS.metal, radarX, 10.4, radarZ, "metal"));
   for (const [dx, dz, lift] of [[-7, 5, 5.4], [7, 6, 4.6]] as const) {
     parts.push(post(0.4, 0.5, lift, 6, WORLD_COLORS.metal, radarX + dx, 0, radarZ + dz, "metal"));
@@ -274,6 +271,16 @@ function saucerParts(x: number, y: number, z: number, scale: number): BufferGeom
 /** The saucer that holds station overhead. */
 export function createSaucerGeometry(): BufferGeometry {
   return merge(saucerParts(0, 0, 0, 1));
+}
+
+/** The radar's bowl and feed horn, centred on their pivot and tipped to the approach. */
+export function createRadarDishGeometry(): BufferGeometry {
+  // A bowl, not a cone: wide rim over a narrow throat.
+  const bowl = post(5.6, 1.3, 2.3, 22, WORLD_COLORS.whitewash, 0, -0.2, 0, "metal");
+  const feed = post(0.34, 0.5, 4.2, 6, WORLD_COLORS.metal, 0, 1.0, 0, "metal");
+  const dish = merge([bowl, feed]);
+  dish.rotateX(-0.6);
+  return dish;
 }
 
 /** The beam of light the hovering saucer stands on. */

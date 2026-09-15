@@ -45,12 +45,11 @@ export const SITES: readonly Site[] = [
   { slug: "salto-caveiras", x: 118, z: -96, rotationY: 0, pad: 10, clearing: 12 },
   // The far attraction: out on the plateau at the very end of the map.
   { slug: "porto-de-ovnis", x: 22, z: -288, rotationY: 0, pad: 38, clearing: 40 },
-  // The farms, up on the ridge at the back of the map. They sit between the hill domes,
-  // not inside them: a dome is a mesh on the terrain, and anything within its reach ends
-  // up buried in it whatever the ground does.
-  { slug: "fazenda-do-cedro", x: -166, z: -190, rotationY: Math.PI * 0.94, pad: 24, clearing: 30 },
-  { slug: "fazenda-santa-barbara", x: 10, z: -196, rotationY: Math.PI * 1.04, pad: 24, clearing: 30 },
-  { slug: "fazenda-dos-pinheiros", x: 196, z: -186, rotationY: Math.PI * 0.88, pad: 24, clearing: 30 },
+  // The farms, on the plateau behind the ridge, at the back of the map. They face the
+  // camera and the plateau track, which reaches each one's forecourt.
+  { slug: "fazenda-do-cedro", x: -200, z: -254, rotationY: 0.06, pad: 32, clearing: 36 },
+  { slug: "fazenda-santa-barbara", x: -60, z: -266, rotationY: -0.04, pad: 32, clearing: 36 },
+  { slug: "fazenda-dos-pinheiros", x: 206, z: -262, rotationY: 0.08, pad: 32, clearing: 36 },
 ];
 
 const BY_SLUG: ReadonlyMap<string, Site> = new Map(SITES.map((site) => [site.slug, site]));

@@ -7,8 +7,8 @@ import { QUALITY } from "@/lib/world/constants";
 
 /**
  * The image pipeline: ambient occlusion for contact shadows under eaves and between
- * trees, a whisper of bloom on the sun and lanterns, a vignette to hold the frame, and
- * filmic tone mapping so the sunset does not clip to flat orange.
+ * trees, bloom that only the HDR sun disc crosses, a vignette to hold the frame, and
+ * filmic tone mapping. AgX was tried and read washed-out next to it.
  */
 export function PostEffects(): React.ReactElement | null {
   if (!QUALITY.postProcessing) return null;
@@ -20,7 +20,7 @@ export function PostEffects(): React.ReactElement | null {
       ) : (
         <></>
       )}
-      <Bloom luminanceThreshold={0.92} intensity={0.22} mipmapBlur />
+      <Bloom luminanceThreshold={1.0} intensity={0.5} mipmapBlur />
       <Vignette eskil={false} offset={0.18} darkness={0.4} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>

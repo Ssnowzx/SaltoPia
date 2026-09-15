@@ -9,8 +9,8 @@ import { box, merge, post } from "@/lib/world/builders";
 import { LAKE, ROAD, UFO_PORT, VEHICLES, WORLD_COLORS } from "@/lib/world/constants";
 import { createSailboatGeometry, createYachtGeometry, wheel } from "@/lib/world/props";
 import { CAR_CURVE, SAILBOAT_CURVE, YACHT_CURVE, surfaceHeightAt } from "@/lib/world/roads";
-import { terrainHeightAt } from "@/lib/world/terrain";
-import { SAUCER_HOVER, createBeamGeometry, createSaucerGeometry } from "@/lib/world/ufo-port";
+import { smoothstep, terrainHeightAt } from "@/lib/world/terrain";
+import { LANDING, RADAR, SAUCER_HOVER, createBeamGeometry, createRadarDishGeometry, createSaucerGeometry } from "@/lib/world/ufo-port";
 
 import { useWorldMaterials } from "./world-materials-context";
 
@@ -73,6 +73,7 @@ export function Vehicles(): React.ReactElement {
       }),
     [],
   );
+  const radarDish = useMemo(() => createRadarDishGeometry(), []);
   const portGround = useMemo(() => terrainHeightAt(UFO_PORT.x, UFO_PORT.z), []);
   const { flat: material } = useWorldMaterials();
 
@@ -80,6 +81,9 @@ export function Vehicles(): React.ReactElement {
   const yachtRef = useRef<Mesh>(null);
   const sailboatRef = useRef<Mesh>(null);
   const saucerRef = useRef<Mesh>(null);
+  const landingRef = useRef<Mesh>(null);
+  const radarRef = useRef<Mesh>(null);
+  const beamRef = useRef<Mesh<BufferGeometry, MeshBasicMaterial>>(null);
   const scratch = useMemo(() => new Vector3(), []);
 
   const carLength = useMemo(() => CAR_CURVE.getLength(), []);
@@ -104,6 +108,26 @@ export function Vehicles(): React.ReactElement {
       sailboatRef.current.rotation.z = 0.08 + Math.sin(elapsed * 0.9) * 0.04;
     }
 
+    // The radar sweeps; the beam breathes.
+    if (radarRef.current) radarRef.current.rotation.y = elapsed * 0.45;
+    if (beamRef.current) beamRef.current.material.opacity = 0.17 + Math.sin(elapsed * 2.1) * 0.06;
+
+    // A second saucer comes down onto the apron, waits, and climbs away again.
+    if (landingRef.current) {
+      const phase = (elapsed / LANDING.periodSeconds) % 1;
+      const descent = 1 - smoothstep(0.02, 0.4, phase);
+      const climb = smoothstep(0.58, 0.92, phase);
+      const height = LANDING.bottom + (LANDING.top - LANDING.bottom) * Math.max(descent, climb);
+      const drift = Math.max(descent, climb);
+      landingRef.current.position.set(
+        UFO_PORT.x + LANDING.x + Math.sin(elapsed * 0.9) * 0.4 * drift,
+        portGround + height,
+        UFO_PORT.z + LANDING.z + Math.cos(elapsed * 0.7) * 0.4 * drift,
+      );
+      landingRef.current.rotation.y = -elapsed * 0.6;
+      landingRef.current.rotation.z = Math.sin(elapsed * 0.5) * 0.04 * drift;
+    }
+
     // The saucer holds station over the pad, bobbing and turning slowly.
     if (saucerRef.current) {
       saucerRef.current.position.set(
@@ -123,7 +147,9 @@ export function Vehicles(): React.ReactElement {
       <mesh ref={yachtRef} geometry={yacht} material={material} castShadow />
       <mesh ref={sailboatRef} geometry={sailboat} material={material} castShadow />
       <mesh ref={saucerRef} geometry={saucer} material={material} castShadow />
-      <mesh geometry={beam} material={beamMaterial} position={[UFO_PORT.x, portGround + 0.6, UFO_PORT.z]} />
+      <mesh ref={landingRef} geometry={saucer} material={material} castShadow />
+      <mesh ref={radarRef} geometry={radarDish} material={material} position={[UFO_PORT.x + RADAR.x, portGround + RADAR.y, UFO_PORT.z + RADAR.z]} castShadow />
+      <mesh ref={beamRef} geometry={beam} material={beamMaterial} position={[UFO_PORT.x, portGround + 0.6, UFO_PORT.z]} />
     </group>
   );
 }

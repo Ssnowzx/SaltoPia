@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import type { InstancedMesh } from "three";
-import { Euler, Matrix4, MeshStandardMaterial, Quaternion, Vector3 } from "three";
+import { Euler, Matrix4, MeshBasicMaterial, Quaternion, Vector3 } from "three";
 
 import { SKY_COLORS } from "@/lib/world/constants";
 import { createHillsGeometry } from "@/lib/world/hills";
@@ -24,6 +24,7 @@ import {
   createWaterfallFoamGeometry,
 } from "@/lib/world/roads";
 import { createTerrainGeometry } from "@/lib/world/terrain";
+import { createTerrainMaterial } from "@/lib/world/terrain-material";
 
 import { useWorldMaterials } from "./world-materials-context";
 
@@ -88,16 +89,10 @@ export function Neighborhood(): React.ReactElement {
   const materials = useWorldMaterials();
 
   const terrainGeometry = useMemo(() => createTerrainGeometry(), []);
-  const terrainMaterial = useMemo(
-    () => new MeshStandardMaterial({ map: materials.grass, vertexColors: true, flatShading: true, roughness: 1, metalness: 0 }),
-    [materials.grass],
-  );
-  // The plane beyond the terrain's edge takes the haze colour, not a ground colour:
-  // in straw it read as a slab of desert across the top of the frame.
-  const groundMaterial = useMemo(
-    () => new MeshStandardMaterial({ color: SKY_COLORS.haze, roughness: 1, metalness: 0, fog: true }),
-    [],
-  );
+  const terrainMaterial = useMemo(() => createTerrainMaterial(materials.grass), [materials.grass]);
+  // The plane beyond the terrain's edge is unlit haze, so it matches the fog exactly;
+  // lit, it never quite did, and read as a pale slab across the top of the frame.
+  const groundMaterial = useMemo(() => new MeshBasicMaterial({ color: SKY_COLORS.haze, fog: true }), []);
 
   const hillsGeometry = useMemo(() => createHillsGeometry(), []);
   const roadGeometry = useMemo(() => createRoadGeometry(), []);

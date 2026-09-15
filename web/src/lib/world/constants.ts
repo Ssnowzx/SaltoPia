@@ -67,6 +67,8 @@ export const WORLD_COLORS = {
   /** Earth tracks. */
   road: "#9c8a6e",
   /** The stone-sett streets Lages is known for. */
+  /** The wet earth at the waterline. There is no sand on a river bank. */
+  wetBank: "#5d5a3a",
   barnRed: "#a8442f",
   barnOchre: "#b87a36",
   street: "#838079",
@@ -83,8 +85,11 @@ export const WORLD_COLORS = {
   rail: "#8a8e93",
   ballast: "#8b8378",
   /** Clouds: lit tops and shaded undersides. */
-  cloud: "#f8ecd6",
-  cloudShade: "#dcc4a6",
+  cloud: "#fff3e4",
+  /** The haze lying on the far shore: barely there, the colour of the fog. */
+  mist: "#f6e3c6",
+  mistShade: "#ead0a8",
+  cloudShade: "#e6b49a",
   /** Lit lantern glass. */
   lantern: "#f2c14e",
   /** Vine rows. */
@@ -125,10 +130,11 @@ export const WORLD_COLORS = {
 
 /** Sky gradient stops - sunset over the reservoir: blue overhead, gold at the sun. */
 export const SKY_COLORS = {
-  high: "#e8732a",
-  mid: "#f0a03c",
-  low: "#f7d264",
-  haze: "#f4dca4",
+  /** Dusk overhead: a sunset sky is violet-blue at the zenith, not orange all the way up. */
+  high: "#6f6fa4",
+  mid: "#dc8a56",
+  low: "#f6c66a",
+  haze: "#f2d6ae",
 } as const;
 
 /** The lake's shading. */
@@ -181,28 +187,20 @@ export const RIVER = {
 /** Where a road or rail deck sits when it crosses water. */
 export const BRIDGE_DECK_HEIGHT = 1.5;
 
-/** Streets and tracks. */
+/** Streets and tracks. Widths live in road-network.ts, where the terrain reads them. */
 export const ROAD = {
-  streetWidth: 4.4,
-  /** Kerb and pavement strip either side of a street. */
-  kerbExtra: 1.2,
-  drivewayWidth: 3.6,
-  trailWidth: 3.0,
-  pathWidth: 2.4,
   /** The broken centre line: dash pitch and width. */
   centreLineSpacing: 13,
   centreLineWidth: 0.26,
-  /**
-   * Lift above the terrain. It clears the noise the paved height averages away, so the
-   * kerb never sinks into a bump the ribbon no longer follows.
-   */
-  lift: 0.34,
+  /** Lift above the graded ground, so the ribbon never z-fights with it. */
+  lift: 0.18,
 } as const;
 
 /** Atmospheric depth. The far hills dissolve into this. */
 export const FOG = {
-  near: 340,
-  far: 940,
+  /** The town is clear, the far shore is lightly veiled, the back hills dissolve. */
+  near: 270,
+  far: 900,
 } as const;
 
 /** Clouds drifting over the valley - thin sunset streaks, not cumulus. */
@@ -263,7 +261,7 @@ export const CAMERA = {
   maxDistance: 290,
   /** No top-down view: the town is composed for a low, cinematic angle. */
   minPolarAngle: 0.78,
-  maxPolarAngle: 1.38,
+  maxPolarAngle: 1.24,
   /** The world is built to be seen from the south, so the orbit is held to an arc. */
   minAzimuthAngle: -0.42,
   maxAzimuthAngle: 0.42,
@@ -278,8 +276,13 @@ export const DRIFT = {
 
 /** Camera flight to a point of interest. Matches the reference implementation. */
 export const FLIGHT = {
-  durationSeconds: 2,
+  /** Base duration, plus a little per unit travelled, capped. */
+  durationSeconds: 1.7,
+  secondsPerUnit: 0.0035,
+  maxDurationSeconds: 3,
   ease: "power2.inOut",
+  /** How high the path arcs above the higher end, as a share of the distance. */
+  arcLift: 0.22,
 } as const;
 
 /** Renderer limits. */

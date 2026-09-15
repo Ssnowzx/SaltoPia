@@ -42,7 +42,7 @@ import {
   createStiltCabinGeometry,
   createYachtGeometry,
 } from "./props";
-import { ROAD_POLYLINES, YARDS, type Waypoint } from "./roads";
+import { ROAD_POLYLINES, YARDS, type Waypoint } from "./road-network";
 import { createUfoPortGeometry } from "./ufo-port";
 import { eastShoreXAt, farShoreZAt, lakeDistance, peninsulaDistance, riverDistance, terrainHeightAt } from "./terrain";
 
@@ -547,20 +547,22 @@ export const LANDMARKS: readonly Placement[] = [
   placed("parasolTeal", 24, 74),
 
   // Boats: moored at the piers and pulled up on the shore.
-  afloatBig("yachtMoored", -84, -22, 0.2),
-  afloatBig("yachtMoored", -120, -20, 2.9),
-  afloatBig("yachtMoored", 26, -6, 1.8, 0.95),
-  afloatBig("yachtMoored", -30, -70, 0.6),
-  afloatBig("sailboatMoored", -10, -20, 1.2),
-  afloatBig("sailboatMoored", -46, -6, 2.4),
-  afloatBig("sailboatMoored", -20, -54, 0.7),
-  afloatBig("sailboatMoored", -70, -60, 2.1),
+  // Moorings: off the piers, clear of both boats' loops. One moored on a loop is a
+  // collision every lap.
+  afloatBig("yachtMoored", -84, -20, 0.2),
+  afloatBig("yachtMoored", -120, -22, 2.9),
+  afloatBig("yachtMoored", 28, 0, 1.8, 0.95),
+  afloatBig("yachtMoored", 8, -60, 0.6),
+  afloatBig("sailboatMoored", 30, -30, 1.2),
+  afloatBig("sailboatMoored", -64, -22, 2.4),
+  afloatBig("sailboatMoored", 14, -84, 0.7),
+  afloatBig("sailboatMoored", -136, -22, 2.1),
   afloatBig("sailboatMoored", 6, -86, 1.5),
-  afloatBig("kayak", -6, 12, 1.1),
-  afloatBig("kayak", -24, 24, 0.4),
-  afloatBig("kayak", -52, 16, 2.2),
-  afloatBig("kayak", -14, -40, 0.9),
-  afloatBig("kayak", -96, -8, 1.8),
+  afloat("kayak", 36, 4, 0.4),
+  afloat("kayak", 30, -10, 2.2),
+  afloat("kayak", 40, -14, 1.1),
+  afloat("kayak", -136, -20, 0.3),
+  afloat("kayak", -92, -18, 2.6),
 
   // Boulders below the falls.
   placed("rock", 124, -102, 0.4, 2.0),

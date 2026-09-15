@@ -36,6 +36,9 @@ interface CameraRigProps {
 /** Keeps the drift from pressing against the azimuth stops. */
 const DRIFT_MARGIN = 0.03;
 
+/** Where the orbit target may go: over the map, between the water and the ridge tops. */
+const TARGET_BOUNDS = { minX: -230, maxX: 240, minZ: -300, maxZ: 190, minY: -2, maxY: 60 } as const;
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -120,30 +123,32 @@ export function CameraRig({
       },
     });
 
-    timeline.to(
-      camera.position,
-      {
-        x: destination.x,
-        y: destination.y,
-        z: destination.z,
-        duration: FLIGHT.durationSeconds,
-        ease: FLIGHT.ease,
-      },
-      0,
-    );
+    // The flight arcs: a straight tween from the hub to a place on the plateau passes
+    // through the ridge on the way. The path is a quadratic Bezier whose control point
+    // is lifted above both ends by a share of the distance.
+    const start = camera.position.clone();
+    const startTarget = controls.target.clone();
+    const distance = start.distanceTo(destination);
+    const control = start.clone().lerp(destination, 0.5);
+    control.y = Math.max(start.y, destination.y) + distance * FLIGHT.arcLift;
+    const progress = { value: 0 };
+    const scratch = new Vector3();
 
-    timeline.to(
-      controls.target,
-      {
-        x: lookAt.x,
-        y: lookAt.y,
-        z: lookAt.z,
-        duration: FLIGHT.durationSeconds,
-        ease: FLIGHT.ease,
-        onUpdate: () => controls.update(),
+    timeline.to(progress, {
+      value: 1,
+      duration: Math.min(FLIGHT.maxDurationSeconds, FLIGHT.durationSeconds + distance * FLIGHT.secondsPerUnit),
+      ease: FLIGHT.ease,
+      onUpdate: () => {
+        const t = progress.value;
+        const u = 1 - t;
+        scratch.copy(start).multiplyScalar(u * u);
+        scratch.addScaledVector(control, 2 * u * t);
+        scratch.addScaledVector(destination, t * t);
+        camera.position.copy(scratch);
+        controls.target.copy(startTarget).lerp(lookAt, t);
+        controls.update();
       },
-      0,
-    );
+    });
 
     flightRef.current = timeline;
 
@@ -175,6 +180,12 @@ export function CameraRig({
       driftRef.current = null;
     }
 
+    // Zooming toward the cursor moves the target, so it is held inside the map: pointed
+    // at the sky, it would otherwise walk off the terrain.
+    controls.target.x = clamp(controls.target.x, TARGET_BOUNDS.minX, TARGET_BOUNDS.maxX);
+    controls.target.z = clamp(controls.target.z, TARGET_BOUNDS.minZ, TARGET_BOUNDS.maxZ);
+    controls.target.y = clamp(controls.target.y, TARGET_BOUNDS.minY, TARGET_BOUNDS.maxY);
+
     controls.update();
   });
 
@@ -184,6 +195,8 @@ export function CameraRig({
       makeDefault
       // Panning would let the visitor slide the town out of frame, which the spec forbids.
       enablePan={false}
+      // The wheel dollies toward whatever is under the cursor, so a zoom is aimed.
+      zoomToCursor
       enableDamping
       dampingFactor={0.06}
       minDistance={CAMERA.minDistance}

@@ -25,20 +25,13 @@ interface HillSpec {
 }
 
 const HILLS: readonly HillSpec[] = [
-  // The near ridge is no longer here: it is terrain now, so the chalet village can
-  // stand on it. See `RIDGE` in terrain.ts. What is left is pure backdrop.
-  // The middle band, split around the corridor the road takes up to the UFO port.
-  { x: -236, z: -250, radius: 94, height: 18, depth: 0.5 },
-  { x: -140, z: -266, radius: 92, height: 20, depth: 0.55 },
-  { x: 168, z: -262, radius: 92, height: 19, depth: 0.5 },
-  { x: 262, z: -250, radius: 84, height: 17, depth: 0.5 },
+  // Only the backdrop is left here. The near ridge and the band behind it are terrain
+  // now (`RIDGE` in terrain.ts), so the chalets and the farms can stand on them.
   // The far band, behind the port and almost dissolved into the haze.
   { x: -176, z: -395, radius: 112, height: 24, depth: 0.9 },
   { x: -22, z: -412, radius: 120, height: 26, depth: 0.95 },
   { x: 136, z: -398, radius: 110, height: 23, depth: 0.9 },
   // Shoulders, closing the frame on both sides well outside the bay.
-  // Far enough out that their front edges fall outside the frame. Closer in, a dome
-  // sitting on the terrain cuts into it and reads as a sheer-sided mesa.
   { x: -324, z: -142, radius: 86, height: 16, depth: 0.5 },
   { x: -342, z: -22, radius: 78, height: 14, depth: 0.5 },
   { x: 330, z: -122, radius: 84, height: 15, depth: 0.5 },
@@ -46,7 +39,7 @@ const HILLS: readonly HillSpec[] = [
 ];
 
 function createHillGeometry(hill: HillSpec, seed: number): BufferGeometry {
-  const geometry = new IcosahedronGeometry(1, 3).toNonIndexed();
+  const geometry = new IcosahedronGeometry(1, 3);
   const positions = geometry.attributes.position as BufferAttribute;
   const colors = new Float32Array(positions.count * 3);
 
@@ -59,10 +52,14 @@ function createHillGeometry(hill: HillSpec, seed: number): BufferGeometry {
     const y = positions.getY(index);
     const z = positions.getZ(index);
 
-    const noise = fractalNoise2D(x * 1.9 + seed, z * 1.9 + seed * 0.7, WORLD_SEED + 53, 3) - 0.5;
-    const scale = 1 + noise * 0.2;
+    // A coxilha's profile - flat crown, firm flank - not a dome. The contour wobble is
+    // low-frequency so the outline undulates; fine noise on a silhouette reads as rubble.
+    const contour = fractalNoise2D(x * 0.55 + seed, z * 0.55 + seed * 0.7, WORLD_SEED + 53, 2) - 0.5;
+    const fine = fractalNoise2D(x * 1.9 + seed, z * 1.9, WORLD_SEED + 54, 2) - 0.5;
+    const scale = 1 + contour * 0.28 + fine * 0.06;
+    const shaped = Math.pow(Math.max(y, 0), 0.55);
 
-    positions.setXYZ(index, x * hill.radius * scale, Math.max(y, -0.05) * hill.height * scale, z * hill.radius * 0.8 * scale);
+    positions.setXYZ(index, x * hill.radius * scale, Math.max(shaped, -0.05) * hill.height * scale, z * hill.radius * 0.8 * scale);
 
     // Green almost all the way up, gold only at the crown. Blending from 5% of the
     // height made every dome a tan mound, and a row of tan mounds reads as desert.
@@ -71,7 +68,7 @@ function createHillGeometry(hill: HillSpec, seed: number): BufferGeometry {
     // at 0.55 its whole plateau read as desert.
     const color = foot.clone().lerp(gold, smoothstep(0.82, 1.0, t));
     // Distance drains the colour toward the haze, which is what gives the band depth.
-    color.lerp(haze, hill.depth * 0.44);
+    color.lerp(haze, hill.depth * 0.6);
 
     colors[index * 3] = color.r;
     colors[index * 3 + 1] = color.g;

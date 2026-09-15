@@ -1,8 +1,10 @@
 import { BufferAttribute, BufferGeometry, Color, PlaneGeometry } from "three";
 
 import { LAKE, TERRAIN, WORLD_COLORS, WORLD_SEED } from "./constants";
-import { CHALET_SITES, SITES } from "./sites";
+import { flattenCurve } from "./curves";
 import { fractalNoise2D } from "./noise";
+import { BRIDGES, ROAD_POLYLINES, YARDS } from "./road-network";
+import { CHALET_SITES, SITES } from "./sites";
 
 /**
  * The shape of the land around the Caveiras reservoir.
@@ -182,12 +184,20 @@ interface Ridge {
 }
 
 const RIDGE: readonly Ridge[] = [
+  // The near ridge, behind the far shore. The chalet village climbs it.
   { x: -238, z: -178, radiusX: 90, radiusZ: 44, height: 13 },
   { x: -150, z: -176, radiusX: 86, radiusZ: 44, height: 14 },
   { x: -56, z: -186, radiusX: 80, radiusZ: 46, height: 17 },
   { x: 40, z: -180, radiusX: 78, radiusZ: 44, height: 15 },
   { x: 132, z: -186, radiusX: 84, radiusZ: 46, height: 16 },
   { x: 226, z: -178, radiusX: 80, radiusZ: 42, height: 13 },
+  // The back band, on the plateau. The farms stand on these slopes, which is why they
+  // are ground and not backdrop meshes. The gap between x = -60 and x = 60 is the UFO
+  // port's own plateau.
+  { x: -262, z: -262, radiusX: 96, radiusZ: 62, height: 18 },
+  { x: -150, z: -276, radiusX: 90, radiusZ: 60, height: 20 },
+  { x: 150, z: -282, radiusX: 88, radiusZ: 60, height: 19 },
+  { x: 270, z: -264, radiusX: 90, radiusZ: 60, height: 17 },
 ];
 
 function ridgeHeightAt(x: number, z: number): number {
@@ -277,8 +287,13 @@ function naturalHeightAt(x: number, z: number): number {
     ground += (top - ground) * smoothstep(6, -6, peninsula);
   }
 
-  // The basin: the floor drops away from the shore.
+  // Inland the ground never dips under the water level. The rolling noise is +/-3 on a
+  // base only 1.6 above it, and a hollow below the surface far from any shore drew a
+  // dry pit in lake-bed colours.
   const lake = lakeDistance(x, z);
+  ground = Math.max(ground, LAKE.level + 1.0 - 1.0 * (1 - smoothstep(6, 14, lake)));
+
+  // The basin: the floor drops away from the shore.
   ground += (LAKE.floor - ground) * smoothstep(8, -6, lake);
 
   // The river below the dam.
@@ -291,8 +306,8 @@ function naturalHeightAt(x: number, z: number): number {
 
 const PAD_HEIGHTS: ReadonlyMap<FlatPad, number> = new Map(FLAT_PADS.map((pad) => [pad, naturalHeightAt(pad.x, pad.z)]));
 
-/** Ground height at a world position. */
-export function terrainHeightAt(x: number, z: number): number {
+/** Ground height with the pads levelled in, before the roads are graded. */
+function paddedHeightAt(x: number, z: number): number {
   let height = naturalHeightAt(x, z);
 
   for (const pad of FLAT_PADS) {
@@ -307,12 +322,141 @@ export function terrainHeightAt(x: number, z: number): number {
   return height;
 }
 
+// ---------------------------------------------------------------------------------
+// Grading under the roads
+// ---------------------------------------------------------------------------------
+
+/**
+ * The ground is graded to every road: flat across the road's width at the road's own
+ * level, easing back to the natural ground over a shoulder either side.
+ *
+ * Draping a ribbon over ungraded ground never works. Lift it a little and the ground
+ * comes through its edges on every bump; lift it more and it floats on every crest.
+ * Real roads cut and fill, and so does this one.
+ */
+const ROAD_SHOULDER = 3.2;
+
+/** How far along the road the level is averaged, so the grade does not follow bumps. */
+const ROAD_SMOOTHING = 3.6;
+
+/** Grading distances are measured to the drawn curve, sampled this finely. */
+const GRADE_STEP = 3;
+
+interface GradedSegment {
+  readonly ax: number;
+  readonly az: number;
+  readonly bx: number;
+  readonly bz: number;
+  readonly halfWidth: number;
+}
+
+const GRADED_SEGMENTS: readonly GradedSegment[] = ROAD_POLYLINES.flatMap((road) => {
+  const points = flattenCurve(road.points, road.closed, GRADE_STEP);
+  const segments: GradedSegment[] = [];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const [ax, az] = points[index];
+    const [bx, bz] = points[index + 1];
+    segments.push({ ax, az, bx, bz, halfWidth: road.width / 2 });
+  }
+  return segments;
+});
+
+/** Segments bucketed by cell, so a height query only looks at the roads next to it. */
+const GRADE_CELL = 24;
+const GRADE_BUCKETS: ReadonlyMap<string, readonly number[]> = (() => {
+  const buckets = new Map<string, number[]>();
+  GRADED_SEGMENTS.forEach((segment, index) => {
+    const reach = segment.halfWidth + ROAD_SHOULDER;
+    const minCellX = Math.floor((Math.min(segment.ax, segment.bx) - reach) / GRADE_CELL);
+    const maxCellX = Math.floor((Math.max(segment.ax, segment.bx) + reach) / GRADE_CELL);
+    const minCellZ = Math.floor((Math.min(segment.az, segment.bz) - reach) / GRADE_CELL);
+    const maxCellZ = Math.floor((Math.max(segment.az, segment.bz) + reach) / GRADE_CELL);
+    for (let cellX = minCellX; cellX <= maxCellX; cellX += 1) {
+      for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ += 1) {
+        const key = `${cellX},${cellZ}`;
+        const bucket = buckets.get(key);
+        if (bucket) bucket.push(index);
+        else buckets.set(key, [index]);
+      }
+    }
+  });
+  return buckets;
+})();
+
+/** The deck height where a point lies on a bridge, or -Infinity. */
+export function bridgeDeckAt(x: number, z: number): number {
+  let deck = Number.NEGATIVE_INFINITY;
+  for (const bridge of BRIDGES) {
+    const d = distanceToSegment(x, z, bridge.from[0], bridge.from[1], bridge.to[0], bridge.to[1]);
+    if (d < bridge.halfWidth + 1.5) deck = Math.max(deck, bridge.deck);
+  }
+  return deck;
+}
+
+/** The level a road is built at over a point on its centreline. */
+function roadLevelAt(x: number, z: number, alongX: number, alongZ: number): number {
+  const magnitude = Math.hypot(alongX, alongZ) || 1;
+  const dx = (alongX / magnitude) * ROAD_SMOOTHING;
+  const dz = (alongZ / magnitude) * ROAD_SMOOTHING;
+  const smoothed = (paddedHeightAt(x - dx, z - dz) + paddedHeightAt(x, z) + paddedHeightAt(x + dx, z + dz)) / 3;
+  return Math.max(smoothed, bridgeDeckAt(x, z));
+}
+
+interface Grade {
+  readonly weight: number;
+  readonly level: number;
+}
+
+function roadGradeAt(x: number, z: number): Grade | null {
+  let best: Grade | null = null;
+
+  const bucket = GRADE_BUCKETS.get(`${Math.floor(x / GRADE_CELL)},${Math.floor(z / GRADE_CELL)}`);
+  if (bucket) {
+    for (const index of bucket) {
+      const segment = GRADED_SEGMENTS[index];
+      const reach = segment.halfWidth + ROAD_SHOULDER;
+      const abx = segment.bx - segment.ax;
+      const abz = segment.bz - segment.az;
+      const t = Math.min(1, Math.max(0, ((x - segment.ax) * abx + (z - segment.az) * abz) / (abx * abx + abz * abz || 1)));
+      const cx = segment.ax + abx * t;
+      const cz = segment.az + abz * t;
+      const d = Math.hypot(x - cx, z - cz);
+      if (d >= reach) continue;
+
+      const weight = 1 - smoothstep(segment.halfWidth, reach, d);
+      if (best && weight <= best.weight) continue;
+      best = { weight, level: roadLevelAt(cx, cz, abx, abz) };
+    }
+  }
+
+  for (const yard of YARDS) {
+    const d = distance(x, z, yard.x, yard.z);
+    if (d >= yard.radius + ROAD_SHOULDER) continue;
+    const weight = 1 - smoothstep(yard.radius, yard.radius + ROAD_SHOULDER, d);
+    if (best && weight <= best.weight) continue;
+    best = { weight, level: Math.max(paddedHeightAt(yard.x, yard.z), bridgeDeckAt(yard.x, yard.z)) };
+  }
+
+  return best;
+}
+
+/** Ground height at a world position. */
+export function terrainHeightAt(x: number, z: number): number {
+  const height = paddedHeightAt(x, z);
+
+  // The lake floor stays where it is under a bridge; only the banks are filled.
+  if (lakeDistance(x, z) < -3) return height;
+
+  const grade = roadGradeAt(x, z);
+  if (!grade) return height;
+  return height + (grade.level - height) * grade.weight;
+}
+
 /** The grass/straw/sand/rock blend at a point. */
 function surfaceColorAt(x: number, z: number, height: number): Color {
   const grass = new Color(WORLD_COLORS.grass);
   const grassDeep = new Color(WORLD_COLORS.grassDeep);
   const straw = new Color(WORLD_COLORS.straw);
-  const sand = new Color(WORLD_COLORS.sand);
   const hillGold = new Color(WORLD_COLORS.hilltop);
   const lakeBed = new Color("#5f8f86");
 
@@ -323,14 +467,12 @@ function surfaceColorAt(x: number, z: number, height: number): Color {
   // z = -105 - in front of the far shore at z = -120 - turned the land right behind
   // them into desert, which is what it looked like.
   base.lerp(hillGold, smoothstep(-300, -430, z) * 0.45);
-  base.lerp(straw, smoothstep(18, 36, height) * 0.38);
+  // Straw only on the hilltops. From 18 up, the whole plateau - which starts at 30 -
+  // went the colour of a dry paddock.
+  base.lerp(straw, smoothstep(36, 54, height) * 0.22);
 
-  // Sand along the shore, lake bed below the water. The distance alone is not enough:
-  // where the bay meets the outlet channel both terms sit near zero across a wide band,
-  // and the beach spread up the hillside as a pale wedge. A beach is also low ground.
-  const shore = Math.abs(lakeDistance(x, z));
-  const aboveWater = height - LAKE.level;
-  base.lerp(sand, (1 - smoothstep(0.5, 2.4, shore)) * (1 - smoothstep(0.3, 2.2, aboveWater)) * 0.85);
+  // The lake bed below the water. The beach itself is drawn by the terrain material,
+  // per pixel - see terrain-material.ts.
   base.lerp(lakeBed, smoothstep(LAKE.level + 0.2, LAKE.floor, height));
 
   return base;
@@ -343,6 +485,7 @@ export function createTerrainGeometry(): BufferGeometry {
 
   const positions = geometry.attributes.position as BufferAttribute;
   const colors = new Float32Array(positions.count * 3);
+  const shores = new Float32Array(positions.count);
 
   for (let index = 0; index < positions.count; index += 1) {
     const x = positions.getX(index);
@@ -355,10 +498,14 @@ export function createTerrainGeometry(): BufferGeometry {
     colors[index * 3] = color.r;
     colors[index * 3 + 1] = color.g;
     colors[index * 3 + 2] = color.b;
+    // Signed distance to the water, for the beach in the shader. Clamped so a far
+    // inland vertex does not drag the interpolation across a whole triangle.
+    shores[index] = Math.max(-20, Math.min(20, lakeDistance(x, z)));
   }
 
   positions.needsUpdate = true;
   geometry.setAttribute("color", new BufferAttribute(colors, 3));
+  geometry.setAttribute("shore", new BufferAttribute(shores, 1));
   geometry.computeVertexNormals();
 
   return geometry;

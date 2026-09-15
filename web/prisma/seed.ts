@@ -143,8 +143,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Campo aberto, gado e um café que dura a manhã inteira",
     description:
       "Meia hora de estrada de chão depois da comunidade, o mato abre e aparece o campo: galpão vermelho, dois silos e a casa branca no meio do pasto. O café colonial sai às nove, com cuca, melado e queijo da própria leiteria.",
-    world: [-166, 0, -190],
-    camera: [-150, 28, -146],
+    world: [-200, 0, -254],
+    camera: [-186, 30, -206],
     experiences: [
       { slug: "cafe-colonial-da-fazenda", name: "Café colonial da fazenda", description: "Mesa posta na varanda com cuca de banana, melado de cana, queijo curado e leite tirado na hora.", kind: "FOOD", durationMinutes: 90 },
       { slug: "cavalgada-pelo-campo", name: "Cavalgada pelo campo", description: "Duas horas a cavalo pelo pasto alto, com parada no açude para o chimarrão.", kind: "TOUR", durationMinutes: 120 },
@@ -156,8 +156,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A sede de 1912 e o galpão de tropeiro",
     description:
       "A fazenda mais antiga do planalto, ainda na mesma família. A sede de madeira tem o assoalho original e o galpão guarda os arreios de quatro gerações de tropeiros que desciam a serra por aqui.",
-    world: [10, 0, -196],
-    camera: [18, 28, -150],
+    world: [-60, 0, -266],
+    camera: [-48, 30, -218],
     experiences: [
       { slug: "visita-a-sede-historica", name: "Visita à sede histórica", description: "A casa de 1912 por dentro, com quem cresceu nela contando cada cômodo.", kind: "TOUR", durationMinutes: 60 },
       { slug: "tarde-de-ordenha", name: "Tarde de ordenha", description: "Fim de tarde no curral, com as crianças aprendendo a tirar leite no balde.", kind: "EVENT", durationMinutes: 45 },
@@ -169,8 +169,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Araucárias centenárias e a safra do pinhão",
     description:
       "No alto, atrás do morro dos chalés, um pinheiral que ninguém derrubou. Na safra, de abril a julho, a fazenda abre a colheita para quem quiser subir e trazer o pinhão do chão.",
-    world: [196, 0, -186],
-    camera: [180, 28, -142],
+    world: [206, 0, -262],
+    camera: [190, 30, -214],
     experiences: [
       { slug: "colheita-do-pinhao", name: "Colheita do pinhão", description: "Manhã inteira debaixo das araucárias, cesto na mão, com quem conhece a safra.", kind: "TRAIL", durationMinutes: 90 },
     ],

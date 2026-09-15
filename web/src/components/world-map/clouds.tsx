@@ -3,7 +3,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import type { BufferAttribute, BufferGeometry, Mesh } from "three";
-import { Color, MeshStandardMaterial } from "three";
+import { Color, MeshBasicMaterial } from "three";
 
 import { blob, merge } from "@/lib/world/builders";
 import { CLOUDS, MIST, WORLD_COLORS, WORLD_SEED } from "@/lib/world/constants";
@@ -72,19 +72,21 @@ export function Clouds(): React.ReactElement {
     [],
   );
   const mistGeometries = useMemo(
-    () => [0, 1, 2].map((index) => createCloudGeometry(WORLD_SEED + 40 + index * 17, WORLD_COLORS.cloudShade, WORLD_COLORS.cloud)),
+    () => [0, 1, 2].map((index) => createCloudGeometry(WORLD_SEED + 40 + index * 17, WORLD_COLORS.mistShade, WORLD_COLORS.mist)),
     [],
   );
 
-  const material = useMemo(() => new MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 }), []);
+  // Unlit: a lit flat-shaded cloud turns into a grey-brown lump against a bright sky.
+  // The shading is baked into the vertex colours, underside to top.
+  const material = useMemo(() => new MeshBasicMaterial({ vertexColors: true, fog: true }), []);
   const mistMaterial = useMemo(
     () =>
-      new MeshStandardMaterial({
+      new MeshBasicMaterial({
         vertexColors: true,
-        flatShading: true,
-        roughness: 1,
+        fog: true,
         transparent: true,
-        opacity: 0.58,
+        // Faint: unlit and any denser, the mist reads as a white smear over the far shore.
+        opacity: 0.22,
         depthWrite: false,
       }),
     [],

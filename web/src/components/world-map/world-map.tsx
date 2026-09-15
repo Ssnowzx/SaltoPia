@@ -1,12 +1,12 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useCallback, useRef, useState } from "react";
-import { PCFSoftShadowMap } from "three";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type DirectionalLight, Object3D, PCFShadowMap } from "three";
 
 import { SiteHeader } from "@/components/site-header";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { CAMERA, FOG, RENDERER, SKY_COLORS, WORLD_COLORS } from "@/lib/world/constants";
+import { CAMERA, FOG, RENDERER, SKY_COLORS } from "@/lib/world/constants";
 import type { Place } from "@/types";
 
 import { CameraRig } from "./camera-rig";
@@ -34,6 +34,53 @@ interface WorldMapProps {
   readonly places: readonly Place[];
 }
 
+/**
+ * The key light, aimed at the middle of the community. A directional light shines at
+ * its target, and the default target is the origin - out in the bay.
+ */
+function SunLight(): React.ReactElement {
+  const lightRef = useRef<DirectionalLight>(null);
+  const target = useMemo(() => new Object3D(), []);
+
+  useEffect(() => {
+    target.position.set(SUN_TARGET.x, SUN_TARGET.y, SUN_TARGET.z);
+    target.updateMatrixWorld();
+    const light = lightRef.current;
+    if (light) light.target = target;
+  }, [target]);
+
+  return (
+    <>
+      <primitive object={target} />
+      <directionalLight
+        ref={lightRef}
+        position={[96, 118, 44]}
+        intensity={2.5}
+        color="#ffd6a2"
+        castShadow
+        // The frustum has to contain everything that receives shadow: past its edge a
+        // fragment samples outside the depth map and comes back fully shadowed, which
+        // once drew a dark slab with a hard diagonal edge across half the frame.
+        shadow-mapSize={[4096, 4096]}
+        shadow-camera-left={-380}
+        shadow-camera-right={380}
+        shadow-camera-top={380}
+        shadow-camera-bottom={-380}
+        shadow-camera-near={1}
+        shadow-camera-far={1400}
+        shadow-bias={-0.0003}
+        // One shadow texel is about 0.19 world units here; the bias has to clear the
+        // roads' own depth without lifting the shadows off the trees' feet.
+        shadow-normalBias={0.5}
+        shadow-intensity={0.82}
+      />
+    </>
+  );
+}
+
+/** Where the key light points: the middle of the community. */
+const SUN_TARGET = { x: 50, y: 0, z: 10 } as const;
+
 export function WorldMap({ places }: WorldMapProps): React.ReactElement {
   const reducedMotion = usePrefersReducedMotion();
   const [exploring, setExploring] = useState(false);
@@ -56,7 +103,7 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
         <Canvas
           // Capped so a dense display cannot multiply fragment cost - world-map spec.
           dpr={[1, RENDERER.maxPixelRatio]}
-          shadows={{ type: PCFSoftShadowMap }}
+          shadows={{ type: PCFShadowMap }}
           camera={{
             fov: CAMERA.fov,
             near: CAMERA.near,
@@ -68,34 +115,12 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
           <color attach="background" args={[SKY_COLORS.haze]} />
           <fog attach="fog" args={[SKY_COLORS.haze, FOG.near, FOG.far]} />
 
-          {/* The key light sits front-right so faces read; a warm rim from the sun's
-              side catches roofs and the far shore; the sky fills from above. */}
-          <directionalLight
-            position={[70, 90, 40]}
-            intensity={2.0}
-            color="#ffe0b0"
-            castShadow
-            // The frustum has to contain everything that receives shadow. The terrain is
-            // 420 across, so its diagonal projects to about 300 - at +/-150 everything
-            // beyond sampled outside the map and came back fully shadowed, which drew a
-            // dark slab with a hard diagonal edge across half the frame.
-            shadow-mapSize={[4096, 4096]}
-            shadow-camera-left={-380}
-            shadow-camera-right={380}
-            shadow-camera-top={380}
-            shadow-camera-bottom={-380}
-            shadow-camera-near={1}
-            shadow-camera-far={1400}
-            shadow-bias={-0.0004}
-            // One shadow texel covers about 0.19 world units at this frustum and map
-            // size. At 0.06 the roads sampled their own depth and striped themselves
-            // with acne right down the carriageway.
-            shadow-normalBias={0.9}
-            shadow-intensity={0.7}
-          />
-          <directionalLight position={[90, 50, -120]} intensity={1.1} color="#ffc98a" />
-          <hemisphereLight args={[SKY_COLORS.mid, WORLD_COLORS.grass, 1.2]} position={[0, 60, 0]} />
-          <ambientLight intensity={0.55} color={SKY_COLORS.haze} />
+          {/* Warm key from the sun's side, cool sky fill: the contrast between the two is
+              what makes a sunset read as a sunset rather than a single orange. */}
+          <SunLight />
+          <directionalLight position={[110, 40, -160]} intensity={0.9} color="#ffb070" />
+          <hemisphereLight args={["#8a97c4", "#5a4a30", 0.6]} position={[0, 60, 0]} />
+          <ambientLight intensity={0.16} color="#d9c6ad" />
 
           <Suspense fallback={null}>
             <WorldMaterialsProvider>

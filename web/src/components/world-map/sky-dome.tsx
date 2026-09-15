@@ -54,6 +54,9 @@ const SKY_FRAGMENT = /* glsl */ `
   }
 `;
 
+/** The disc is well over white so it alone crosses the bloom threshold. */
+const SUN_HDR = new Color(WORLD_COLORS.sun).multiplyScalar(3.2);
+
 const RAYS_VERTEX = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -144,7 +147,7 @@ export function SkyDome({ radius = 760 }: SkyDomeProps): React.ReactElement {
 
       <mesh ref={sunRef} position={sunPosition} renderOrder={-1}>
         <circleGeometry args={[radius * 0.075, 40]} />
-        <meshBasicMaterial color={WORLD_COLORS.sun} depthWrite={false} fog={false} toneMapped={false} />
+        <meshBasicMaterial color={SUN_HDR} depthWrite={false} fog={false} toneMapped={false} />
       </mesh>
     </group>
   );
