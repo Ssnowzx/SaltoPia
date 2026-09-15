@@ -4,7 +4,7 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import type { InstancedMesh } from "three";
 import { Euler, Matrix4, Quaternion, Vector3 } from "three";
 
-import { WATER_LEVEL, WORLD_COLORS } from "@/lib/world/constants";
+import { createMountainsGeometry } from "@/lib/world/mountains";
 import {
   LANDMARKS,
   MODEL_REGISTRY,
@@ -13,14 +13,15 @@ import {
   createScatter,
   groundHeightFor,
 } from "@/lib/world/neighborhood-layout";
-import { createRiverGeometry, createTerrainGeometry } from "@/lib/world/terrain";
+import { createRailGeometry, createRiverGeometry, createRoadGeometry } from "@/lib/world/roads";
+import { createTerrainGeometry } from "@/lib/world/terrain";
 
 /**
  * Everything standing in the valley.
  *
  * Scenery is grouped by model and drawn with one InstancedMesh per group, so a forest
- * of 250 trees costs a handful of draw calls rather than 250 - required by the
- * world-map spec.
+ * of hundreds of trees costs a handful of draw calls rather than hundreds - required by
+ * the world-map spec.
  */
 
 /** Builds the transform for one placement. */
@@ -79,10 +80,13 @@ function InstancedGroup({ model, placements }: InstancedGroupProps): React.React
 
 export function Neighborhood(): React.ReactElement {
   const terrainGeometry = useMemo(() => createTerrainGeometry(), []);
+  const mountainsGeometry = useMemo(() => createMountainsGeometry(), []);
+  const roadGeometry = useMemo(() => createRoadGeometry(), []);
+  const railGeometry = useMemo(() => createRailGeometry(), []);
   const riverGeometry = useMemo(() => createRiverGeometry(), []);
 
   // Landmarks and scatter are placed the same way; grouping them together means a model
-  // used by both - a rock at a lookout, say - still shares one batch.
+  // used by both still shares one batch.
   const groups = useMemo(() => {
     const all: readonly Placement[] = [...LANDMARKS, ...createScatter()];
     const byModel = new Map<ModelKey, Placement[]>();
@@ -105,15 +109,20 @@ export function Neighborhood(): React.ReactElement {
         <meshStandardMaterial vertexColors flatShading roughness={1} metalness={0} />
       </mesh>
 
-      {/* The river, following its own course rather than flooding the valley. */}
-      <mesh geometry={riverGeometry} position={[0, WATER_LEVEL, 0]}>
-        <meshStandardMaterial
-          color={WORLD_COLORS.water}
-          roughness={0.25}
-          metalness={0.1}
-          transparent
-          opacity={0.94}
-        />
+      <mesh geometry={mountainsGeometry} castShadow receiveShadow>
+        <meshStandardMaterial vertexColors flatShading roughness={1} metalness={0} />
+      </mesh>
+
+      <mesh geometry={roadGeometry} receiveShadow>
+        <meshStandardMaterial vertexColors roughness={1} metalness={0} />
+      </mesh>
+
+      <mesh geometry={railGeometry} receiveShadow>
+        <meshStandardMaterial vertexColors roughness={0.8} metalness={0.1} />
+      </mesh>
+
+      <mesh geometry={riverGeometry}>
+        <meshStandardMaterial vertexColors roughness={0.28} metalness={0.05} transparent opacity={0.95} />
       </mesh>
 
       {groups.map(([model, placements]) => (

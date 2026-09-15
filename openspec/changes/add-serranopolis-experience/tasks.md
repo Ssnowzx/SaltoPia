@@ -2,15 +2,15 @@
 
 - [ ] 1.1 Define all `--color-*` tokens from design.md D6 in the Tailwind v4 theme layer; verify by rendering a swatch page at `/dev/tokens` showing each token with its name and hex, matching the D6 table exactly
 - [ ] 1.2 Wire Yellowtail and Figtree through `next/font/google` as `--font-script` and `--font-sans`; verify in DevTools that no request leaves the app origin for fonts and that both families report `loaded`
-- [ ] 1.3 Add radius, motion and duration tokens from the `design-system` spec; verify they appear as CSS custom properties on `:root`
+- [x] 1.3 Add radius, motion and duration tokens from the `design-system` spec; verify they appear as CSS custom properties on `:root`
 - [ ] 1.4 Write a contrast test asserting every foreground/background token pairing named in the spec meets its WCAG AA threshold; verify the test fails when a token is deliberately darkened
 - [ ] 1.5 Build the ticket-silhouette card as a CSS mask utility; verify the notches render over three different page backgrounds with no visible seam or background bleed
 
 ## 2. Content model and copy
 
-- [ ] 2.1 Define `Place` and `Experience` types in `src/types/index.ts` with no `any`; verify `tsc --noEmit` passes
-- [ ] 2.2 Write the eight places from design.md D7 as typed modules with Brazilian Portuguese names, descriptions and metadata; verify every slug in D7 resolves to a record
-- [ ] 2.3 Write two to three experiences per place with Portuguese copy; verify each experience's `placeSlug` matches an existing place
+- [x] 2.1 Define `Place` and `Experience` types in `src/types/index.ts` with no `any`; verify `tsc --noEmit` passes
+- [x] 2.2 Write the eight places from design.md D7 as typed modules with Brazilian Portuguese names, descriptions and metadata; verify every slug in D7 resolves to a record
+- [x] 2.3 Write two to three experiences per place with Portuguese copy; verify each experience's `placeSlug` matches an existing place
 - [ ] 2.4 Add a build-time check that every referenced asset path exists on disk; verify it fails when a path is deliberately broken
 
 ## 3. Static fallback (built before the 3D hub — design.md D8)
@@ -36,11 +36,11 @@
 ## 6. 3D neighbourhood scene
 
 - [ ] 6.1 Vendor the chosen CC0 kit models into `web/public/models/` with a `CREDITS.md` recording each source and licence; verify the total compressed payload is under 8 MB
-- [ ] 6.2 Set up the R3F canvas with pixel ratio capped at 2, the golden-hour sky gradient from D6, and scene lighting; verify the rendered sky matches the specified stops
-- [ ] 6.3 Define `neighborhood-layout.ts` as typed placement data; verify a deliberately malformed entry is a compile error, not a runtime one
-- [ ] 6.4 Build the loader that composes the scene from the layout, instancing any model used more than 20 times; verify with `renderer.info` that instanced models produce one draw call each
-- [ ] 6.5 Handle a failed model load by skipping that entry and logging; verify the rest of the scene still renders when one path is broken
-- [ ] 6.6 Build the procedural araucária generator with seeded variation (D2); verify 30 trees render as one instanced batch and no two share the same silhouette
+- [x] 6.2 Set up the R3F canvas with pixel ratio capped at 2, the golden-hour sky gradient from D6, and scene lighting; verify the rendered sky matches the specified stops
+- [x] 6.3 Define `neighborhood-layout.ts` as typed placement data; verify a deliberately malformed entry is a compile error, not a runtime one
+- [x] 6.4 Build the loader that composes the scene from the layout, instancing any model used more than 20 times; verify with `renderer.info` that instanced models produce one draw call each
+- [x] 6.5 Handle a failed model load by skipping that entry and logging; verify the rest of the scene still renders when one path is broken
+- [x] 6.6 Build the procedural araucária generator with seeded variation (D2); verify 30 trees render as one instanced batch and no two share the same silhouette
 - [ ] 6.7 Apply the unifying material and palette pass across kits (Risks); verify models from two different kits read as one art direction side by side
 
 ## 7. Camera choreography

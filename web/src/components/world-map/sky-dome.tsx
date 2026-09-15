@@ -1,16 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
-import { BackSide, Color, ShaderMaterial } from "three";
+import { useLayoutEffect, useMemo, useRef } from "react";
+import type { Mesh } from "three";
+import { BackSide, Color, ShaderMaterial, Vector3 } from "three";
 
-import { SKY_COLORS } from "@/lib/world/constants";
+import { SKY_COLORS, WORLD_COLORS } from "@/lib/world/constants";
 
 /**
- * The sky - late golden hour over the campos, per design.md D6.
+ * The sky - late golden hour over the campos, per design.md D6 - and the sun.
  *
  * A gradient on an inverted sphere rather than a flat background colour: the horizon
  * band is what sells the altitude, and a solid colour behind low-poly terrain reads as
- * a missing texture.
+ * a missing texture. The sun sits low behind the serra so the peaks cut across it.
  */
 
 const VERTEX_SHADER = /* glsl */ `
@@ -38,19 +39,22 @@ const FRAGMENT_SHADER = /* glsl */ `
 
     // Three stops from horizon to zenith, then a haze band pooled at the horizon
     // itself - that band is the mist sitting in the valley.
-    vec3 color = mix(uLow, uMid, smoothstep(0.0, 0.28, h));
-    color = mix(color, uHigh, smoothstep(0.22, 0.75, h));
-    color = mix(uHaze, color, smoothstep(-0.06, 0.12, h));
+    vec3 color = mix(uLow, uMid, smoothstep(0.0, 0.14, h));
+    color = mix(color, uHigh, smoothstep(0.1, 0.55, h));
+    color = mix(uHaze, color, smoothstep(-0.06, 0.1, h));
 
     gl_FragColor = vec4(color, 1.0);
   }
 `;
 
+/** Where the sun sits, as a direction from the origin. Low, and behind the peaks. */
+const SUN_DIRECTION = new Vector3(0.16, 0.19, -1).normalize();
+
 interface SkyDomeProps {
   readonly radius?: number;
 }
 
-export function SkyDome({ radius = 400 }: SkyDomeProps): React.ReactElement {
+export function SkyDome({ radius = 420 }: SkyDomeProps): React.ReactElement {
   const material = useMemo(
     () =>
       new ShaderMaterial({
@@ -69,9 +73,31 @@ export function SkyDome({ radius = 400 }: SkyDomeProps): React.ReactElement {
     [radius],
   );
 
+  const sunPosition = useMemo(() => SUN_DIRECTION.clone().multiplyScalar(radius * 0.92), [radius]);
+  const sunRef = useRef<Mesh>(null);
+  const glowRef = useRef<Mesh>(null);
+
+  // A circle faces +Z; lookAt turns that toward the valley.
+  useLayoutEffect(() => {
+    sunRef.current?.lookAt(0, 0, 0);
+    glowRef.current?.lookAt(0, 0, 0);
+  }, []);
+
   return (
-    <mesh material={material} renderOrder={-1}>
-      <sphereGeometry args={[radius, 32, 16]} />
-    </mesh>
+    <group>
+      <mesh material={material} renderOrder={-2}>
+        <sphereGeometry args={[radius, 32, 16]} />
+      </mesh>
+
+      <mesh ref={glowRef} position={sunPosition} renderOrder={-1}>
+        <circleGeometry args={[radius * 0.13, 32]} />
+        <meshBasicMaterial color={WORLD_COLORS.sun} transparent opacity={0.22} depthWrite={false} fog={false} />
+      </mesh>
+
+      <mesh ref={sunRef} position={sunPosition} renderOrder={-1}>
+        <circleGeometry args={[radius * 0.065, 32]} />
+        <meshBasicMaterial color={WORLD_COLORS.sun} depthWrite={false} fog={false} />
+      </mesh>
+    </group>
   );
 }

@@ -8,8 +8,11 @@ import { CAMERA, RENDERER, SKY_COLORS, WORLD_COLORS } from "@/lib/world/constant
 import type { Place } from "@/types";
 
 import { CameraRig } from "./camera-rig";
+import { Clouds } from "./clouds";
 import { Neighborhood } from "./neighborhood";
 import { SkyDome } from "./sky-dome";
+import { Smoke } from "./smoke";
+import { Vehicles } from "./vehicles";
 
 /**
  * The 3D neighbourhood hub.
@@ -45,9 +48,9 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
         gl={{ antialias: true }}
       >
         <color attach="background" args={[SKY_COLORS.haze]} />
-        <fog attach="fog" args={[SKY_COLORS.haze, 430, 1150]} />
+        <fog attach="fog" args={[SKY_COLORS.haze, 190, 820]} />
 
-        {/* Low warm sun from behind the ridge, cool bounce from the sky. */}
+        {/* Low warm sun from the side, cool bounce from the sky. */}
         <directionalLight
           position={[-70, 96, 58]}
           intensity={2.4}
@@ -71,6 +74,9 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
         <Suspense fallback={null}>
           <SkyDome />
           <Neighborhood />
+          <Clouds />
+          <Vehicles />
+          <Smoke />
         </Suspense>
 
         <CameraRig

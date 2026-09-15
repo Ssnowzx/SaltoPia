@@ -2,14 +2,30 @@ import type { BufferGeometry } from "three";
 
 import {
   createAraucariaGeometry,
-  createBandstandGeometry,
+  createBroadleafGeometry,
   createBuildingGeometry,
+  createBushGeometry,
   createConiferGeometry,
+  createFenceGeometry,
+  createLamppostGeometry,
   createRockGeometry,
+  createStoneWallGeometry,
 } from "./builders";
-import { TERRAIN, WORLD_COLORS, WORLD_SEED } from "./constants";
+import { ROAD, TERRAIN, WORLD_COLORS, WORLD_SEED } from "./constants";
+import {
+  createBosqueSignGeometry,
+  createCtgGeometry,
+  createEstacaoGeometry,
+  createGalpaoGeometry,
+  createMiranteGeometry,
+  createPousadaGeometry,
+  createPracaGeometry,
+  createVineRowGeometry,
+  createVinicolaGeometry,
+} from "./landmarks";
 import { createRandom } from "./noise";
-import { terrainHeightAt } from "./terrain";
+import { CIRCUIT, RAIL_LINE, SPOKES, type Waypoint } from "./roads";
+import { distanceToRiver, terrainHeightAt } from "./terrain";
 
 /**
  * What Serranopolis is made of, as data.
@@ -22,16 +38,25 @@ import { terrainHeightAt } from "./terrain";
 /** Every kind of object that can stand on the terrain. */
 export type ModelKey =
   | "araucaria"
+  | "araucariaB"
+  | "araucariaYoung"
   | "conifer"
+  | "broadleaf"
+  | "bush"
   | "rock"
-  | "bandstand"
   | "house"
-  | "barn"
-  | "hall"
-  | "station"
-  | "winery"
-  | "inn"
-  | "shelter";
+  | "fence"
+  | "stoneWall"
+  | "lamppost"
+  | "vineRow"
+  | "praca"
+  | "galpao"
+  | "mirante"
+  | "vinicola"
+  | "ctg"
+  | "estacao"
+  | "pousada"
+  | "bosqueSign";
 
 /**
  * Resolves a model key to geometry.
@@ -41,82 +66,36 @@ export type ModelKey =
  * scene.
  */
 export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = {
-  araucaria: () => createAraucariaGeometry(13, 2.8),
+  araucaria: () => createAraucariaGeometry("mature", 15, 3),
+  araucariaB: () => createAraucariaGeometry("mature", 13, 11),
+  araucariaYoung: () => createAraucariaGeometry("young", 7, 5),
   conifer: () => createConiferGeometry(9),
+  broadleaf: () => createBroadleafGeometry(6, 2),
+  bush: () => createBushGeometry(1.1),
   rock: () => createRockGeometry(1.7),
-  bandstand: () => createBandstandGeometry(),
   house: () =>
     createBuildingGeometry({
-      width: 4.4,
-      depth: 3.6,
-      height: 2.8,
-      roofHeight: 1.5,
-      wallColor: WORLD_COLORS.whitewash,
-      roofColor: WORLD_COLORS.tile,
-      chimney: true,
-    }),
-  barn: () =>
-    createBuildingGeometry({
-      width: 11,
-      depth: 7,
-      height: 3.6,
-      roofHeight: 2.4,
-      wallColor: WORLD_COLORS.timber,
-      roofColor: WORLD_COLORS.tile,
-      veranda: true,
-      chimney: true,
-    }),
-  hall: () =>
-    createBuildingGeometry({
-      width: 13,
-      depth: 5.4,
-      height: 3.2,
-      roofHeight: 1.9,
-      wallColor: WORLD_COLORS.whitewash,
-      roofColor: WORLD_COLORS.tile,
-      veranda: true,
-    }),
-  station: () =>
-    createBuildingGeometry({
-      width: 10,
-      depth: 4.6,
-      height: 3.4,
+      width: 4.6,
+      depth: 3.8,
+      height: 2.9,
       roofHeight: 1.6,
       wallColor: WORLD_COLORS.whitewash,
-      roofColor: WORLD_COLORS.ember,
-      veranda: true,
-    }),
-  winery: () =>
-    createBuildingGeometry({
-      width: 8.5,
-      depth: 6,
-      height: 3.8,
-      roofHeight: 2.1,
-      wallColor: WORLD_COLORS.rockLight,
       roofColor: WORLD_COLORS.tile,
       chimney: true,
+      windows: true,
     }),
-  inn: () =>
-    createBuildingGeometry({
-      width: 7.5,
-      depth: 6,
-      height: 4.2,
-      roofHeight: 2.6,
-      wallColor: WORLD_COLORS.rockLight,
-      roofColor: WORLD_COLORS.tile,
-      chimney: true,
-      veranda: true,
-    }),
-  shelter: () =>
-    createBuildingGeometry({
-      width: 4,
-      depth: 3,
-      height: 2.2,
-      roofHeight: 1.1,
-      wallColor: WORLD_COLORS.timber,
-      roofColor: WORLD_COLORS.tile,
-      veranda: true,
-    }),
+  fence: () => createFenceGeometry(8),
+  stoneWall: () => createStoneWallGeometry(9),
+  lamppost: () => createLamppostGeometry(),
+  vineRow: () => createVineRowGeometry(4.5),
+  praca: () => createPracaGeometry(),
+  galpao: () => createGalpaoGeometry(),
+  mirante: () => createMiranteGeometry(),
+  vinicola: () => createVinicolaGeometry(),
+  ctg: () => createCtgGeometry(),
+  estacao: () => createEstacaoGeometry(),
+  pousada: () => createPousadaGeometry(),
+  bosqueSign: () => createBosqueSignGeometry(),
 };
 
 /** One object placed on the terrain. Y always comes from the terrain, never from here. */
@@ -131,6 +110,58 @@ export interface Placement {
   readonly yOffset: number;
 }
 
+function placed(model: ModelKey, x: number, z: number, rotationY = 0, scale = 1): Placement {
+  return { model, x, z, rotationY, scale, yOffset: 0 };
+}
+
+/**
+ * The landmarks and the town around the square.
+ *
+ * Landmark coordinates match the `world_x` / `world_z` seeded for each place, so a pin
+ * and its building agree without either knowing about the other.
+ */
+export const LANDMARKS: readonly Placement[] = [
+  placed("praca", 0, 0),
+  placed("galpao", -28, 14),
+  placed("ctg", -20, -18),
+  // Turned to face the rails, which run along its south side.
+  placed("estacao", 26, 46, Math.PI),
+  placed("vinicola", 30, -30),
+  placed("pousada", 14, 30),
+  placed("mirante", 2, -46),
+  placed("bosqueSign", -41, -39, 0.6),
+
+  // Houses just outside the circuit road.
+  placed("house", -19, 5.5, 0.2),
+  placed("house", -25, -5.5, 0.5, 0.95),
+  placed("house", -17, 13, -0.3, 1.05),
+  placed("house", 23, -3, 0.1),
+  placed("house", 36, 26, -0.4, 0.95),
+  placed("house", 40, 34, 0.3),
+  placed("house", -30, 46, 2.9),
+  placed("house", -38, 36, 3.2, 0.9),
+
+  // The vineyard, on the slope west of the winery.
+  ...[15.5, 20.5].flatMap((x) =>
+    [-25, -27.5, -30, -32.5, -35, -37.5].map((z) => placed("vineRow", x, z)),
+  ),
+
+  // Lamps around the square, outside the ring road.
+  ...Array.from({ length: 8 }, (_, index) => {
+    const angle = (index / 8) * Math.PI * 2 + Math.PI / 8;
+    return placed("lamppost", Math.cos(angle) * (ROAD.ringRadius + 3), Math.sin(angle) * (ROAD.ringRadius + 3));
+  }),
+
+  // Fences and taipas across the campo.
+  placed("fence", -14, 46.5),
+  placed("fence", 4, 47),
+  placed("fence", 30, 37, 0.5),
+  placed("stoneWall", -44, -12, 0.3),
+  placed("stoneWall", -48, -24, 0.1),
+  placed("stoneWall", -30, 4),
+  placed("stoneWall", 40, 40, -0.4),
+];
+
 /** A circle of ground kept clear of scattered scenery. */
 interface Clearing {
   readonly x: number;
@@ -138,73 +169,65 @@ interface Clearing {
   readonly radius: number;
 }
 
-/**
- * The buildings that mark the eight points of interest, plus the town around the square.
- *
- * Coordinates match the `world_x` / `world_z` seeded for each place, so a pin and its
- * building agree without either knowing about the other.
- */
-export const LANDMARKS: readonly Placement[] = [
-  // Praca do Pinhao - the centre.
-  { model: "bandstand", x: 0, z: 0, rotationY: 0, scale: 1, yOffset: 0 },
-  { model: "house", x: -8.5, z: 4, rotationY: 0.3, scale: 1, yOffset: 0 },
-  { model: "house", x: 8, z: 5.5, rotationY: -0.25, scale: 1.1, yOffset: 0 },
-  { model: "house", x: -6, z: -7.5, rotationY: 2.9, scale: 0.95, yOffset: 0 },
-  { model: "house", x: 7.5, z: -8, rotationY: 3.3, scale: 1.05, yOffset: 0 },
-  { model: "house", x: 0.5, z: 12, rotationY: 0.1, scale: 1, yOffset: 0 },
-
-  // Galpao do Fogo de Chao.
-  { model: "barn", x: -28, z: 14, rotationY: 0.42, scale: 1, yOffset: 0 },
-  { model: "house", x: -36, z: 19, rotationY: 0.5, scale: 0.85, yOffset: 0 },
-
-  // CTG Porteira do Tropeiro.
-  { model: "hall", x: -20, z: -18, rotationY: -0.22, scale: 1, yOffset: 0 },
-
-  // Estacao Velha.
-  { model: "station", x: 26, z: 10, rotationY: -0.35, scale: 1, yOffset: 0 },
-  { model: "house", x: 34, z: 15, rotationY: -0.4, scale: 0.9, yOffset: 0 },
-
-  // Vinicola de Altitude.
-  { model: "winery", x: 34, z: -26, rotationY: 0.55, scale: 1, yOffset: 0 },
-
-  // Pousada da Geada.
-  { model: "inn", x: 14, z: 30, rotationY: 0.18, scale: 1, yOffset: 0 },
-
-  // Mirante da Neblina - a shelter on the ridge.
-  { model: "shelter", x: 2, z: -46, rotationY: 0.05, scale: 1, yOffset: 0 },
-];
-
 /** Ground kept clear so landmarks stay legible - required by the world-map spec. */
 const CLEARINGS: readonly Clearing[] = [
-  { x: 0, z: 0, radius: 17 },
+  { x: 0, z: 0, radius: 19 },
   { x: -28, z: 14, radius: 12 },
-  { x: -20, z: -18, radius: 11 },
-  { x: 26, z: 10, radius: 12 },
-  { x: 34, z: -26, radius: 11 },
-  { x: 14, z: 30, radius: 11 },
-  { x: 2, z: -46, radius: 9 },
-  { x: -38, z: -34, radius: 5 },
+  { x: -20, z: -18, radius: 13 },
+  { x: 26, z: 46, radius: 15 },
+  { x: 30, z: -30, radius: 10 },
+  { x: 18, z: -31, radius: 9 },
+  { x: 14, z: 30, radius: 12 },
+  { x: 2, z: -46, radius: 8 },
+  { x: -41, z: -39, radius: 3 },
+  ...LANDMARKS.filter((placement) => placement.model === "house").map((house) => ({
+    x: house.x,
+    z: house.z,
+    radius: 4.5,
+  })),
 ];
 
 function isInClearing(x: number, z: number, extra = 0): boolean {
-  return CLEARINGS.some((clearing) => {
-    const dx = x - clearing.x;
-    const dz = z - clearing.z;
-    return Math.sqrt(dx * dx + dz * dz) < clearing.radius + extra;
-  });
+  return CLEARINGS.some((clearing) => Math.hypot(x - clearing.x, z - clearing.z) < clearing.radius + extra);
 }
 
-/** How far the river runs from a point - scenery keeps out of the water. */
-function distanceToRiver(x: number, z: number): number {
-  return Math.abs(x - (10 * Math.sin(z * 0.035) + 4));
+function distanceToSegment(px: number, pz: number, ax: number, az: number, bx: number, bz: number): number {
+  const abx = bx - ax;
+  const abz = bz - az;
+  const lengthSquared = abx * abx + abz * abz || 1;
+  const t = Math.min(1, Math.max(0, ((px - ax) * abx + (pz - az) * abz) / lengthSquared));
+  return Math.hypot(px - (ax + abx * t), pz - (az + abz * t));
+}
+
+function distanceToPolyline(px: number, pz: number, points: readonly Waypoint[], closed: boolean): number {
+  let best = Number.POSITIVE_INFINITY;
+  const count = closed ? points.length : points.length - 1;
+
+  for (let index = 0; index < count; index += 1) {
+    const [ax, az] = points[index];
+    const [bx, bz] = points[(index + 1) % points.length];
+    best = Math.min(best, distanceToSegment(px, pz, ax, az, bx, bz));
+  }
+
+  return best;
+}
+
+/** Scenery keeps off the roads, the rails and the water. */
+function isOnInfrastructure(x: number, z: number): boolean {
+  if (Math.abs(Math.hypot(x, z) - ROAD.ringRadius) < 4.5) return true;
+  if (distanceToPolyline(x, z, CIRCUIT, true) < 4.6) return true;
+  if (SPOKES.some((spoke) => distanceToPolyline(x, z, spoke, false) < 4.4)) return true;
+  if (distanceToPolyline(x, z, RAIL_LINE, false) < 3.8) return true;
+  return distanceToRiver(x, z) < 8;
 }
 
 /**
- * Scatters trees and rocks across the valley.
+ * Scatters trees, bushes and rocks across the valley.
  *
  * Seeded, so the forest is identical on every load: the town has to be demonstrable
- * twice the same way. Araucarias cluster toward the Bosque and thin out over the open
- * campo; conifers mass on the higher ground behind; rocks sit on the exposed ridges.
+ * twice the same way. Araucarias stand alone across the open campo - the classic
+ * image of the Serra - and mass into the Bosque; conifers hold the higher ground
+ * behind; broadleaf trees and bushes soften the town; rocks sit on the exposed ridges.
  *
  * @returns Every scattered placement, ready to be grouped by model for instancing.
  */
@@ -213,28 +236,26 @@ export function createScatter(): readonly Placement[] {
   const placements: Placement[] = [];
   const half = TERRAIN.size / 2;
 
-  const bosqueX = -38;
-  const bosqueZ = -34;
+  const bosque = { x: -40, z: -36 } as const;
 
-  const tryPlace = (
+  const scatter = (
     model: ModelKey,
-    minScale: number,
-    maxScale: number,
-    attempt: () => readonly [number, number],
-    accept: (x: number, z: number, height: number) => boolean,
     count: number,
-    clearanceExtra = 2,
+    scaleRange: readonly [number, number],
+    propose: () => readonly [number, number],
+    accept: (x: number, z: number, height: number) => boolean,
+    clearance = 2,
   ): void => {
-    let placed = 0;
+    let placedCount = 0;
     let attempts = 0;
 
-    while (placed < count && attempts < count * 24) {
+    while (placedCount < count && attempts < count * 30) {
       attempts += 1;
-      const [x, z] = attempt();
+      const [x, z] = propose();
 
-      if (Math.abs(x) > half - 8 || Math.abs(z) > half - 8) continue;
-      if (isInClearing(x, z, clearanceExtra)) continue;
-      if (distanceToRiver(x, z) < 6) continue;
+      if (Math.abs(x) > half - 6 || Math.abs(z) > half - 6) continue;
+      if (isInClearing(x, z, clearance)) continue;
+      if (isOnInfrastructure(x, z)) continue;
 
       const height = terrainHeightAt(x, z);
       if (!accept(x, z, height)) continue;
@@ -244,70 +265,57 @@ export function createScatter(): readonly Placement[] {
         x,
         z,
         rotationY: random() * Math.PI * 2,
-        scale: minScale + random() * (maxScale - minScale),
+        scale: scaleRange[0] + random() * (scaleRange[1] - scaleRange[0]),
         yOffset: 0,
       });
-      placed += 1;
+      placedCount += 1;
     }
   };
 
-  // The Bosque das Araucarias - a dense stand, which is the point of the place.
-  tryPlace(
-    "araucaria",
-    0.85,
-    1.35,
-    () => {
-      const angle = random() * Math.PI * 2;
-      const radius = 5 + random() * 20;
-      return [bosqueX + Math.cos(angle) * radius, bosqueZ + Math.sin(angle) * radius];
-    },
-    (_x, _z, height) => height > 0 && height < 26,
-    64,
-    0,
-  );
+  const anywhere = (extent = 0.94): (() => readonly [number, number]) => () => [
+    (random() - 0.5) * TERRAIN.size * extent,
+    (random() - 0.5) * TERRAIN.size * extent,
+  ];
 
-  // Araucarias thinning out across the rest of the valley.
-  tryPlace(
-    "araucaria",
-    0.7,
-    1.25,
-    () => [(random() - 0.5) * TERRAIN.size * 0.92, (random() - 0.5) * TERRAIN.size * 0.92],
-    (_x, _z, height) => height > -0.2 && height < 22,
-    90,
-  );
+  const aroundBosque = (): readonly [number, number] => {
+    const angle = random() * Math.PI * 2;
+    const radius = 4 + random() * 22;
+    return [bosque.x + Math.cos(angle) * radius, bosque.z + Math.sin(angle) * radius];
+  };
 
-  // Conifer mass on the higher ground behind the town.
-  tryPlace(
-    "conifer",
-    0.75,
-    1.4,
-    () => [(random() - 0.5) * TERRAIN.size * 0.95, -random() * half * 0.95],
-    (_x, _z, height) => height > 8 && height < 30,
-    130,
-  );
+  const lowGround = (_x: number, _z: number, height: number): boolean => height > -0.5 && height < 18;
+  const highGround = (_x: number, _z: number, height: number): boolean => height > 9 && height < 44;
 
-  // Basalt on the exposed ridges.
-  tryPlace(
+  // The Bosque das Araucarias - a dense stand of mature trees.
+  scatter("araucaria", 34, [0.9, 1.3], aroundBosque, lowGround, 0);
+  scatter("araucariaB", 26, [0.9, 1.3], aroundBosque, lowGround, 0);
+  scatter("araucariaYoung", 18, [0.8, 1.4], aroundBosque, lowGround, 0);
+
+  // Lone araucarias across the campo, thinning with distance from the town.
+  scatter("araucaria", 42, [0.8, 1.25], anywhere(0.9), lowGround, 3);
+  scatter("araucariaB", 36, [0.8, 1.25], anywhere(0.9), lowGround, 3);
+  scatter("araucariaYoung", 30, [0.7, 1.3], anywhere(0.9), lowGround, 3);
+
+  // Conifer mass on the high ground behind and beside the town.
+  scatter("conifer", 150, [0.75, 1.45], () => [(random() - 0.5) * TERRAIN.size * 0.96, -random() * half * 0.9], highGround);
+  scatter("conifer", 60, [0.7, 1.3], anywhere(0.96), (_x, _z, height) => height > 14 && height < 40);
+
+  // Broadleaf trees and bushes around the town.
+  scatter("broadleaf", 55, [0.8, 1.4], anywhere(0.7), lowGround, 2);
+  scatter("bush", 90, [0.7, 1.5], anywhere(0.6), lowGround, 1);
+
+  // Basalt on the ridges and along the river.
+  scatter("rock", 60, [0.6, 2.2], anywhere(0.96), (_x, _z, height) => height > 16);
+  scatter(
     "rock",
-    0.6,
-    2.2,
-    () => [(random() - 0.5) * TERRAIN.size * 0.95, (random() - 0.5) * TERRAIN.size * 0.95],
-    (_x, _z, height) => height > 14,
-    70,
-  );
-
-  // A few boulders down by the water, where the river has dropped them.
-  tryPlace(
-    "rock",
-    0.4,
-    1.1,
+    24,
+    [0.4, 1.1],
     () => {
       const z = (random() - 0.5) * TERRAIN.size * 0.8;
-      const x = 10 * Math.sin(z * 0.035) + 4 + (random() - 0.5) * 16;
-      return [x, z];
+      return [46 + 4.5 * Math.sin(z * 0.045 + 0.6) + (random() - 0.5) * 24, z];
     },
-    (x, z) => distanceToRiver(x, z) > 6.5 && distanceToRiver(x, z) < 13,
-    26,
+    (x, z) => distanceToRiver(x, z) > 8 && distanceToRiver(x, z) < 13,
+    0,
   );
 
   return placements;

@@ -134,8 +134,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Uva que amadurece no frio",
     description:
       "Mil e duzentos metros acima do mar, onde a uva amadurece devagar e a geada faz parte do plano. As parreiras descem a encosta em degraus até a cantina de pedra.",
-    world: [34, 6, -26],
-    camera: [50, 22, -6],
+    world: [30, 6, -30],
+    camera: [46, 22, -8],
     experiences: [
       {
         slug: "degustacao-na-cantina",
@@ -177,8 +177,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "O trem parou, a feira ficou",
     description:
       "A estação não recebe trem desde os anos setenta, mas a plataforma nunca esvaziou. Virou feira: queijo, mel de melato de bracatinga, cuca, e os trilhos sumindo na neblina no fim do pátio.",
-    world: [26, 0, 10],
-    camera: [40, 18, 30],
+    world: [26, 0, 46],
+    camera: [40, 18, 68],
     experiences: [
       {
         slug: "feira-da-plataforma",
