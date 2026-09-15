@@ -6,11 +6,12 @@ import type { BufferAttribute, BufferGeometry, Mesh } from "three";
 import { Color, MeshBasicMaterial } from "three";
 
 import { blob, merge } from "@/lib/world/builders";
-import { CLOUDS, MIST, WORLD_COLORS, WORLD_SEED } from "@/lib/world/constants";
+import { CLOUDS, WORLD_COLORS, WORLD_SEED } from "@/lib/world/constants";
 import { createRandom } from "@/lib/world/noise";
 
 /**
- * Clouds drifting over the valley, and the bank of mist behind the lookout.
+ * Clouds drifting high over the valley. A bank of mist on the far shore was tried and
+ * read as sheets of glass lying on the water; it is gone.
  *
  * Each cloud is a handful of low-poly blobs merged into one mesh and coloured coral,
  * lighter on top, like the reference's sunset clouds. They drift east and wrap, which
@@ -71,26 +72,10 @@ export function Clouds(): React.ReactElement {
     () => [0, 1, 2].map((index) => createCloudGeometry(WORLD_SEED + index * 17, WORLD_COLORS.cloudShade, WORLD_COLORS.cloud)),
     [],
   );
-  const mistGeometries = useMemo(
-    () => [0, 1, 2].map((index) => createCloudGeometry(WORLD_SEED + 40 + index * 17, WORLD_COLORS.mistShade, WORLD_COLORS.mist)),
-    [],
-  );
 
   // Unlit: a lit flat-shaded cloud turns into a grey-brown lump against a bright sky.
   // The shading is baked into the vertex colours, underside to top.
   const material = useMemo(() => new MeshBasicMaterial({ vertexColors: true, fog: true }), []);
-  const mistMaterial = useMemo(
-    () =>
-      new MeshBasicMaterial({
-        vertexColors: true,
-        fog: true,
-        transparent: true,
-        // Faint: unlit and any denser, the mist reads as a white smear over the far shore.
-        opacity: 0.22,
-        depthWrite: false,
-      }),
-    [],
-  );
 
   const clouds = useMemo<CloudState[]>(() => {
     const random = createRandom(WORLD_SEED + 99);
@@ -105,18 +90,6 @@ export function Clouds(): React.ReactElement {
     }));
   }, []);
 
-  const mist = useMemo(() => {
-    const random = createRandom(WORLD_SEED + 7);
-    return Array.from({ length: MIST.count }, (_, index) => ({
-      x: -132 + (index / (MIST.count - 1)) * 264 + (random() - 0.5) * 14,
-      y: MIST.height + (random() - 0.5) * 4,
-      z: MIST.nearZ + random() * (MIST.farZ - MIST.nearZ),
-      scaleX: 3.0 + random() * 1.6,
-      scaleY: 0.22 + random() * 0.12,
-      scaleZ: 1.6 + random() * 0.9,
-      variant: index % 3,
-    }));
-  }, []);
 
   const cloudRefs = useRef<(Mesh | null)[]>([]);
 
@@ -143,15 +116,6 @@ export function Clouds(): React.ReactElement {
         />
       ))}
 
-      {mist.map((bank, index) => (
-        <mesh
-          key={`mist-${index}`}
-          geometry={mistGeometries[bank.variant]}
-          material={mistMaterial}
-          position={[bank.x, bank.y, bank.z]}
-          scale={[bank.scaleX, bank.scaleY, bank.scaleZ]}
-        />
-      ))}
     </group>
   );
 }

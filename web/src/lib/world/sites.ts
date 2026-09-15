@@ -42,7 +42,9 @@ export const SITES: readonly Site[] = [
   // The araucaria wood on the peninsula.
   { slug: "bosque-das-araucarias", x: -60, z: -44, rotationY: 0.6, pad: 12, clearing: 5 },
   // The falls at the dam, where the river leaves the reservoir.
-  { slug: "salto-caveiras", x: 118, z: -96, rotationY: 0, pad: 10, clearing: 12 },
+  // No pad: the dam complex samples the ground under each of its parts, and a pad here
+  // pushed a flat green tongue out into the channel.
+  { slug: "salto-caveiras", x: 118, z: -96, rotationY: 0, pad: 3, clearing: 12 },
   // The far attraction: out on the plateau at the very end of the map.
   { slug: "porto-de-ovnis", x: 22, z: -288, rotationY: 0, pad: 38, clearing: 40 },
   // The farms, on the plateau behind the ridge, at the back of the map. They face the

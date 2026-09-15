@@ -8,7 +8,7 @@
  * Landmarks may touch their own driveway; houses, shops and chalets may not touch any.
  */
 import { LANDMARKS } from "../src/lib/world/neighborhood-layout";
-import { ROAD_POLYLINES } from "../src/lib/world/road-network";
+import { PARKING_LOTS, ROAD_POLYLINES } from "../src/lib/world/road-network";
 import { SAILBOAT_CURVE, YACHT_CURVE } from "../src/lib/world/roads";
 import { lakeDistance, peninsulaDistance } from "../src/lib/world/terrain";
 const R: Record<string, number> = { lakeHouse: 8.4, houseWhitewash: 3.6, houseYellow: 3.6, houseTimber: 3.6, houseMint: 3.6, cabana: 2.8, shopBrick: 4.2, shopYellow: 4.2, shopMint: 4.2, shopTimber: 4.2, aFrameShingle: 3.4, aFrameSlate: 3.4, aFrameTile: 3.4, stiltCabin: 4, pousada: 11, praca: 11, galpao: 9, ctg: 9, estacao: 11, vinicola: 8, chapel: 4, farmRed: 26, farmOchre: 26, farmTimber: 26 };
@@ -33,6 +33,15 @@ for (const p of b.filter((m) => !LANDMARK.has(m.model))) {
     best = Math.min(best, seg(p.x, p.z, line.points[k][0], line.points[k][1], line.points[k + 1][0], line.points[k + 1][1]) - line.width / 2);
   if (best < R[p.model] * p.scale * 0.8) { bad += 1; console.log(`ON ROAD ${p.model}(${p.x.toFixed(0)},${p.z.toFixed(0)}) gap=${best.toFixed(1)} r=${(R[p.model] * p.scale).toFixed(1)}`); }
 }
+// Car parks must clear every street, or the cars park on the carriageway.
+for (const lot of PARKING_LOTS) {
+  const reach = Math.hypot(lot.width, lot.depth) / 2;
+  let best = Infinity;
+  for (const line of ROAD_POLYLINES) for (let k = 0; k < line.points.length - 1; k += 1)
+    best = Math.min(best, seg(lot.x, lot.z, line.points[k][0], line.points[k][1], line.points[k + 1][0], line.points[k + 1][1]) - line.width / 2);
+  if (best < reach) { bad += 1; console.log(`CAR PARK (${lot.x},${lot.z}) on a road, gap ${best.toFixed(1)} < ${reach.toFixed(1)}`); }
+}
+
 // The boats: each loop stays on open water and off the island, the loops never come
 // within a boat length of each other, and no mooring sits on a loop.
 const BOAT_CLEARANCE = 12;

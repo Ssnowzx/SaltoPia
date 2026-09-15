@@ -384,6 +384,10 @@ of wet earth, drawn in the terrain's fragment shader from the interpolated groun
 and signed distance to the water. As a vertex colour, at one vertex every 2.4 units, a
 strip that narrow was a sawtooth along every diagonal stretch of shore.
 
+The terrain itself is smooth-shaded. Flat-shaded, every slope was a zig-zag of light
+and dark triangles: a wall of facets along the channel bank, a ladder of pale rungs down
+any road on an embankment. Buildings, trees and the backdrop hills keep their facets.
+
 ### D22 — Light from two temperatures
 
 The key light is warm and aimed at the community; the fill is a cool sky hemisphere.

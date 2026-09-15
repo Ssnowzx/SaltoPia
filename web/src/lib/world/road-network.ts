@@ -164,8 +164,9 @@ export interface ParkingLot {
 
 /** Car parks: a paved rectangle, with cars placed by the layout. */
 export const PARKING_LOTS: readonly ParkingLot[] = [
-  { x: 38, z: 104, width: 16, depth: 11, rotationY: -0.3 },
-  { x: 64, z: 40, width: 12, depth: 8, rotationY: -0.3 },
+  // Between the shore street and the pousada. The lot used to sit on the street itself,
+  // so the cars parked on the carriageway.
+  { x: 26, z: 100, width: 15, depth: 10, rotationY: -0.3 },
   { x: 144, z: 106, width: 10, depth: 7, rotationY: 0.5 },
 ];
 

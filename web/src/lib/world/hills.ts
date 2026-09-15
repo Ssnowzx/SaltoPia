@@ -32,8 +32,10 @@ const HILLS: readonly HillSpec[] = [
   { x: -22, z: -412, radius: 120, height: 26, depth: 0.95 },
   { x: 136, z: -398, radius: 110, height: 23, depth: 0.9 },
   // Shoulders, closing the frame on both sides well outside the bay.
-  { x: -324, z: -142, radius: 86, height: 16, depth: 0.5 },
-  { x: -342, z: -22, radius: 78, height: 14, depth: 0.5 },
+  // The west pair stand over open water, where no tree can be planted on them, so
+  // they are pushed deep into the haze rather than left as bare slopes at the frame edge.
+  { x: -334, z: -152, radius: 86, height: 16, depth: 0.9 },
+  { x: -352, z: -26, radius: 78, height: 14, depth: 0.9 },
   { x: 330, z: -122, radius: 84, height: 15, depth: 0.5 },
   { x: 348, z: 12, radius: 76, height: 13, depth: 0.5 },
 ];

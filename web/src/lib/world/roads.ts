@@ -176,7 +176,9 @@ function appendRectangle(lot: ParkingLot, lift: number, color: Color, surface: S
       const b = corner(u1, v0);
       const c = corner(u1, v1);
       const d = corner(u0, v1);
-      for (const [px, pz] of [a, b, d, b, c, d]) {
+      // Wound to face +Y. The other way round the whole car park was back-face culled -
+      // it had never actually drawn; the cars simply stood on the grass.
+      for (const [px, pz] of [a, d, b, b, d, c]) {
         pushVertex(sink, px, surfaceHeightAt(px, pz) + lift, pz, color, surface, 0, 0);
       }
     }

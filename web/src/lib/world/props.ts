@@ -25,6 +25,22 @@ function triangle(
   return paint(geometry, color, "plain");
 }
 
+/** A sail: a triangle hinged on the mast, swung out by `boom` radians. */
+function sail(
+  a: readonly [number, number, number],
+  b: readonly [number, number, number],
+  c: readonly [number, number, number],
+  boom: number,
+  color: string,
+): BufferGeometry {
+  const geometry = triangle(a, b, c, color);
+  // The mast stands at (0, y, a.z); rotate the sail about it.
+  geometry.translate(0, 0, -a[2]);
+  geometry.rotateY(boom);
+  geometry.translate(0, 0, a[2]);
+  return geometry;
+}
+
 /** A wheel lying on its side, axle along X. */
 export function wheel(x: number, y: number, z: number, radius: number): BufferGeometry {
   const geometry = new CylinderGeometry(radius, radius, radius * 0.9, 8);
@@ -179,8 +195,11 @@ export function createSailboatGeometry(sailColor: string): BufferGeometry {
     box(0.9, 0.12, 2.0, WORLD_COLORS.timber, 0, 0.46, -0.6, 0, "planks"),
     post(0.05, 0.06, 5.2, 5, WORLD_COLORS.whitewash, 0, 0.4, 0.4, "metal"),
     box(0.06, 0.06, 2.4, WORLD_COLORS.whitewash, 0, 1.2, -0.8, 0, "metal"),
-    triangle([0.02, 1.25, 0.4], [0.02, 5.4, 0.4], [0.02, 1.25, -2.0], sailColor),
-    triangle([-0.02, 1.2, 0.5], [-0.02, 4.6, 0.5], [-0.02, 1.2, 2.1], WORLD_COLORS.whitewash),
+    // The sails are sheeted out at different angles. Both along the centreline, they
+    // vanished together whenever the boat pointed at the camera - a flat sheet seen
+    // edge-on has no width - and the boat lost its shape for a stretch of every lap.
+    sail([0, 1.25, 0.4], [0, 5.4, 0.4], [0, 1.25, -2.0], 0.5, sailColor),
+    sail([0, 1.2, 0.5], [0, 4.6, 0.5], [0, 1.2, 2.1], -0.38, WORLD_COLORS.whitewash),
   ];
   return merge(parts);
 }

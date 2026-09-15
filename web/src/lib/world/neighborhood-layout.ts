@@ -497,14 +497,12 @@ export const LANDMARKS: readonly Placement[] = [
   ),
 
   // Parked cars in the car parks and the yards.
-  placed("sedanWhite", 34, 102, -0.3),
-  placed("sedanDark", 37, 104, -0.3),
-  placed("sedanSilver", 40, 106, -0.3),
-  placed("sedanWhite", 37, 100, -0.3),
-  placed("sedanDark", 41, 102, -0.3),
-  placed("sedanSilver", 61, 39, -0.3),
-  placed("sedanWhite", 64, 41, -0.3),
-  placed("sedanDark", 67, 43, -0.3),
+  placed("sedanWhite", 22, 98, 1.27),
+  placed("sedanDark", 25, 97, 1.27),
+  placed("sedanSilver", 28, 96, 1.27),
+  placed("sedanWhite", 23, 103, 1.27),
+  placed("sedanDark", 26, 102, 1.27),
+  placed("sedanSilver", 29, 101, 1.27),
   placed("sedanSilver", 142, 105, 0.5),
   placed("sedanWhite", 145, 107, 0.5),
   placed("sedanDark", 186, -186, 0.9),
@@ -718,6 +716,19 @@ export function createScatter(): readonly Placement[] {
   scatter("broadleafWarm", 150, [0.9, 1.7], onFarPlateau, onLand, 3);
   scatter("araucaria", 54, [0.9, 1.4], onFarPlateau, onLand, 4);
   scatter("rock", 60, [0.7, 2.4], onFarPlateau, onLand, 3);
+
+  // The outskirts: everything outside the community, to the edge of the map. Araucaria
+  // country - left bare, the edges of the frame read as pasture with nothing on it.
+  const outskirts = (x: number, z: number): boolean => {
+    const beyondTown = x - eastShoreXAt(z) > 150 || z > 156 || z < -128 || x < -205;
+    return onLand(x, z) && beyondTown;
+  };
+  const onOutskirts = (): readonly [number, number] => [-300 + random() * 600, -318 + random() * 616];
+  scatter("araucaria", 520, [0.85, 1.4], onOutskirts, outskirts, 3);
+  scatter("araucariaB", 380, [0.85, 1.4], onOutskirts, outskirts, 3);
+  scatter("conifer", 420, [0.8, 1.5], onOutskirts, outskirts, 2);
+  scatter("broadleaf", 300, [0.9, 1.6], onOutskirts, outskirts, 2);
+  scatter("bush", 220, [0.7, 1.3], onOutskirts, outskirts, 1);
 
   return placements;
 }

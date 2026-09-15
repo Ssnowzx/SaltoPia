@@ -86,9 +86,6 @@ export const WORLD_COLORS = {
   ballast: "#8b8378",
   /** Clouds: lit tops and shaded undersides. */
   cloud: "#fff3e4",
-  /** The haze lying on the far shore: barely there, the colour of the fog. */
-  mist: "#f6e3c6",
-  mistShade: "#ead0a8",
   cloudShade: "#e6b49a",
   /** Lit lantern glass. */
   lantern: "#f2c14e",
@@ -163,7 +160,8 @@ export const LAKE = {
   /** Water surface height. */
   level: 0.6,
   /** Lake bed height. */
-  floor: -4.2,
+  /** Shallow: the water is opaque, and a deep basin only makes the banks steep. */
+  floor: -3.0,
   /** Where the dam sits, at the reservoir's north-east corner. */
   dam: { x: 112, z: -104 },
   /** River level below the dam. */
@@ -205,19 +203,11 @@ export const FOG = {
 
 /** Clouds drifting over the valley - thin sunset streaks, not cumulus. */
 export const CLOUDS = {
-  count: 11,
-  minHeight: 64,
-  maxHeight: 108,
+  count: 9,
+  minHeight: 96,
+  maxHeight: 132,
   spread: 420,
   driftSpeed: 1.1,
-} as const;
-
-/** The haze lying on the far shore. */
-export const MIST = {
-  count: 8,
-  height: 9,
-  nearZ: -92,
-  farZ: -112,
 } as const;
 
 /** Vehicles. */

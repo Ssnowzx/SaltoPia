@@ -50,10 +50,13 @@ const FRAGMENT_BEACH = /* glsl */ `
 `;
 
 export function createTerrainMaterial(grass: Texture): MeshStandardMaterial {
+  // Smooth-shaded. Flat-shaded, every slope became a zig-zag of light and dark
+  // triangles: a wall of facets along the channel bank, a ladder of pale rungs along
+  // any road on an embankment. The buildings and trees keep their facets.
   const material = new MeshStandardMaterial({
     map: grass,
     vertexColors: true,
-    flatShading: true,
+    flatShading: false,
     roughness: 1,
     metalness: 0,
   });

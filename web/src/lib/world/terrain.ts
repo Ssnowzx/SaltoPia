@@ -198,6 +198,10 @@ const RIDGE: readonly Ridge[] = [
   { x: -150, z: -276, radiusX: 90, radiusZ: 60, height: 20 },
   { x: 150, z: -282, radiusX: 88, radiusZ: 60, height: 19 },
   { x: 270, z: -264, radiusX: 90, radiusZ: 60, height: 17 },
+  // The east shoulders, inside the map's edge. Wooded like everything else: as bare
+  // domes at the frame's edge they read as heaps of clay.
+  { x: 262, z: -30, radiusX: 64, radiusZ: 100, height: 13 },
+  { x: 270, z: 112, radiusX: 60, radiusZ: 90, height: 11 },
 ];
 
 function ridgeHeightAt(x: number, z: number): number {
@@ -229,8 +233,9 @@ interface FlatPad {
  */
 const FLAT_PADS: readonly FlatPad[] = [
   ...SITES.map((site) => ({ x: site.x, z: site.z, radius: site.pad, falloff: Math.max(6, site.pad * 0.5) })),
-  // The usina below the dam.
-  { x: 128, z: -112, radius: 8, falloff: 5 },
+  // The usina on the channel's south bank. Its pad was still at the old river site,
+  // so the building stood in the slope with only its roof showing.
+  { x: 118, z: -90, radius: 7, falloff: 5 },
   // The lakefront houses and cabanas, which stand on the drop down to the water.
   { x: 44, z: 40, radius: 11, falloff: 7 },
   { x: 70, z: -14, radius: 11, falloff: 7 },
@@ -240,8 +245,7 @@ const FLAT_PADS: readonly FlatPad[] = [
   { x: 22, z: 124, radius: 7, falloff: 5 },
   // Car parks. Without their own ground the cars stood on a slope, and a flat-bottomed
   // car on a slope floats at one end.
-  { x: 38, z: 104, radius: 13, falloff: 7 },
-  { x: 64, z: 40, radius: 10, falloff: 6 },
+  { x: 26, z: 100, radius: 12, falloff: 7 },
   { x: 144, z: 106, radius: 9, falloff: 6 },
   // The chalets on the ridge, each on its own shelf so it does not tip down the slope.
   ...CHALET_SITES.map(([x, z]) => ({ x, z, radius: 6, falloff: 4 })),
@@ -293,13 +297,15 @@ function naturalHeightAt(x: number, z: number): number {
   const lake = lakeDistance(x, z);
   ground = Math.max(ground, LAKE.level + 1.0 - 1.0 * (1 - smoothstep(6, 14, lake)));
 
-  // The basin: the floor drops away from the shore.
-  ground += (LAKE.floor - ground) * smoothstep(8, -6, lake);
+  // The basin: the floor eases away from the shore. Dropping it over six units made a
+  // 45-degree bank that, at one vertex every 2.4 units, was a faceted wall along the
+  // whole outlet channel.
+  ground += (LAKE.floor - ground) * smoothstep(12, -5, lake);
 
   // The river below the dam.
   const river = riverDistance(x, z);
   const riverFloor = riverSurfaceHeightAt(x) - 2.6;
-  ground += (riverFloor - ground) * smoothstep(LAKE.riverHalfWidth + 6, LAKE.riverHalfWidth * 0.9, river) * smoothstep(LAKE.dam.x - 2, LAKE.dam.x + 3, x);
+  ground += (riverFloor - ground) * smoothstep(LAKE.riverHalfWidth + 10, LAKE.riverHalfWidth * 0.9, river) * smoothstep(LAKE.dam.x - 2, LAKE.dam.x + 3, x);
 
   return ground;
 }
@@ -334,7 +340,7 @@ function paddedHeightAt(x: number, z: number): number {
  * comes through its edges on every bump; lift it more and it floats on every crest.
  * Real roads cut and fill, and so does this one.
  */
-const ROAD_SHOULDER = 3.2;
+const ROAD_SHOULDER = 5.0;
 
 /** How far along the road the level is averaged, so the grade does not follow bumps. */
 const ROAD_SMOOTHING = 3.6;
