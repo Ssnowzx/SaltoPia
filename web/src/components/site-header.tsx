@@ -54,7 +54,7 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
             width={LOGO.width}
             height={LOGO.height}
             priority
-            className="h-11 w-auto sm:h-16"
+            className="h-8 w-auto sm:h-10"
           />
         </Link>
 

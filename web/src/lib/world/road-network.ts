@@ -118,7 +118,7 @@ export interface Driveway {
 
 export const DRIVEWAYS: readonly Driveway[] = [
   // Pousada da Geada, at the south end of the lakefront.
-  { points: [[40, 106], [32, 110]], width: ROAD_WIDTHS.drivewayWidth, surface: "street", yard: [29, 111], yardRadius: 6 },
+  { points: [[40, 106], [33, 110]], width: ROAD_WIDTHS.drivewayWidth, surface: "street", yard: [31, 111], yardRadius: 3.5 },
   // Praca do Pinhao and its pier.
   { points: [[62, 12], [54, 12]], width: ROAD_WIDTHS.drivewayWidth, surface: "street", yard: [51, 12], yardRadius: 5 },
   // The shops, off the road through the middle of the community.

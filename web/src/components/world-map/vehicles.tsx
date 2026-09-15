@@ -46,6 +46,12 @@ function createPickupGeometry(): BufferGeometry {
   return merge(parts);
 }
 
+/**
+ * The moving boats are built oversized like the moored ones: at the map's distance a
+ * true-scale yacht is a few pixels of deck, a plank adrift.
+ */
+const BOAT_SCALE = 1.6;
+
 /** How fast the rides turn, radians per second. */
 const RIDES = { wheelSpeed: 0.22, carouselSpeed: 0.55, swingSpeed: 0.9 } as const;
 
@@ -115,7 +121,7 @@ export function Vehicles(): React.ReactElement {
   const sailboatLength = useMemo(() => SAILBOAT_CURVE.getLength(), []);
 
   const onRoad = (x: number, z: number): number => surfaceHeightAt(x, z) + ROAD.lift;
-  const onWater = (): number => LAKE.level;
+  const onWater = (): number => LAKE.level + VEHICLES.boatFreeboard * BOAT_SCALE;
 
   useFrame(({ clock }) => {
     const elapsed = clock.getElapsedTime();
@@ -123,13 +129,16 @@ export function Vehicles(): React.ReactElement {
     if (carRef.current) {
       placeOnCurve(carRef.current, CAR_CURVE, ((elapsed * VEHICLES.carSpeed) / carLength) % 1, onRoad, scratch);
     }
+    // The roll is applied on top of the heading with rotateZ, never by writing the
+    // Euler's z. `lookAt` can express a heading as (x = pi, y, z = pi), and overwriting
+    // z alone then turned the boat upside down - a flat plank adrift, showing its keel.
     if (yachtRef.current) {
       placeOnCurve(yachtRef.current, YACHT_CURVE, ((elapsed * VEHICLES.boatSpeed) / yachtLength) % 1, onWater, scratch);
-      yachtRef.current.rotation.z = Math.sin(elapsed * 1.3) * 0.02;
+      yachtRef.current.rotateZ(Math.sin(elapsed * 1.3) * 0.02);
     }
     if (sailboatRef.current) {
       placeOnCurve(sailboatRef.current, SAILBOAT_CURVE, ((elapsed * VEHICLES.boatSpeed * 0.7) / sailboatLength) % 1, onWater, scratch);
-      sailboatRef.current.rotation.z = 0.08 + Math.sin(elapsed * 0.9) * 0.04;
+      sailboatRef.current.rotateZ(0.08 + Math.sin(elapsed * 0.9) * 0.04);
     }
 
     // The fairground rides turn; the drop tower climbs slowly and falls.
@@ -180,8 +189,8 @@ export function Vehicles(): React.ReactElement {
   return (
     <group>
       <mesh ref={carRef} geometry={pickup} material={material} castShadow />
-      <mesh ref={yachtRef} geometry={yacht} material={material} castShadow />
-      <mesh ref={sailboatRef} geometry={sailboat} material={material} castShadow />
+      <mesh ref={yachtRef} geometry={yacht} material={material} scale={BOAT_SCALE} castShadow />
+      <mesh ref={sailboatRef} geometry={sailboat} material={material} scale={BOAT_SCALE} castShadow />
       <mesh ref={saucerRef} geometry={saucer} material={material} castShadow />
       <mesh ref={landingRef} geometry={saucer} material={material} castShadow />
       <mesh ref={wheelRef} geometry={ferrisWheel} material={material} position={[...park.wheel]} castShadow />

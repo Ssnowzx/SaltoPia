@@ -214,6 +214,11 @@ export const CLOUDS = {
 export const VEHICLES = {
   carSpeed: 6.5,
   boatSpeed: 4.2,
+  /**
+   * How high a hull rides above the surface. The water is opaque, and a boat placed at
+   * the surface showed nothing but its deck - a plank adrift in the middle of the lake.
+   */
+  boatFreeboard: 0.45,
 } as const;
 
 /** Chimney smoke. */

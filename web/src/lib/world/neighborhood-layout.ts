@@ -12,7 +12,7 @@ import {
   createRockGeometry,
   createStoneWallGeometry,
 } from "./builders";
-import { LAKE, TERRAIN, UFO_PORT, WORLD_COLORS, WORLD_SEED } from "./constants";
+import { LAKE, TERRAIN, UFO_PORT, VEHICLES, WORLD_COLORS, WORLD_SEED } from "./constants";
 import { createAmusementParkGeometry, createRestaurantGeometry } from "./attractions";
 import { createFarmGeometry } from "./farms";
 import { CHALET_SITES, SITES, siteAt } from "./sites";
@@ -277,7 +277,7 @@ function afloat(model: ModelKey, x: number, z: number, rotationY = 0, scale = 1)
 
 /** Boats read small from the map's distance, so they are built oversized on purpose. */
 function afloatBig(model: ModelKey, x: number, z: number, rotationY = 0, scale = 1): Placement {
-  return afloat(model, x, z, rotationY, scale * 1.6);
+  return { ...afloat(model, x, z, rotationY, scale * 1.6), yOffset: VEHICLES.boatFreeboard * 1.6 };
 }
 
 /**
@@ -508,12 +508,12 @@ export const LANDMARKS: readonly Placement[] = [
   ),
 
   // Parked cars in the car parks and the yards.
-  placed("sedanWhite", 22, 98, 1.27),
-  placed("sedanDark", 25, 97, 1.27),
-  placed("sedanSilver", 28, 96, 1.27),
-  placed("sedanWhite", 23, 103, 1.27),
-  placed("sedanDark", 26, 102, 1.27),
-  placed("sedanSilver", 29, 101, 1.27),
+  placed("sedanWhite", 21.5, 97.5, 1.27),
+  placed("sedanDark", 25, 96.4, 1.27),
+  placed("sedanSilver", 28.5, 95.3, 1.27),
+  placed("sedanWhite", 23.5, 104, 1.27),
+  placed("sedanDark", 27, 102.9, 1.27),
+  placed("sedanSilver", 30.5, 101.8, 1.27),
   placed("sedanSilver", 142, 105, 0.5),
   placed("sedanWhite", 145, 107, 0.5),
   placed("sedanDark", 186, -186, 0.9),
