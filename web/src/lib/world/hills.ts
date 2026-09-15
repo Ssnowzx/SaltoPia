@@ -36,8 +36,9 @@ const HILLS: readonly HillSpec[] = [
   // they are pushed deep into the haze rather than left as bare slopes at the frame edge.
   { x: -334, z: -152, radius: 86, height: 16, depth: 0.9 },
   { x: -352, z: -26, radius: 78, height: 14, depth: 0.9 },
-  { x: 330, z: -122, radius: 84, height: 15, depth: 0.5 },
-  { x: 348, z: 12, radius: 76, height: 13, depth: 0.5 },
+  // No east pair: the east shoulders are terrain now, wooded like the rest. As backdrop
+  // meshes their front edges reached inside the map and stood behind the fairground as
+  // bare mounds.
 ];
 
 function createHillGeometry(hill: HillSpec, seed: number): BufferGeometry {

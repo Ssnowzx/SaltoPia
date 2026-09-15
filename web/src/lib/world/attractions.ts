@@ -36,6 +36,12 @@ export const FERRIS_WHEEL = { x: -18, y: 13.5, z: -6, radius: 11 } as const;
 /** Where the carousel's platform pivots. */
 export const CAROUSEL = { x: 14, y: 0.55, z: 4, radius: 5.2 } as const;
 
+/** The chair swing: its arms and chairs turn about the top of the mast. */
+export const SWING = { x: 20, y: 8.2, z: -16, radius: 4.6 } as const;
+
+/** The drop tower: a ring of seats that climbs the mast and falls. */
+export const DROP_TOWER = { x: -22, z: -19, height: 19, low: 1.6, top: 16, periodSeconds: 13 } as const;
+
 const PARK_COLORS = {
   red: "#c94a3a",
   cream: "#f5e9cf",
@@ -127,6 +133,99 @@ function ticketGate(x: number, z: number): BufferGeometry[] {
   ];
 }
 
+/** The drop tower's mast, base and crown; the ring of seats is a mesh of its own. */
+function dropTowerMast(): BufferGeometry[] {
+  const { x, z, height } = DROP_TOWER;
+  return [
+    post(2.6, 3, 0.6, 12, WORLD_COLORS.stone, x, 0, z, "stone"),
+    post(0.5, 0.7, height, 8, PARK_COLORS.steel, x, 0.6, z, "metal"),
+    post(0.14, 0.14, height, 4, PARK_COLORS.red, x + 0.6, 0.6, z, "metal"),
+    post(0.14, 0.14, height, 4, PARK_COLORS.red, x - 0.6, 0.6, z, "metal"),
+    box(2.4, 0.8, 2.4, PARK_COLORS.red, x, height + 0.9, z, 0, "metal"),
+    blob(0.4, PARK_COLORS.yellow, x, height + 1.6, z, 1, 1, "glass"),
+  ];
+}
+
+/** The chair swing's mast and canopy; the arms and chairs turn separately. */
+function swingMast(): BufferGeometry[] {
+  const { x, y, z, radius } = SWING;
+  return [
+    post(1.6, 1.8, 0.4, 12, WORLD_COLORS.stone, x, 0, z, "stone"),
+    post(0.36, 0.44, y - 0.2, 8, PARK_COLORS.cream, x, 0.4, z, "plaster"),
+    cone(radius * 0.7, 1.6, 12, PARK_COLORS.teal, x, y + 0.6, z, "metal"),
+    blob(0.35, PARK_COLORS.yellow, x, y + 2.4, z, 1, 1, "glass"),
+  ];
+}
+
+/** A game stall: a tent with a striped roof and a counter, facing +Z before `rotation`. */
+function gameStall(x: number, z: number, rotation: number, color: string): BufferGeometry[] {
+  const parts: BufferGeometry[] = [
+    box(3.6, 0.2, 2.6, WORLD_COLORS.timber, 0, 0.1, 0, 0, "planks"),
+    box(3.4, 1.0, 0.3, WORLD_COLORS.timberDark, 0, 0.7, 1.15, 0, "planks"),
+    box(3.4, 1.6, 0.2, PARK_COLORS.cream, 0, 1.0, -1.2, 0, "plaster"),
+    cone(2.6, 1.6, 4, color, 0, 2.6, 0, "plain"),
+    blob(0.22, PARK_COLORS.yellow, 0, 4.3, 0, 1, 0, "glass"),
+  ];
+  for (const px of [-1.6, 1.6]) {
+    for (const pz of [-1.1, 1.1]) parts.push(post(0.08, 0.1, 2.6, 4, WORLD_COLORS.timberDark, px, 0.2, pz, "bark"));
+  }
+  // Prizes on the back wall.
+  for (const [px, py] of [[-1.1, 1.4], [-0.4, 1.6], [0.4, 1.3], [1.1, 1.6]] as const) {
+    parts.push(blob(0.22, [PARK_COLORS.red, PARK_COLORS.teal, PARK_COLORS.yellow][Math.abs(Math.round(px * 3)) % 3], px, py, -1.05, 1, 0, "plain"));
+  }
+  for (const part of parts) {
+    part.rotateY(rotation);
+    part.translate(x, 0, z);
+  }
+  return parts;
+}
+
+/** A bandstand: a round deck under a conical roof on posts. */
+function bandstand(x: number, z: number): BufferGeometry[] {
+  const parts: BufferGeometry[] = [
+    post(3.4, 3.6, 0.6, 12, WORLD_COLORS.stone, x, 0, z, "stone"),
+    post(3.2, 3.2, 0.2, 12, WORLD_COLORS.timber, x, 0.6, z, "planks"),
+    cone(4.0, 1.8, 8, PARK_COLORS.teal, x, 3.6, z, "metal"),
+    post(3.9, 3.9, 0.2, 8, PARK_COLORS.cream, x, 3.5, z, "plaster"),
+    blob(0.3, PARK_COLORS.yellow, x, 5.7, z, 1, 1, "glass"),
+  ];
+  for (let index = 0; index < 8; index += 1) {
+    const angle = (index / 8) * Math.PI * 2;
+    parts.push(post(0.12, 0.14, 3, 5, PARK_COLORS.cream, x + Math.cos(angle) * 3, 0.6, z + Math.sin(angle) * 3, "plaster"));
+  }
+  const rail = createFenceGeometry(2.2);
+  for (let index = 1; index < 8; index += 1) {
+    const angle = (index / 8) * Math.PI * 2 + Math.PI / 8;
+    const segment = rail.clone();
+    segment.rotateY(-angle + Math.PI / 2);
+    segment.translate(x + Math.cos(angle) * 3, 0.8, z + Math.sin(angle) * 3);
+    parts.push(segment);
+  }
+  return parts;
+}
+
+/** A vendor's cart: a box on two wheels under a small awning. */
+function cart(x: number, z: number, rotation: number, color: string): BufferGeometry[] {
+  const parts: BufferGeometry[] = [
+    box(1.6, 1.0, 0.9, PARK_COLORS.cream, 0, 0.9, 0, 0, "planks"),
+    box(1.7, 0.1, 1.0, color, 0, 1.45, 0, 0, "plain"),
+    post(0.05, 0.05, 1.3, 4, PARK_COLORS.steel, 0.7, 1.4, 0.35, "metal"),
+    post(0.05, 0.05, 1.3, 4, PARK_COLORS.steel, -0.7, 1.4, 0.35, "metal"),
+    awning(1.9, 0.6, color, 0, 2.7, 0, "plain"),
+  ];
+  for (const wx of [-0.55, 0.55]) {
+    const wheel = post(0.3, 0.3, 0.08, 10, WORLD_COLORS.slateDark, 0, 0, 0, "metal");
+    wheel.rotateZ(Math.PI / 2);
+    wheel.translate(wx, 0.3, 0.25);
+    parts.push(wheel);
+  }
+  for (const part of parts) {
+    part.rotateY(rotation);
+    part.translate(x, 0, z);
+  }
+  return parts;
+}
+
 /** Poles with strings of lights between them, around the fairground. */
 function lightStrings(points: ReadonlyArray<readonly [number, number]>): BufferGeometry[] {
   const parts: BufferGeometry[] = [];
@@ -150,12 +249,26 @@ export function createAmusementParkGeometry(): BufferGeometry {
   const parts: BufferGeometry[] = [
     ...ferrisFrame(),
     ...carouselCanopy(),
+    ...dropTowerMast(),
+    ...swingMast(),
     ...bumperCars(2, -18),
+    ...bandstand(-12, -19),
     ...ticketGate(2, 18),
     ...kiosk(-10, 12, 0.3, PARK_COLORS.red),
     ...kiosk(-4, 14, 0.1, PARK_COLORS.teal),
     ...kiosk(12, 14, -0.2, PARK_COLORS.yellow),
+    // Game stalls down the west and east fences, facing the midway.
+    ...gameStall(-25, 2, Math.PI / 2, PARK_COLORS.red),
+    ...gameStall(-25, 8, Math.PI / 2, PARK_COLORS.teal),
+    ...gameStall(-25, -12, Math.PI / 2, PARK_COLORS.yellow),
+    ...gameStall(25, -8, -Math.PI / 2, PARK_COLORS.teal),
+    ...gameStall(25, -2, -Math.PI / 2, PARK_COLORS.red),
+    ...gameStall(25, 10, -Math.PI / 2, PARK_COLORS.yellow),
+    ...cart(-8, 8, 0.4, PARK_COLORS.red),
+    ...cart(9, 10, -0.5, PARK_COLORS.teal),
+    ...cart(-2, -9, 1.2, PARK_COLORS.yellow),
     ...lightStrings([[-28, 16], [-28, -22], [22, -24], [24, 16]]),
+    ...lightStrings([[-6, -3], [10, -3], [10, 1], [-6, 1]]),
   ];
 
   // A paved midway from the gate past the rides.
@@ -234,6 +347,52 @@ export function createFerrisWheelGeometry(): BufferGeometry {
     parts.push(box(0.12, 0.6, 0.12, PARK_COLORS.steel, gx, gy - 0.2, 0, 0, "metal"));
   }
 
+  return merge(parts);
+}
+
+/** The chair swing's turning top: arms from the hub, chains, and chairs flung outward. */
+export function createSwingGeometry(): BufferGeometry {
+  const { radius } = SWING;
+  const chairs = 10;
+  const parts: BufferGeometry[] = [post(1.2, 1.4, 0.5, 12, PARK_COLORS.red, 0, -0.25, 0, "metal")];
+  const colours = [PARK_COLORS.red, PARK_COLORS.teal, PARK_COLORS.yellow];
+  for (let index = 0; index < chairs; index += 1) {
+    const angle = (index / chairs) * Math.PI * 2;
+    const arm = post(0.06, 0.06, radius, 4, PARK_COLORS.steel, 0, 0, 0, "metal");
+    arm.rotateZ(-Math.PI / 2);
+    arm.rotateY(-angle);
+    parts.push(arm);
+    // The chair hangs out and down, as if flung by the turn.
+    const cx = Math.cos(angle) * (radius + 1.4);
+    const cz = Math.sin(angle) * (radius + 1.4);
+    const chain = post(0.03, 0.03, 3.4, 3, PARK_COLORS.steel, 0, 0, 0, "metal");
+    chain.rotateZ(0.42);
+    chain.rotateY(-angle);
+    chain.translate(Math.cos(angle) * (radius + 0.7), -3.2, Math.sin(angle) * (radius + 0.7));
+    parts.push(chain);
+    const chair = box(0.6, 0.5, 0.6, colours[index % 3], 0, 0, 0, 0, "metal");
+    chair.rotateY(-angle);
+    chair.translate(cx, -3.4, cz);
+    parts.push(chair);
+  }
+  return merge(parts);
+}
+
+/** The drop tower's ring of seats, centred on the mast. */
+export function createDropRingGeometry(): BufferGeometry {
+  const seats = 8;
+  const parts: BufferGeometry[] = [post(1.5, 1.5, 0.7, 12, PARK_COLORS.yellow, 0, 0, 0, "metal")];
+  for (let index = 0; index < seats; index += 1) {
+    const angle = (index / seats) * Math.PI * 2;
+    const seat = box(0.7, 0.9, 0.7, PARK_COLORS.red, 0, 0, 0, 0, "metal");
+    seat.rotateY(-angle);
+    seat.translate(Math.cos(angle) * 1.9, 0.5, Math.sin(angle) * 1.9);
+    parts.push(seat);
+    const back = box(0.7, 1.0, 0.16, PARK_COLORS.steel, 0, 0, 0, 0, "metal");
+    back.rotateY(-angle + Math.PI / 2);
+    back.translate(Math.cos(angle) * 1.55, 1.0, Math.sin(angle) * 1.55);
+    parts.push(back);
+  }
   return merge(parts);
 }
 
