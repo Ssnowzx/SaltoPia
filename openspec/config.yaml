@@ -1,0 +1,52 @@
+schema: spec-driven
+
+context: |
+  PROJECT: "Serranopolis" - an immersive 3D web experience that lets visitors
+  explore a fictional new neighborhood of Lages, Santa Catarina, Brazil
+  (Serra Catarinense highlands). Academic project for a 5th-semester presentation.
+
+  REFERENCE: The interaction model is modeled on visitmeatopia.com (Awwwards
+  Honorable Mention, Aug 2026). Same architecture and choreography, entirely
+  different theme, palette, copy and art. Never copy their assets or text.
+
+  ARCHITECTURE (hub-and-spoke):
+  - Home is NOT a scrolling page. It is a fullscreen WebGL canvas holding a
+    low-poly 3D neighborhood. The camera drifts over it and flies to points of
+    interest. Document height stays at viewport height.
+  - Map pins are HTML (div + inline SVG) in an absolutely positioned overlay
+    above the canvas, repositioned every frame by projecting 3D world positions
+    to 2D screen space. They are NOT 3D sprites.
+  - Clicking a pin does not navigate. The camera flies to the location
+    (GSAP, duration 2, ease power2.inOut) and a detail card animates in.
+    A "VISIT" button inside that card performs the route change.
+  - Place pages and recipe/experience pages ARE ordinary long scroll pages with
+    no canvas.
+  - Route changes use the View Transitions API with a circular iris reveal:
+    @keyframes hole { 0% { clip-path: circle(0%) } 100% { clip-path: circle(100%) } }
+    applied to ::view-transition-new(root) for 1.5s ease-in, while
+    ::view-transition-old(root) has no animation. A .no-transition class
+    disables it for reduced-motion users.
+
+  TECH STACK: Next.js 16 (App Router, Turbopack), React 19, TypeScript strict,
+  Tailwind CSS v4, three.js, @react-three/fiber, @react-three/drei,
+  gsap + @gsap/react (useGSAP), lenis for smooth scroll on content pages.
+
+  3D ASSETS: CC0 low-poly kits (Kenney City Kit, Quaternius, Poly Pizza),
+  composed at runtime from a typed layout data file rather than one giant
+  pre-baked GLB. Araucaria trees - the signature tree of the Serra - are
+  generated procedurally in three.js because no CC0 kit ships them.
+
+  CONVENTIONS:
+  - All identifiers, filenames, comments and commit messages in English.
+  - All user-facing copy in Brazilian Portuguese.
+  - No `any`. No class inheritance - compose instead.
+  - Files lowercase-with-hyphen. Components PascalCase. Constants UPPER_SNAKE_CASE.
+  - Every animation must respect prefers-reduced-motion.
+
+rules:
+  proposal:
+    - State explicitly which visitmeatopia.com mechanic each capability mirrors
+    - Always include a "Non-goals" section
+  design:
+    - Record exact animation durations, easings and colour tokens - no vague adjectives
+    - Note the WebGL performance budget and the mobile fallback for every 3D decision

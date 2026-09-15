@@ -1,0 +1,226 @@
+## Context
+
+See proposal.md — Why.
+
+The reference implementation at `visitmeatopia.com` was measured directly rather than
+guessed at: its pages were rendered in headless Chromium, its stylesheets read from the live
+document, and its bundles inspected. The numbers below are observed, not estimated.
+
+**What the reference actually does**
+
+| Aspect | Observed |
+| --- | --- |
+| Framework | Next.js 16.2.11 (Turbopack), React 19.3 canary, Emotion for styling |
+| 3D | three.js via `@react-three/fiber`; `GLTFLoader` + DRACO; `InstancedMesh`, `Points`, `VideoTexture` |
+| Animation | GSAP 3.38.1 with `Draggable` and `useGSAP`; `duration: 2`, `ease: "power2.inOut"` |
+| Hub document height | 918px against a 900px viewport — the hub does not scroll |
+| City payload | A single `Map.v45.glb` of **16.3 MB**, with ~160 textures unpacked as blobs |
+| Pins | `<div>` + inline `<svg>` (54×75) in an absolute overlay; positioned by inline `transform: translate(-50%,-50%) translate(Xpx, Ypx)`; hover `transform: scale()` at `0.2s ease-in-out` |
+| Pin colour | `#E75B37`; label `background #FFFDF6`, `border-radius 100px`, `padding 4px 8px` |
+| Page transition | View Transitions API. `@keyframes hole { 0% { clip-path: circle(0%) } 100% { clip-path: circle(100%) } }` on `::view-transition-new(root)` for `1.5s ease-in`; `::view-transition-old(root)` has no animation; a `.no-transition` class zeroes all durations |
+| Content pages | Ordinary scroll — district 5401px, recipe 4547px — with **no canvas** |
+| Palette | `#E75B37` `#C04C2E` `#9A3D25` `#FFFDF6` `#FEF2DF` `#FFEDCE` `#83C5AD` `#355D4F` `#0C5B53` `#3C3231` |
+| Type | `cinema-script` (display) + `proxima-nova` (UI), both Adobe Typekit |
+| Other | Kontent.ai headless CMS; `react-modal`; Google Tag Manager |
+
+**Constraints specific to this project**
+
+- Two of the reference's fonts are licensed Adobe Typekit families and cannot be used.
+- The reference's 16.3 MB single-GLB approach is a poor fit for an unknown classroom
+  network, and it hides the city's composition inside a binary the professor cannot inspect.
+- No budget: every asset must be CC0 or generated.
+- The evaluation is a live demo. A failure mode that blanks the screen costs more than any
+  amount of visual polish gains.
+
+## Goals / Non-Goals
+
+**Goals:**
+
+- Reproduce the reference's *choreography* — the hub-and-spoke model, the projected pin
+  overlay, the fly-to-then-card flow, the iris transition — at matching timing fidelity.
+- Keep the neighbourhood's composition readable as source: a reviewer should be able to open
+  one file and see what the town is made of.
+- Stay demonstrable on unknown hardware, including hardware with no working WebGL.
+- Carry an identity that is genuinely of the Serra Catarinense, not the reference's palette
+  with the hues rotated.
+
+**Non-Goals:**
+
+- A headless CMS. Content is typed TypeScript modules in the repository; adding a CMS later
+  changes the data source, not any spec.
+- Geographic accuracy. Serranópolis is a *fictional* new neighbourhood of Lages. It borrows
+  the region's architecture, vegetation, light and culture, not its street plan.
+- Authentication, user accounts, or the reference's photo-upload contest mechanic.
+- Matching the reference's asset *volume*. Eight points of interest, not ten districts with
+  ninety recipes.
+
+## Decisions
+
+### D1 — Compose the neighbourhood from a typed layout, not a pre-baked GLB
+
+The reference ships one 16.3 MB `Map.glb`. This project instead keeps a
+`neighborhood-layout.ts` module listing every placed object as
+`{ model, position, rotation, scale }`, loads a small set of CC0 kit models, and assembles
+the scene at runtime.
+
+*Why:* the layout becomes reviewable and diffable source — which matters for an academic
+submission — and the payload drops to the handful of distinct models actually used rather
+than a monolith containing every instance. It also removes Blender from the critical path,
+so the neighbourhood can be edited without leaving the editor.
+
+*Alternative considered:* authoring in Blender and exporting one DRACO-compressed GLB, as
+the reference does. Rejected for this project: it produces a better-looking result faster but
+makes the town opaque to review and puts a 16 MB download in front of the demo. It stays
+available as a later optimisation — the layout can be baked into a single GLB without any
+spec changing.
+
+### D2 — Generate araucária trees procedurally
+
+The araucária is the visual signature of the Serra Catarinense: a bare trunk with a flat,
+candelabra-like crown. No CC0 kit ships one, and substituting generic conifers would make
+the town read as alpine rather than Brazilian.
+
+They are therefore built in three.js geometry — a trunk plus radially arranged flattened
+crown segments, with seeded per-tree variation in height, crown radius and segment count —
+and drawn as a single instanced batch.
+
+*Why:* it is the cheapest way to get the one silhouette that carries the region's identity,
+and a seeded generator gives a forest of individuals from one geometry.
+
+*Alternative considered:* 2D billboard sprites from generated art. Rejected — billboards
+break the moment the camera orbits, and the hub orbits continuously.
+
+### D3 — Pins as projected HTML, matching the reference
+
+Each frame, each place's world position is projected to normalised device coordinates and
+written to the pin's `transform`. A place behind the camera plane is hidden. Occlusion is
+resolved by a raycast against terrain and building meshes.
+
+*Why:* this is what the reference does, and the reasons hold — HTML labels stay crisp at any
+distance, stay upright under orbit, take styling and transitions directly, and are reachable
+by keyboard and screen reader in a way that geometry never is.
+
+*Cost:* a DOM write per pin per frame. With eight pins this is negligible. The transform is
+written directly to the node rather than routed through React state, so the render loop does
+not trigger a reconciliation pass sixty times a second.
+
+### D4 — Iris transition via the View Transitions API, with the same numbers
+
+```css
+@keyframes iris {
+  from { clip-path: circle(0%); }
+  to   { clip-path: circle(100%); }
+}
+::view-transition-old(root) { animation: none; }
+::view-transition-new(root) { animation: 1.5s ease-in both iris; }
+```
+
+Identical in construction and timing to the reference. The outgoing page deliberately does
+not animate: the effect reads as an aperture opening onto the new page rather than as a
+cross-fade.
+
+Support is feature-detected. Where `startViewTransition` is absent, navigation proceeds
+plainly — the transition is decoration and never gates arrival.
+
+### D5 — Free type that carries the same roles
+
+| Role | Reference | Here | Why |
+| --- | --- | --- | --- |
+| Display script | `cinema-script` (Typekit) | **Yellowtail** | Same retro sign-painter register — a brush script with a painted ductus rather than a formal copperplate |
+| Interface sans | `proxima-nova` (Typekit) | **Figtree** | Geometric-humanist with a 400–900 range, so the heavy display weights the layout depends on exist |
+
+Both are self-hosted through `next/font/google`, which removes the third-party request and
+generates a metric-adjusted fallback, holding layout shift near zero.
+
+### D6 — Palette derived from the region, mapped onto the reference's roles
+
+The reference's palette works because of its *structure*, not its hues: one saturated warm
+accent doing all the pointing, a near-white warm surface for content, a soft cool secondary
+for decorative script, and a deep desaturated tone to sit under everything. That structure
+is kept; every hue is replaced from the Serra.
+
+| Role | Reference | Serranópolis | Drawn from |
+| --- | --- | --- | --- |
+| Primary accent | `#E75B37` | `#C4522E` | Embers of the fogo de chão |
+| Button | `#C04C2E` | `#A8431F` | — |
+| Button hover | `#9A3D25` | `#83341A` | — |
+| Card surface | `#FFFDF6` | `#FFF9EC` | Morning mist over the campos |
+| Page background | `#FEF2DF` | `#F3E4C8` | Dry highland grass |
+| Script accent | `#83C5AD` | `#9CC4B2` | Erva-mate leaf |
+| Deep surface | `#0C5B53` | `#1E4A3A` | Araucária canopy |
+| Body text | `#3C3231` | `#2E241C` | Araucária bark |
+| — | — | `#7FA3B8` | Frost, and the cold water of the Rio Canoas |
+| — | — | `#D9A441` | Ripe pinhão |
+| — | — | `#7B2D3F` | High-altitude wine |
+
+The last three have no counterpart in the reference. They exist because the Serra's identity
+is partly *cold* — frost, mist, altitude — and a palette built only from warm tones would
+describe a different place.
+
+Sky gradient: `#F2C879` → `#E89F5E` → `#D97B4A`, with a mist band at `#F0E2CC` along the
+horizon. This is late golden hour over the campos, which is when the region looks most like
+itself, and it preserves the reference's warm-sky-over-cool-land contrast.
+
+### D7 — Eight points of interest
+
+| Slug | Name | What it is |
+| --- | --- | --- |
+| `galpao-do-fogo` | Galpão do Fogo de Chão | Costela on the stake over open fire |
+| `praca-do-pinhao` | Praça do Pinhão | The central square; Festa do Pinhão |
+| `mirante-da-neblina` | Mirante da Neblina | Lookout over the canyon and the cloud sea |
+| `vinicola-de-altitude` | Vinícola de Altitude | High-altitude winery and its terraces |
+| `ctg-porteira-do-tropeiro` | CTG Porteira do Tropeiro | Gaúcho traditions centre |
+| `bosque-das-araucarias` | Bosque das Araucárias | Araucária forest trail |
+| `estacao-velha` | Estação Velha | The old railway station, now a market |
+| `pousada-da-geada` | Pousada da Geada | Rural inn with a lit hearth |
+
+Eight rather than the reference's ten: enough to fill the map legibly, few enough that each
+gets a genuinely written page instead of filler.
+
+### D8 — Fallback is built first, not last
+
+The static-illustration fallback required by `world-map` is implemented before the 3D hub,
+not after. A fallback added last is a fallback that has never been seen.
+
+*Why:* the demo runs on a machine nobody has tested. WebGL is the single point of failure,
+and the cost of discovering that at the podium is total.
+
+### D9 — Art direction sourced from generated illustration
+
+The 3D models are CC0 geometry, deliberately plain. The *character* comes from 2D
+illustration generated to a written art-direction brief: the wordmark, each place's crest,
+each place page's cinematic hero, the marquee motifs, and the fallback map.
+
+*Why:* this splits the problem along its natural seam — geometry is what CC0 kits are good
+at, and identity is what they are uniformly bad at. Every generated asset is specified by a
+prompt kept in the repository, so the art is reproducible rather than a one-off nobody can
+regenerate.
+
+## Risks / Trade-offs
+
+- **WebGL unavailable or unstable on the demo machine** → The static fallback is a spec
+  requirement and is built first (D8). Context loss mid-session also routes to it, so a
+  crash degrades instead of freezing.
+- **Runtime composition looks cruder than the reference's hand-authored map** → Accepted,
+  and partly bought back by D9: character is carried by the illustrated layer. The layout
+  can be baked into a single authored GLB later with no spec change (D1).
+- **Per-frame DOM writes for pins** → Bounded at eight pins, written outside React's render
+  cycle (D3). If the count ever grows past a few dozen, this needs re-measuring.
+- **CC0 kits are stylistically inconsistent between sources** → Restrict to as few kits as
+  possible, and unify them with a shared material and palette pass at load rather than
+  accepting each kit's baked-in colours.
+- **8 MB payload budget is tight for a town** → Instancing (D1) and procedural trees (D2) do
+  most of the work. If the budget is threatened, object *variety* is cut before object
+  *count*; a sparse town reads worse than a repetitive one.
+- **Generated illustration may come back stylistically inconsistent across places** → The
+  art-direction brief fixes palette, lighting, camera height and rendering style as shared
+  constants, varying only the subject per place.
+- **The reference is a live commercial site** → Only its architecture and timing are
+  reproduced. No asset, no string, and no name is copied. The 16.3 MB GLB downloaded during
+  analysis is confined to the scratch directory and is never vendored into this repository.
+
+## Open Questions
+
+- Whether to bake the final layout into a single DRACO-compressed GLB before the
+  presentation. Deferred: it is a build-step optimisation that changes no spec and no task
+  beyond its own, and the decision wants a real measurement of the classroom network.
