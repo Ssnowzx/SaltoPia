@@ -412,8 +412,10 @@ so the title state does not replay.
 The place heroes are renders of the map from each place's own flight camera, made by
 `scratchpad/meatopia/shot-heroes.js` with the interface hidden; the experience images
 are crops of them, and the crests are SVGs drawn from the pin glyphs
-(`scripts/build-crests.ts`). Nothing is fetched from anywhere. Illustrations from the
-Grok brief in `docs/image-prompts.md` replace them at the same paths when they arrive.
+(`scripts/build-crests.ts`). Nothing is fetched from anywhere. The pages' final images are **photographs** generated
+from the briefs in `docs/image-prompts.md` and dropped in at the same paths: the map is
+the stylised layer, the pages are the real place - the user's call, 2026-09-15, after
+seeing a first set made in the map's own low-poly style.
 
 ### D22 — Light from two temperatures
 
