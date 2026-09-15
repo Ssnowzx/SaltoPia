@@ -423,8 +423,15 @@ The entry screen - wordmark, tagline, the way in - is on from the first paint. W
 waits for the world is only what lies behind it: an opaque sky gradient that fades out
 once the scene has been drawn (two frames, counted by `SceneReady`), leaving the
 translucent cream the world reads through. A separate curtain over the whole screen was
-tried first and was worse: it hid the wordmark, so the site opened on a blank sky. The
-way in is disabled while the sky is up, and a timeout opens it regardless after eight
+tried first and was worse: it hid the wordmark, so the site opened on a blank sky.
+
+Coming back to the hub skips the title state, but only from inside the site: the session
+flag alone made every reload skip it, so the site appeared to jump straight into the map
+and the opening was never seen. A browser-back counts, and so does a navigation whose
+referrer is one of our own pages; a reload, a typed address and a fresh visit all open on
+the title.
+
+The way in is disabled while the sky is up, and a timeout opens it regardless after eight
 seconds - this is judged live on a machine nobody has tested, and a visitor must never
 be left on a sky that does not clear.
 
