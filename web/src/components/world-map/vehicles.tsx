@@ -7,7 +7,7 @@ import { CatmullRomCurve3, DoubleSide, MeshBasicMaterial, Vector3 } from "three"
 
 import { box, merge, post } from "@/lib/world/builders";
 import { LAKE, ROAD, UFO_PORT, VEHICLES, WORLD_COLORS } from "@/lib/world/constants";
-import { createSailboatGeometry, createYachtGeometry, wheel } from "@/lib/world/props";
+import { createSailboatGeometry, createSedanGeometry, createYachtGeometry, wheel } from "@/lib/world/props";
 import { CAR_CURVE, SAILBOAT_CURVE, YACHT_CURVE, surfaceHeightAt } from "@/lib/world/roads";
 import { smoothstep, terrainHeightAt } from "@/lib/world/terrain";
 import { CAROUSEL, DROP_TOWER, FERRIS_WHEEL, SWING, createCarouselGeometry, createDropRingGeometry, createFerrisWheelGeometry, createSwingGeometry } from "@/lib/world/attractions";
@@ -52,6 +52,15 @@ function createPickupGeometry(): BufferGeometry {
  */
 const BOAT_SCALE = 1.6;
 
+/**
+ * What drives the road, and where each one starts in the two-leg cycle. Half a cycle
+ * apart, so one is always somewhere in the town while the other is up on the plateau.
+ */
+const TRAFFIC = [
+  { key: "pickup", phase: 0 },
+  { key: "sedan", phase: 1 },
+] as const;
+
 /** How fast the rides turn, radians per second. */
 const RIDES = { wheelSpeed: 0.22, carouselSpeed: 0.55, swingSpeed: 0.9 } as const;
 
@@ -68,6 +77,7 @@ function placeOnCurve(mesh: Mesh, curve: CatmullRomCurve3, t: number, heightAt: 
 
 export function Vehicles(): React.ReactElement {
   const pickup = useMemo(() => createPickupGeometry(), []);
+  const sedan = useMemo(() => createSedanGeometry(WORLD_COLORS.sedanWhite), []);
   const yacht = useMemo(() => createYachtGeometry(), []);
   const sailboat = useMemo(() => createSailboatGeometry(WORLD_COLORS.wine), []);
   const saucer = useMemo(() => createSaucerGeometry(), []);
@@ -103,7 +113,7 @@ export function Vehicles(): React.ReactElement {
   const portGround = useMemo(() => terrainHeightAt(UFO_PORT.x, UFO_PORT.z), []);
   const { flat: material } = useWorldMaterials();
 
-  const carRef = useRef<Mesh>(null);
+  const carRefs = useRef<(Mesh | null)[]>([]);
   const yachtRef = useRef<Mesh>(null);
   const sailboatRef = useRef<Mesh>(null);
   const saucerRef = useRef<Mesh>(null);
@@ -126,8 +136,19 @@ export function Vehicles(): React.ReactElement {
   useFrame(({ clock }) => {
     const elapsed = clock.getElapsedTime();
 
-    if (carRef.current) {
-      placeOnCurve(carRef.current, CAR_CURVE, ((elapsed * VEHICLES.carSpeed) / carLength) % 1, onRoad, scratch);
+    // The traffic shuttles: out to the plateau, then back. Running the route as a loop
+    // meant the car vanished at the far end and reappeared at the near one.
+    const leg = carLength / VEHICLES.carSpeed;
+    for (let index = 0; index < TRAFFIC.length; index += 1) {
+      const mesh = carRefs.current[index];
+      if (!mesh) continue;
+      const phase = ((elapsed / leg + TRAFFIC[index].phase) % 2 + 2) % 2;
+      const outbound = phase < 1;
+      const t = outbound ? phase : 2 - phase;
+      placeOnCurve(mesh, CAR_CURVE, t, onRoad, scratch);
+      // `placeOnCurve` faces along the curve; on the way back the vehicle drives the
+      // other way down the same road.
+      if (!outbound) mesh.rotateY(Math.PI);
     }
     // The roll is applied on top of the heading with rotateZ, never by writing the
     // Euler's z. `lookAt` can express a heading as (x = pi, y, z = pi), and overwriting
@@ -188,7 +209,17 @@ export function Vehicles(): React.ReactElement {
 
   return (
     <group>
-      <mesh ref={carRef} geometry={pickup} material={material} castShadow />
+      {TRAFFIC.map((vehicle, index) => (
+        <mesh
+          key={vehicle.key}
+          ref={(mesh) => {
+            carRefs.current[index] = mesh;
+          }}
+          geometry={vehicle.key === "pickup" ? pickup : sedan}
+          material={material}
+          castShadow
+        />
+      ))}
       <mesh ref={yachtRef} geometry={yacht} material={material} scale={BOAT_SCALE} castShadow />
       <mesh ref={sailboatRef} geometry={sailboat} material={material} scale={BOAT_SCALE} castShadow />
       <mesh ref={saucerRef} geometry={saucer} material={material} castShadow />

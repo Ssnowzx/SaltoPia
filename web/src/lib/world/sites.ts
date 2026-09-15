@@ -46,7 +46,7 @@ export const SITES: readonly Site[] = [
   // pushed a flat green tongue out into the channel.
   { slug: "salto-caveiras", x: 118, z: -96, rotationY: 0, pad: 3, clearing: 12 },
   // The far attraction: out on the plateau at the very end of the map.
-  { slug: "porto-de-ovnis", x: 22, z: -288, rotationY: 0, pad: 38, clearing: 40 },
+  { slug: "ovni-porto", x: 22, z: -288, rotationY: 0, pad: 38, clearing: 40 },
   // The farms, on the plateau behind the ridge, at the back of the map. They face the
   // camera and the plateau track, which reaches each one's forecourt.
   { slug: "fazenda-do-cedro", x: -200, z: -254, rotationY: 0.06, pad: 32, clearing: 36 },

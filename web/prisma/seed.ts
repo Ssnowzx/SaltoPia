@@ -201,8 +201,8 @@ const PLACES: readonly PlaceSeed[] = [
     ],
   },
   {
-    slug: "porto-de-ovnis",
-    name: "Porto de OVNIs",
+    slug: "ovni-porto",
+    name: "Ovni Porto",
     tagline: "A pista de pouso do planalto",
     description:
       "No alto do planalto, longe das luzes da comunidade, um pátio de concreto com balizas acesas espera visita. A torre opera desde 2028 e o registro de avistamentos fica aberto na sala de controle — o céu limpo da serra é o melhor do país para isso, e quase toda noite alguém jura ter visto algo.",
@@ -277,6 +277,12 @@ async function main(): Promise<void> {
       },
     });
   }
+
+  // A place renamed to a new slug leaves its old row behind: an upsert can only create
+  // or update, never notice the absence. Without this the site kept showing the place
+  // under both names.
+  const removed = await prisma.place.deleteMany({ where: { slug: { notIn: PLACES.map((place) => place.slug) } } });
+  if (removed.count > 0) process.stdout.write(`Removed ${removed.count} place(s) no longer seeded.\n`);
 
   const places = await prisma.place.count();
   const experiences = await prisma.experience.count();

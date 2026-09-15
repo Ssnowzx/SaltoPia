@@ -4,7 +4,7 @@ import { arch, blob, box, cone, merge, paint, pipe, post } from "./builders";
 import { WORLD_COLORS } from "./constants";
 
 /**
- * The Porto de OVNIs: the far attraction on the plateau behind the reservoir.
+ * The Ovni Porto: the far attraction on the plateau behind the reservoir.
  *
  * A stepped landing platform ringed with beacon masts, a glass-domed terminal, a radar
  * array, an approach lane of lights, a boarding gantry, a landed saucer and one holding

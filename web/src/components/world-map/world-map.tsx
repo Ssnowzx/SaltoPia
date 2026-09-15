@@ -17,6 +17,7 @@ import { PinOverlay, type PinNodes } from "./pin-overlay";
 import { PinProjector } from "./pin-projector";
 import { PlaceCard } from "./place-card";
 import { PostEffects } from "./post-effects";
+import { SceneReady } from "./scene-ready";
 import { SkyDome } from "./sky-dome";
 import { Smoke } from "./smoke";
 import { Vehicles } from "./vehicles";
@@ -78,6 +79,23 @@ function SunLight(): React.ReactElement {
   );
 }
 
+/**
+ * What covers the canvas while the world is still being built: the sky's own colours,
+ * so the curtain lifting reads as the haze clearing rather than as a page appearing.
+ */
+function BootCurtain(): React.ReactElement {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-20 bg-[linear-gradient(to_bottom,var(--color-sky-high)_0%,var(--color-sky-mid)_38%,var(--color-sky-low)_62%,var(--color-sky-haze)_100%)]"
+    >
+      <div className="absolute inset-x-0 bottom-24 flex justify-center">
+        <span className="font-script text-2xl text-teal-deep/70 motion-safe:animate-pulse">Chegando a Saltopia…</span>
+      </div>
+    </div>
+  );
+}
+
 /** Session-storage key set once the visitor has entered the world. */
 const EXPLORED_KEY = "saltopia:explored";
 
@@ -101,6 +119,8 @@ const SUN_TARGET = { x: 50, y: 0, z: 10 } as const;
 export function WorldMap({ places }: WorldMapProps): React.ReactElement {
   const reducedMotion = usePrefersReducedMotion();
   const [entered, setEntered] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
+  const handleSceneReady = useCallback(() => setSceneReady(true), []);
   // Coming back from a place page must not replay the title state - page-transitions
   // spec. The flag lives in session storage, which survives the full-document
   // navigation, and is read as external state so the first client render agrees with
@@ -161,6 +181,7 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
               <Smoke />
             </WorldMaterialsProvider>
             <PostEffects />
+            <SceneReady onReady={handleSceneReady} />
           </Suspense>
 
           <PinProjector places={places} nodes={pinNodes} hidden={!exploring || isFlying} />
@@ -177,7 +198,8 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
       {exploring ? <PinOverlay places={places} nodes={pinNodes} onSelect={setFocus} /> : null}
       {exploring ? <SiteHeader places={places} /> : null}
       {cardOpen && focus ? <PlaceCard place={focus} onClose={handleClose} /> : null}
-      {exploring ? null : <IntroOverlay onExplore={handleExplore} />}
+      {exploring ? null : <IntroOverlay onExplore={handleExplore} ready={sceneReady} />}
+      {sceneReady ? null : <BootCurtain />}
     </div>
   );
 }

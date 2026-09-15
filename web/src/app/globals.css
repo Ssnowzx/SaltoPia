@@ -119,6 +119,19 @@ body {
   navigation: auto;
 }
 
+/*
+ * The title state fades in with the world's first frame. Rendered immediately, it used
+ * to sit over an empty canvas while the scene was still being built.
+ */
+.intro {
+  opacity: 0;
+  transition: opacity 900ms var(--ease-ui);
+}
+
+.intro[data-ready="true"] {
+  opacity: 1;
+}
+
 /* Scroll-driven reveal. A section is only ever hidden after scripting marks it pending. */
 [data-reveal="pending"] {
   opacity: 0;

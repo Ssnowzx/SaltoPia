@@ -212,7 +212,9 @@ export const CLOUDS = {
 
 /** Vehicles. */
 export const VEHICLES = {
-  carSpeed: 6.5,
+  // The route runs 529 units from the south entrance to the port gate; at 6.5 a single
+  // leg took 81 seconds and the traffic read as parked.
+  carSpeed: 9.5,
   boatSpeed: 4.2,
   /**
    * How high a hull rides above the surface. The water is opaque, and a boat placed at
@@ -228,7 +230,7 @@ export const SMOKE = {
   riseSpeed: 1.5,
 } as const;
 
-/** The Porto de OVNIs on the plateau, the map's most distant attraction. */
+/** The Ovni Porto on the plateau, the map's most distant attraction. */
 export const UFO_PORT = { x: 22, z: -288 } as const;
 
 /** Map pins. */

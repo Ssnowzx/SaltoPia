@@ -458,7 +458,7 @@ const SITE_LANDMARKS: readonly Placement[] = ([
   ["mirante", "mirante-da-neblina"],
   ["bosqueSign", "bosque-das-araucarias"],
   ["salto", "salto-caveiras"],
-  ["ufoPort", "porto-de-ovnis"],
+  ["ufoPort", "ovni-porto"],
   ["farmRed", "fazenda-do-cedro"],
   ["farmOchre", "fazenda-santa-barbara"],
   ["farmTimber", "fazenda-dos-pinheiros"],
@@ -586,7 +586,7 @@ export const LAWNS: ReadonlyArray<{ readonly x: number; readonly z: number; read
     z: house.z,
     radius: house.model === "lakeHouse" ? 10 : house.model === "cabana" ? 5 : 7,
   })),
-  ...SITES.filter((site) => site.slug !== "porto-de-ovnis" && site.slug !== "bosque-das-araucarias").map((site) => ({
+  ...SITES.filter((site) => site.slug !== "ovni-porto" && site.slug !== "bosque-das-araucarias").map((site) => ({
     x: site.x,
     z: site.z,
     radius: site.pad * 0.6,

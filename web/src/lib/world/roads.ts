@@ -18,6 +18,7 @@ import {
   ROAD_WIDTHS,
   SHORE_STREET,
   type ParkingLot,
+  type Waypoint,
 } from "./road-network";
 import { RIVER_COURSE, bridgeDeckAt, lakeDistance, riverDistance, riverSurfaceHeightAt, terrainHeightAt } from "./terrain";
 import { SURFACE, type SurfaceKey } from "./textures";
@@ -507,8 +508,22 @@ export function createWaterfallFoamGeometry(): BufferGeometry {
 // Vehicle routes
 // ---------------------------------------------------------------------------------
 
-/** The curve the pickup follows: the main road, out and back. */
-export const CAR_CURVE: CatmullRomCurve3 = createCurve(MAIN_ROAD, false);
+/**
+ * The road the traffic runs: in from the south-east, the length of the community, over
+ * the channel bridge and up the plateau to the Ovni Porto's gate.
+ *
+ * One continuous route, because a vehicle can only follow one. It used to be the main
+ * road alone, and reaching the north end the car jumped back to the south end in front
+ * of the visitor; it shuttles now - see `Vehicles`.
+ */
+export const CAR_ROUTE: readonly Waypoint[] = [
+  ...[...ENTRY_ROAD].reverse().slice(0, -1),
+  ...MAIN_ROAD,
+  ...PLATEAU_TRACK.slice(1),
+  ...PORT_SPUR.slice(1),
+];
+
+export const CAR_CURVE: CatmullRomCurve3 = createCurve(CAR_ROUTE, false);
 
 /**
  * The yacht keeps to the south-east basin, off the square and the resort.

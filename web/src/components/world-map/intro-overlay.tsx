@@ -9,20 +9,25 @@ import Image from "next/image";
 
 interface IntroOverlayProps {
   readonly onExplore: () => void;
+  /** True once the world has been drawn; the title fades in with it, never before. */
+  readonly ready: boolean;
 }
 
-export function IntroOverlay({ onExplore }: IntroOverlayProps): React.ReactElement {
+export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.ReactElement {
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(246,229,188,0.18)_0%,rgba(246,229,188,0.42)_60%,rgba(246,229,188,0.62)_100%)] px-6 text-center">
+    <div
+      data-ready={ready}
+      className="intro absolute inset-0 z-10 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(246,229,188,0.18)_0%,rgba(246,229,188,0.42)_60%,rgba(246,229,188,0.62)_100%)] px-6 text-center"
+    >
       <p className="font-script text-3xl text-teal sm:text-4xl">Bem-vindo a</p>
-      <h1 className="mt-3 w-full max-w-[820px] rounded-[40px] bg-[radial-gradient(ellipse_at_center,rgba(46,36,28,0.62)_0%,rgba(46,36,28,0.42)_55%,rgba(46,36,28,0)_78%)] px-10 py-8">
+      <h1 className="mt-4 w-full max-w-[760px]">
         <Image
           src="/logo-saltopia.png"
           alt="Saltopia - Salto Caveiras, Serra Catarinense"
           width={900}
           height={364}
           priority
-          className="h-auto w-full drop-shadow-[0_14px_30px_rgba(20,14,8,0.55)]"
+          className="h-auto w-full drop-shadow-[0_18px_34px_rgba(20,14,8,0.42)]"
         />
       </h1>
       <p className="mt-5 max-w-xl font-sans text-base font-semibold text-bark sm:text-lg">

@@ -417,6 +417,20 @@ from the briefs in `docs/image-prompts.md` and dropped in at the same paths: the
 the stylised layer, the pages are the real place - the user's call, 2026-09-15, after
 seeing a first set made in the map's own low-poly style.
 
+### D25 — The title state waits for the world
+
+The opening is held behind a curtain in the sky's own colours until the scene has been
+drawn - two frames, counted by `SceneReady` - and the title then fades in over it.
+Rendered immediately, as it was, opening the site could show a bare cream page with the
+wordmark floating on it while the atlas, the terrain and the models were still being
+built. The curtain lifting reads as haze clearing.
+
+Traffic shuttles. The pickup followed the main road as a loop, so at the north end it
+jumped back to the south end in front of the visitor; the route now runs from the
+south-east entrance the length of the community, over the channel bridge and up the
+plateau to the Ovni Porto's gate, and two vehicles drive it out and back, half a cycle
+apart.
+
 ### D22 — Light from two temperatures
 
 The key light is warm and aimed at the community; the fill is a cool sky hemisphere.

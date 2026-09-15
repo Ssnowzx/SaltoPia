@@ -111,7 +111,7 @@ cold mornings. The places are imagined; the landscape is not.
 > water with tables under wine-red umbrellas, strings of bulbs, a short jetty with a
 > moored boat, araucarias along the shore, the town street behind. Sun on the water.
 
-### porto-de-ovnis
+### ovni-porto
 > A UFO landing port on a high plateau at dusk, photographed as if it were real: a round
 > three-tier concrete apron with a painted red and gold target, beacon masts with orange
 > lamps lit, a glass-domed terminal, a control tower with a glazed cab, a radar dish, an
@@ -177,7 +177,7 @@ cold mornings. The places are imagined; the landscape is not.
 ### Deck do Lago
 - **jantar-no-deck** — Dinner on a wooden deck over the water at blue hour: grilled trout on a board, a bottle of local red, candles, string lights, a moored boat at the jetty, the far shore's lights reflected. Shallow depth of field.
 
-### Porto de OVNIs
+### Ovni Porto
 - **vigilia-no-patio** — A night vigil on a concrete apron under the Milky Way: a few people wrapped in blankets on deck chairs, a chimarrão thermos, a red lantern, beacon masts and a control tower silhouetted, the whole southern sky in stars. Long exposure, astrophotography.
 - **visita-a-torre** — Inside a small control tower cab at dusk: an old radio set, a logbook of sightings open on the desk, a pair of binoculars, the glazed cab looking out over a concrete apron with a painted target and beacons coming on.
 
