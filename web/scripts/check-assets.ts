@@ -15,6 +15,14 @@ import { PrismaClient } from "../src/generated/prisma/client";
  * before a presentation is the page nobody clicked. Run it with the rest of the checks:
  * `npm run check:assets`.
  */
+/**
+ * How many pictures a full gallery holds - one per brief in `docs/image-prompts.md`.
+ *
+ * The page's own limit is `GALLERY_MAX` in `src/lib/gallery.ts`, which this script cannot
+ * import: that module is marked server-only and throws outside a React server context.
+ */
+const GALLERY_BRIEFS = 6;
+
 async function main(): Promise<void> {
   const prisma = new PrismaClient({ adapter: new PrismaMariaDb(process.env.DATABASE_URL ?? "") });
   const places = await prisma.place.findMany({
@@ -46,7 +54,7 @@ async function main(): Promise<void> {
     const directory = join(publicDir, "images", "places", place.slug);
     const found = existsSync(directory) ? readdirSync(directory).filter((name) => name.endsWith(".webp")).length : 0;
     pictures += found;
-    if (found < 6) thin.push(`${place.slug} (${found}/6)`);
+    if (found < GALLERY_BRIEFS) thin.push(`${place.slug} (${found}/${GALLERY_BRIEFS})`);
   }
   console.log(`galleries: ${pictures} pictures${thin.length > 0 ? `, still thin: ${thin.join(", ")}` : ""}`);
 

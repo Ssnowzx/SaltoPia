@@ -19,6 +19,10 @@ The call to action in the marquee MUST NOT overlap the moving content.
 The experience grid and the gallery SHALL both lay themselves out by how many items they
 have, so that a place with one experience does not leave a hole where a row was expected.
 
+The gallery SHALL draw its first picture larger than the rest, and SHALL fall back to the
+pictures the page already carries when a place has no gallery of its own yet, so that a
+page is complete before its last photograph is.
+
 Unlike the hub, a place page SHALL scroll normally and MUST NOT render a 3D surface.
 
 #### Scenario: Place page opened
@@ -26,6 +30,11 @@ Unlike the hub, a place page SHALL scroll normally and MUST NOT render a 3D surf
 - **THEN** the hero fills the viewport and shows the place's crest and a scroll cue
 - **AND** the page scrolls normally
 - **AND** no WebGL context is created
+
+#### Scenario: Place has no gallery of its own yet
+- **WHEN** a place has no gallery photographs
+- **THEN** the gallery shows the pictures the page already carries
+- **AND** no empty frame or broken image is rendered
 
 #### Scenario: Place has no experiences yet
 - **WHEN** a place has no published experiences

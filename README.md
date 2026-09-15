@@ -43,6 +43,7 @@ the port. See `CLAUDE.md` for that and two other traps.
 | `npm run check:assets` | Fails when a place or experience points at an image that is not on disk |
 | `npm run build:logo` | Rebuild both wordmark files from `logo.png` |
 | `npm run build:crests` | Rebuild the place crests from the pin glyphs |
+| `npm run images:sharpen` | Sharpen new or replaced photographs, and drop the stale optimised copies |
 
 `npx tsc --noEmit` only passes **after** `npm run build`: Next generates its route types
 into `.next/types` during the build.
@@ -97,19 +98,28 @@ field on every run and deletes places it no longer carries.
 
 ## Images
 
-Place heroes, experience photographs and each place's gallery of six are generated from
-the briefs in `docs/image-prompts.md` and dropped into `web/public/images/`. A gallery is
-just a folder — `public/images/places/<slug>/01.webp` … `06.webp` — which the page reads
-at build time, so adding a picture is dropping a file in.
+Every image is built here and committed; nothing is fetched at runtime.
 
-The generator cannot exceed 1280×720, so every photograph on the pages is an enlargement.
-Run `npm run images:sharpen` after adding or replacing any of them: it puts back the edge
-the enlargement smeared, skips what it has already done, and clears the image cache that
-would otherwise keep serving the old file. The crests are SVGs drawn
-from the pin glyphs, built by `npm run build:crests`. Nothing is fetched at runtime.
+- **Photographs** — place heroes, experience pictures and each place's gallery of six,
+  generated from the briefs in `docs/image-prompts.md` and dropped into
+  `web/public/images/`. A gallery is just a folder — `public/images/places/<slug>/01.webp`
+  … `06.webp` — read at build time, so adding a picture is dropping a file in. The first
+  one is drawn large, so it should be the widest view of the set.
+- **Crests** — SVGs drawn from the pin glyphs by `npm run build:crests`.
+- **Wordmark** — two files cut from `logo.png` by `npm run build:logo`: one on a faded
+  card for the map, one cut out for the cream header.
 
-The optimiser caches by URL, so after replacing an image in `public/` remove
-`web/.next/dev/cache/images` and hard-refresh, or the old one keeps being served.
+**After adding or replacing any photograph, run `npm run images:sharpen`.** The generator
+cannot exceed 1280×720, so what lands here is always an enlargement — a file knocked down
+to 1280 and back loses almost nothing, which is what an interpolated image does.
+Enlarging cannot invent detail, but it smears the edges that were photographed, and the
+pass puts those back. It skips what it has already sharpened, catches a replaced file by
+its digest, and ends by emptying `web/.next/dev/cache/images`.
+
+That last step is the one that costs an afternoon if it is forgotten: the optimiser keys
+its cache on the request URL and not on the file behind it, so a photograph replaced in
+place keeps serving the old pixels through a hard refresh, a restarted server and a
+cleared browser.
 
 ## What is not built yet
 

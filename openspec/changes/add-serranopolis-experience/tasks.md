@@ -79,6 +79,8 @@
 - [x] 10.5 Build the experience card grid using the ticket silhouette; verify it collapses to one column at 400px with no horizontal overflow
 - [x] 10.6 Omit the grid entirely when a place has no experiences; verify with a place whose experience list is empty
 - [x] 10.7 Build the share block and wire the footer; verify links resolve
+- [x] 10.8 Build each page around its place's own colour; verify fifteen pages read as fifteen rather than one page fifteen times — **`placeTheme` expands one accent into the wash, veil, ink and ticket ground; captured three pages side by side**
+- [x] 10.9 Read a place's gallery from `public/images/places/<slug>/`, draw the first picture large, and fall back to the page's own pictures when the folder is empty; verify with a folder holding six files and with an empty one — **empty folders today, so the fallback is what the fifteen pages are rendering; `check:assets` reports 0/6 for each**
 
 ## 11. Experience pages
 
@@ -96,6 +98,12 @@
 - [x] 13.1 Give every place and experience page a unique title, description and social preview image — **`generateMetadata` per route with the place's own hero as the OpenGraph image; read from the served HTML, not from a third-party preview debugger**
 - [x] 13.2 Add the wordmark, favicon and social preview assets — **`src/app/icon.png` cut from the emblem; the wordmark ships in two forms, see D25**
 - [x] 13.3 Run `npm run lint` and `tsc --noEmit` clean, with no `console.log` and no unused imports remaining
+
+## 13b. Photographs
+
+- [x] 13b.1 Establish what the generator can actually deliver; verify by knocking a file down to its suspected native width and back — **1280×720 and 1152×864: the round trip loses ~1.5 of 255, so nothing above that was photographed**
+- [x] 13b.2 Sharpen the enlargements and make the pass repeatable and non-destructive on a second run; verify edge energy rises and a second run changes nothing — **edge energy 16.0 → 29.8 on the galpão hero; second run reports 40 already done**
+- [x] 13b.3 Make the pass drop the optimiser's cached copies; verify the server delivers the new file — **`.next/dev/cache/images`, not `.next/cache/images`: before clearing it the server returned the old bytes exactly, through a restart**
 
 ## 14. Verification pass
 

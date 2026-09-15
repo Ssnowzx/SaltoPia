@@ -101,6 +101,13 @@ Três detalhes desta máquina que já custaram tempo — não os redescubra:
 3. **O healthcheck existe por um motivo.** O MariaDB aceita o `docker compose up` bem antes
    de aceitar conexões, e o `migrate` falha de forma confusa nessa janela.
 
+Um quarto, do Next e não do banco:
+
+4. **Trocar uma imagem em `public/` não muda nada na tela.** O otimizador guarda a cópia
+   em `.next/dev/cache/images` e indexa **pela URL, não pelo arquivo**. Hard refresh,
+   reiniciar o servidor e limpar o navegador não resolvem — e `.next/cache/images` é outra
+   pasta, não a usada. `npm run images:sharpen` limpa a certa no fim da passagem.
+
 Recriar o banco do zero (perde os dados, roda o init script de novo):
 
 ```bash

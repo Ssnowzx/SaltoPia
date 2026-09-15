@@ -41,7 +41,7 @@ grade the ground; the geometry reads them to draw. If either imported the terrai
 cycle would force a copy of the coordinates, and the copies would drift — which they did,
 producing buildings standing beside their own flat ground.
 
-## Five rules the world depends on
+## Six rules the world depends on
 
 These are the ones that cost the most to learn. Each corresponds to a defect that was
 visible on screen and hard to attribute.
@@ -68,7 +68,15 @@ neighbouring tile — a dark seam across every street every couple of metres.
 applies on top of the heading. This is what turned the yacht upside down and made the
 sailboat vanish for part of every lap.
 
-A sixth, older one worth keeping in mind: **a blend or bound that starts in front of what
+**An aimed zoom moves the aim, so putting it back is a pan.** OrbitControls re-derives the
+orbit target from the camera's forward ray on every dolly, which is what makes a zoom go
+toward the cursor. Zooming in on one thing and out again therefore leaves the visitor aimed
+at that thing from far away. The rig eases the aim home, and moves camera and target
+together: easing the target alone lengthens the distance between the two as it moves, which
+feeds back into the strength of the pull and cancels the visitor's zoom while they are
+still making it.
+
+A seventh, older one worth keeping in mind: **a blend or bound that starts in front of what
 it should be behind.** Windows built at the front wall's z and then rotated, a golden tint
 starting in front of the far shore, a shadow frustum smaller than the terrain, a terrace
 meant for one shoreline applied across the whole map. Check extents against the thing they
@@ -85,7 +93,9 @@ real defects:
 - **`check:assets`** — every image path in the database exists on disk. It found three
   crests still pointing at `.webp` files that stopped being written when the crests became
   SVG, and the cause: the seed's update branch was not setting the paths, so rows created
-  before a change kept the old one for ever.
+  before a change kept the old one for ever. It also counts what each gallery folder holds
+  and names the thin ones, without failing on them: a gallery fills up over several
+  sittings, and a page that is missing one is not a broken page.
 
 ## The hub's interface
 
@@ -99,6 +109,10 @@ Choosing a pin does not navigate. The camera flies (`camera-rig.tsx`, a quadrati
 so the path arcs over the ridge rather than through it), the pins hide, and the card opens
 when the camera settles. The card traps Tab and hands focus back to its pin on Escape.
 
+Left alone for three seconds the camera does two things: it resumes its slow sway, and, if
+it is back in its widest band, it eases the aim back onto the composed wide shot. Both are
+in `camera-rig.tsx`, because all of it contends for one camera.
+
 `viewport-framing.tsx` widens the vertical field of view by however much the viewport
 falls short of 16:9, which holds the horizontal field — the axis the town is laid out
 across — at what it was composed for. That is the whole of the hub's responsive behaviour.
@@ -109,6 +123,14 @@ across — at what it was composed for. That is the whole of the hub's responsiv
 them. `Reveal` animates a section in once, and is careful to render everything visible
 when scripting or motion is unavailable — including clearing its own mark if the first
 client render happened before the motion preference was known.
+
+Each page takes its colour from its place's `accent`, which `place-theme.tsx` expands into
+the wash, the veil and the ink the bands are built from — fifteen places read as fifteen
+pages rather than one page fifteen times. The gallery band reads
+`public/images/places/<slug>/` from disk rather than the database: pictures arrive in
+batches and are named by whoever makes them, and ninety rows of nothing but a path would
+turn the seed, which is for words, into a file of filenames. An empty folder falls back to
+the pictures the page already has, so a page works before the last photograph does.
 
 Navigation is full-document, through plain `<a>` elements. That is what lets the browser
 run the iris as a cross-document view transition, which is how the reference does it; the
@@ -124,7 +146,12 @@ Nothing is fetched at runtime and nothing is vendored.
   cream header. Neither works in both places, which is why there are two.
 - **Crests** — `scripts/build-crests.ts` draws an SVG per place from its pin glyph.
 - **Photographs** — generated from `docs/image-prompts.md` and committed under
-  `web/public/images/`.
+  `web/public/images/`. They are always enlargements: the generator tops out at 1280×720
+  and 1152×864, and the files lose almost nothing when knocked down to 1280 and back, which
+  is what an interpolated image does. `scripts/sharpen-photos.py` puts back the edges the
+  enlargement smeared — destructive, so each result is recorded by digest and skipped next
+  time — and empties the optimiser's cache, which keys on the URL and not on the file
+  behind it.
 
 ## Adding a place
 
@@ -133,7 +160,8 @@ Nothing is fetched at runtime and nothing is vendored.
 3. Add a driveway in `road-network.ts` so it can be reached.
 4. Add a pin glyph to `pin-icons.ts`.
 5. Add the place and its experiences to `prisma/seed.ts`, then `npm run db:seed`.
-6. Add a brief to `docs/image-prompts.md` and put the images in `public/images/`.
+6. Add a brief to `docs/image-prompts.md`, put the images in `public/images/` — hero,
+   experiences, and six in `public/images/places/<slug>/` — then `npm run images:sharpen`.
 7. Run `npm run check`.
 
 Steps 1–3 are separate files on purpose, and step 7 is what catches it when one is
