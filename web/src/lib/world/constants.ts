@@ -233,6 +233,9 @@ export const SMOKE = {
   riseSpeed: 1.5,
 } as const;
 
+/** The Porto de OVNIs on the plateau, the map's most distant attraction. */
+export const UFO_PORT = { x: 22, z: -196 } as const;
+
 /** Map pins. */
 export const PIN = {
   anchorHeight: 9,
@@ -253,7 +256,7 @@ export const CAMERA = {
   initialPosition: [34, 68, 168] as const,
   target: [16, 2, -54] as const,
   minDistance: 40,
-  maxDistance: 300,
+  maxDistance: 205,
   /** No top-down view: the town is composed for a low, cinematic angle. */
   minPolarAngle: 0.78,
   maxPolarAngle: 1.38,

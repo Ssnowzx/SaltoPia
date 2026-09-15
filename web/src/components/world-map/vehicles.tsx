@@ -3,12 +3,14 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import type { BufferGeometry, Mesh } from "three";
-import { CatmullRomCurve3, Vector3 } from "three";
+import { CatmullRomCurve3, DoubleSide, MeshBasicMaterial, Vector3 } from "three";
 
 import { box, merge, post } from "@/lib/world/builders";
-import { LAKE, RAIL, ROAD, VEHICLES, WORLD_COLORS } from "@/lib/world/constants";
+import { LAKE, RAIL, ROAD, UFO_PORT, VEHICLES, WORLD_COLORS } from "@/lib/world/constants";
 import { createSailboatGeometry, createYachtGeometry, wheel } from "@/lib/world/props";
 import { CAR_CURVE, SAILBOAT_CURVE, TRAIN_CURVE, YACHT_CURVE, surfaceHeightAt } from "@/lib/world/roads";
+import { terrainHeightAt } from "@/lib/world/terrain";
+import { SAUCER_HOVER, createBeamGeometry, createSaucerGeometry } from "@/lib/world/ufo-port";
 
 import { useWorldMaterials } from "./world-materials-context";
 
@@ -92,12 +94,28 @@ export function Vehicles(): React.ReactElement {
   const wagon = useMemo(() => createWagonGeometry(), []);
   const yacht = useMemo(() => createYachtGeometry(), []);
   const sailboat = useMemo(() => createSailboatGeometry(WORLD_COLORS.wine), []);
+  const saucer = useMemo(() => createSaucerGeometry(), []);
+  const beam = useMemo(() => createBeamGeometry(), []);
+  const beamMaterial = useMemo(
+    () =>
+      new MeshBasicMaterial({
+        color: WORLD_COLORS.lantern,
+        transparent: true,
+        opacity: 0.22,
+        depthWrite: false,
+        side: DoubleSide,
+        toneMapped: false,
+      }),
+    [],
+  );
+  const portGround = useMemo(() => terrainHeightAt(UFO_PORT.x, UFO_PORT.z), []);
   const { flat: material } = useWorldMaterials();
 
   const carRef = useRef<Mesh>(null);
   const yachtRef = useRef<Mesh>(null);
   const sailboatRef = useRef<Mesh>(null);
   const trainRefs = useRef<(Mesh | null)[]>([]);
+  const saucerRef = useRef<Mesh>(null);
   const scratch = useMemo(() => new Vector3(), []);
 
   const carLength = useMemo(() => CAR_CURVE.getLength(), []);
@@ -124,6 +142,17 @@ export function Vehicles(): React.ReactElement {
       sailboatRef.current.rotation.z = 0.08 + Math.sin(elapsed * 0.9) * 0.04;
     }
 
+    // The saucer holds station over the pad, bobbing and turning slowly.
+    if (saucerRef.current) {
+      saucerRef.current.position.set(
+        UFO_PORT.x + SAUCER_HOVER.x + Math.sin(elapsed * 0.25) * 1.6,
+        portGround + SAUCER_HOVER.y + Math.sin(elapsed * 0.6) * 0.7,
+        UFO_PORT.z + SAUCER_HOVER.z + Math.cos(elapsed * 0.25) * 1.6,
+      );
+      saucerRef.current.rotation.y = elapsed * 0.35;
+      saucerRef.current.rotation.z = Math.sin(elapsed * 0.4) * 0.05;
+    }
+
     // The train shuttles: out along the line, then back, holding clear of both ends so
     // the wagons behind the locomotive never run off the rails.
     const cars = 3;
@@ -148,6 +177,8 @@ export function Vehicles(): React.ReactElement {
       <mesh ref={carRef} geometry={pickup} material={material} castShadow />
       <mesh ref={yachtRef} geometry={yacht} material={material} castShadow />
       <mesh ref={sailboatRef} geometry={sailboat} material={material} castShadow />
+      <mesh ref={saucerRef} geometry={saucer} material={material} castShadow />
+      <mesh geometry={beam} material={beamMaterial} position={[UFO_PORT.x, portGround + 0.6, UFO_PORT.z]} />
       {[locomotive, wagon, wagon].map((geometry, index) => (
         <mesh
           key={`train-${index}`}

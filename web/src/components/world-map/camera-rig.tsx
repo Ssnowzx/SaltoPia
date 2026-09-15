@@ -8,6 +8,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Vector3 } from "three";
 
 import { CAMERA, DRIFT, FLIGHT } from "@/lib/world/constants";
+import { terrainHeightAt } from "@/lib/world/terrain";
 import type { Place } from "@/types";
 
 /**
@@ -84,14 +85,20 @@ export function CameraRig({
     flightRef.current?.kill();
     driftRef.current = null;
 
+    // Heights are relative to the ground, not absolute. A seeded Y of 0 is "at the
+    // place", and reading it as an absolute put the camera's target 18 units under the
+    // plateau at the UFO port, so the flight ended inside the apron.
+    const groundAtPlace = terrainHeightAt(focus.worldPosition.x, focus.worldPosition.z);
+    const groundAtCamera = terrainHeightAt(focus.cameraPosition.x, focus.cameraPosition.z);
+
     const destination = new Vector3(
       focus.cameraPosition.x,
-      focus.cameraPosition.y,
+      Math.max(groundAtCamera, groundAtPlace) + focus.cameraPosition.y,
       focus.cameraPosition.z,
     );
     const lookAt = new Vector3(
       focus.worldPosition.x,
-      focus.worldPosition.y,
+      groundAtPlace + focus.worldPosition.y + 2,
       focus.worldPosition.z,
     );
 

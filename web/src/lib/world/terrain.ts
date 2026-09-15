@@ -162,6 +162,14 @@ const FLAT_PADS: readonly FlatPad[] = [
   { x: 118, z: -96, radius: 10, falloff: 6 },
   { x: 128, z: -112, radius: 8, falloff: 5 },
   { x: -60, z: -52, radius: 12, falloff: 8 },
+  // The two lakefront houses stood on the slope down to the water with half their
+  // footprint over the drop; they need ground of their own like every other building.
+  { x: 46, z: 34, radius: 11, falloff: 7 },
+  { x: 72, z: -10, radius: 11, falloff: 7 },
+  { x: 34, z: 44, radius: 7, falloff: 5 },
+  { x: 58, z: 0, radius: 7, falloff: 5 },
+  // The UFO port's apron, which has to be dead flat.
+  { x: 22, z: -196, radius: 26, falloff: 14 },
 ];
 
 function distance(x0: number, z0: number, x1: number, z1: number): number {

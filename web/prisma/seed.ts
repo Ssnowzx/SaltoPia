@@ -138,6 +138,19 @@ const PLACES: readonly PlaceSeed[] = [
     ],
   },
   {
+    slug: "porto-de-ovnis",
+    name: "Porto de OVNIs",
+    tagline: "A pista de pouso do planalto",
+    description:
+      "No alto do planalto, longe das luzes da comunidade, um pátio de concreto com balizas acesas espera visita. A torre opera desde 2028 e o registro de avistamentos fica aberto na sala de controle — o céu limpo da serra é o melhor do país para isso, e quase toda noite alguém jura ter visto algo.",
+    world: [22, 0, -196],
+    camera: [34, 34, -138],
+    experiences: [
+      { slug: "vigilia-no-patio", name: "Vigília no pátio", description: "Madrugada inteira no concreto, cobertor, chimarrão e o céu da serra aberto de ponta a ponta.", kind: "EVENT", durationMinutes: 300 },
+      { slug: "visita-a-torre", name: "Visita à torre de controle", description: "O rádio, a antena e o livro de avistamentos aberto desde a primeira noite.", kind: "TOUR", durationMinutes: 40 },
+    ],
+  },
+  {
     slug: "salto-caveiras",
     name: "Salto do Rio Caveiras",
     tagline: "A barragem, a queda e a usina centenária",

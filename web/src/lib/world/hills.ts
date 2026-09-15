@@ -71,7 +71,9 @@ function createHillGeometry(hill: HillSpec, seed: number): BufferGeometry {
     // Green almost all the way up, gold only at the crown. Blending from 5% of the
     // height made every dome a tan mound, and a row of tan mounds reads as desert.
     const t = Math.max(0, y);
-    const color = foot.clone().lerp(gold, smoothstep(0.55, 0.98, t));
+    // Only the very crown goes gold. The UFO port stands on one of these domes, and
+    // at 0.55 its whole plateau read as desert.
+    const color = foot.clone().lerp(gold, smoothstep(0.82, 1.0, t));
     // Distance drains the colour toward the haze, which is what gives the band depth.
     color.lerp(haze, hill.depth * 0.55);
 

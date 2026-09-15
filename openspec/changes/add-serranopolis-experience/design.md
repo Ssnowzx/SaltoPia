@@ -328,6 +328,33 @@ Renamed on 2026-09-15 from Serranopolis, to the name on the wordmark the user su
 **SALTOPIA**, over a banner reading *Salto Caveiras - Serra Catarinense*, with *Est.
 2028*. The header and title screen carry that lockup.
 
+### D17 — Camera flights are relative to the ground, and the camera cannot leave the world
+
+Two faults in one sitting, both from treating a relative quantity as absolute.
+
+**Zoom.** `maxDistance` was 300 against a terrain 420 across, so pulling back took the
+camera past the terrain's own edge and filled the lower frame with the plane beneath it.
+The bound is now 205 - inside the world. The `world-map` spec already required the
+camera never to lose the neighbourhood from frame; a distance bound larger than the
+world cannot satisfy that.
+
+**Flight targets.** A place's seeded `world` and `camera` Y were read as absolute
+heights. That is harmless while every place sits near y = 0, and wrong the moment one
+does not: the UFO port stands on a plateau about 20 units up, so the camera flew to a
+target 20 units underground and arrived inside the apron. Both are now offsets from
+`terrainHeightAt` at the place, which is what they always meant.
+
+### D18 — Porto de OVNIs
+
+A tenth place, and deliberately the most distant: a concrete apron ringed with beacons
+on the plateau behind the reservoir, a control tower with a dish, a hangar, a windsock,
+and a saucer holding station overhead on a light beam. It is built tall because at that
+range only the tower, the beam and the saucer read at all.
+
+Placing it revealed that the hills' gold crown began at 55% of their height - so the
+plateau it stands on read as desert up close. The crown now starts at 82%, which also
+greens the whole horizon band.
+
 ## Risks / Trade-offs
 
 - **WebGL unavailable or unstable on the demo machine** → The static fallback is a spec

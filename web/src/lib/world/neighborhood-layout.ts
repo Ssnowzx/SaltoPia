@@ -12,7 +12,7 @@ import {
   createRockGeometry,
   createStoneWallGeometry,
 } from "./builders";
-import { LAKE, TERRAIN, WORLD_COLORS, WORLD_SEED } from "./constants";
+import { LAKE, TERRAIN, UFO_PORT, WORLD_COLORS, WORLD_SEED } from "./constants";
 import {
   SALTO_ORIGIN,
   createBosqueSignGeometry,
@@ -42,6 +42,7 @@ import {
   createYachtGeometry,
 } from "./props";
 import { RAIL_LINE, ROAD_POLYLINES, YARDS, type Waypoint } from "./roads";
+import { createUfoPortGeometry } from "./ufo-port";
 import { eastShoreXAt, farShoreZAt, lakeDistance, peninsulaDistance, riverDistance, terrainHeightAt } from "./terrain";
 
 /**
@@ -104,7 +105,8 @@ export type ModelKey =
   | "estacao"
   | "pousada"
   | "bosqueSign"
-  | "salto";
+  | "salto"
+  | "ufoPort";
 
 /** Which shading a model wants: foliage reads better soft, everything built reads flat. */
 export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
@@ -159,6 +161,7 @@ export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
   pousada: "flat",
   bosqueSign: "flat",
   salto: "flat",
+  ufoPort: "flat",
 };
 
 const HOUSE_BASE: Omit<BuildingSpec, "wallColor" | "roofColor"> = {
@@ -231,6 +234,7 @@ export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = 
   pousada: () => createPousadaGeometry(),
   bosqueSign: () => createBosqueSignGeometry(),
   salto: () => createSaltoGeometry(),
+  ufoPort: () => createUfoPortGeometry(),
 };
 
 /** One object placed in the world. Y comes from the terrain, or the waterline for boats. */
@@ -327,6 +331,7 @@ export const LANDMARKS: readonly Placement[] = [
   placed("mirante", -132, -96, 0.3),
   placed("bosqueSign", -60, -44, 0.6),
   placed("salto", SALTO_ORIGIN.x, SALTO_ORIGIN.z),
+  placed("ufoPort", UFO_PORT.x, UFO_PORT.z),
 
   // The row of shops facing the street, awnings toward the water.
   placed("shopBrick", 62, 72, Math.PI * 0.92),
@@ -450,6 +455,7 @@ const CLEARINGS: readonly Clearing[] = [
   { x: 118, z: -92, radius: 12 },
   { x: 134, z: -98, radius: 8 },
   { x: -60, z: -44, radius: 4 },
+  { x: UFO_PORT.x, z: UFO_PORT.z, radius: 24 },
   { x: 42, z: 72, radius: 12 },
   { x: 70, z: 62, radius: 9 },
   { x: 124, z: 100, radius: 8 },
@@ -571,6 +577,14 @@ export function createScatter(): readonly Placement[] {
 
   // Basalt on the high ground.
   scatter("rock", 45, [0.6, 2.2], inCommunity, (_x, _z, height) => height > 14);
+
+  // Woods running back over the plateau, so the horizon is forested land receding into
+  // haze rather than bare domes. They thin out toward the UFO port's clearing.
+  const onPlateau = (): readonly [number, number] => [-205 + random() * 410, -126 - random() * 82];
+  scatter("conifer", 230, [0.8, 1.5], onPlateau, onLand, 2);
+  scatter("broadleafWarm", 190, [0.9, 1.7], onPlateau, onLand, 2);
+  scatter("broadleaf", 150, [0.9, 1.7], onPlateau, onLand, 2);
+  scatter("araucaria", 46, [0.9, 1.35], onPlateau, onLand, 3);
 
   return placements;
 }
