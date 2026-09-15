@@ -18,7 +18,7 @@ import { WORLD_COLORS } from "./constants";
 export const SAUCER_HOVER = { x: 0, y: 19, z: 0 } as const;
 
 /** Where the landed saucer sits, so the gantry can meet it. */
-const LANDED_SAUCER = { x: -9.5, y: 7.4, z: 9.5 } as const;
+const LANDED_SAUCER = { x: -11, y: 8.2, z: 6.5 } as const;
 
 /** Top of the painted tier, so legs, gantry and walkway all meet the same floor. */
 const APRON_TOP = 2.2;
@@ -133,18 +133,20 @@ export function createUfoPortGeometry(): BufferGeometry {
   }
   // A bowl, not a cone: wide rim over a narrow throat, tipped to face the approach.
   const bigDish = post(5.6, 1.3, 2.3, 22, WORLD_COLORS.whitewash, 0, 0, 0, "metal");
-  bigDish.rotateX(0.55);
+  bigDish.rotateX(-0.6);
+  bigDish.rotateY(-0.5);
   bigDish.translate(radarX, 10.2, radarZ);
   parts.push(bigDish);
   const feed = post(0.34, 0.5, 4.2, 6, WORLD_COLORS.metal, 0, 0, 0, "metal");
-  feed.rotateX(0.55);
+  feed.rotateX(-0.6);
+  feed.rotateY(-0.5);
   feed.translate(radarX, 11.4, radarZ);
   parts.push(feed);
   parts.push(post(0.4, 0.4, 3.4, 6, WORLD_COLORS.metal, radarX, 10.4, radarZ, "metal"));
   for (const [dx, dz, lift] of [[-7, 5, 5.4], [7, 6, 4.6]] as const) {
     parts.push(post(0.4, 0.5, lift, 6, WORLD_COLORS.metal, radarX + dx, 0, radarZ + dz, "metal"));
     const small = post(2.2, 0.6, 1.1, 16, WORLD_COLORS.rail, 0, 0, 0, "metal");
-    small.rotateX(0.5);
+    small.rotateX(-0.5);
     small.rotateY(dx > 0 ? 0.6 : -0.6);
     small.translate(radarX + dx, lift + 0.7, radarZ + dz);
     parts.push(small);
