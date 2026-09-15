@@ -419,11 +419,14 @@ seeing a first set made in the map's own low-poly style.
 
 ### D25 — The title state waits for the world
 
-The opening is held behind a curtain in the sky's own colours until the scene has been
-drawn - two frames, counted by `SceneReady` - and the title then fades in over it.
-Rendered immediately, as it was, opening the site could show a bare cream page with the
-wordmark floating on it while the atlas, the terrain and the models were still being
-built. The curtain lifting reads as haze clearing.
+The entry screen - wordmark, tagline, the way in - is on from the first paint. What
+waits for the world is only what lies behind it: an opaque sky gradient that fades out
+once the scene has been drawn (two frames, counted by `SceneReady`), leaving the
+translucent cream the world reads through. A separate curtain over the whole screen was
+tried first and was worse: it hid the wordmark, so the site opened on a blank sky. The
+way in is disabled while the sky is up, and a timeout opens it regardless after eight
+seconds - this is judged live on a machine nobody has tested, and a visitor must never
+be left on a sky that does not clear.
 
 Traffic shuttles. The pickup followed the main road as a loop, so at the north end it
 jumped back to the south end in front of the visitor; the route now runs from the

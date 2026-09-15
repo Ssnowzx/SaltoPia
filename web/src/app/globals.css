@@ -120,16 +120,17 @@ body {
 }
 
 /*
- * The title state fades in with the world's first frame. Rendered immediately, it used
- * to sit over an empty canvas while the scene was still being built.
+ * The entry screen is on from the first paint; what lifts is the sky behind it, once the
+ * world has a frame to show. Fading the whole screen in, as this once did, meant opening
+ * the site on nothing at all.
  */
-.intro {
-  opacity: 0;
-  transition: opacity 900ms var(--ease-ui);
+.intro-sky {
+  opacity: 1;
+  transition: opacity 1200ms var(--ease-ui);
 }
 
-.intro[data-ready="true"] {
-  opacity: 1;
+.intro[data-ready="true"] .intro-sky {
+  opacity: 0;
 }
 
 /* Scroll-driven reveal. A section is only ever hidden after scripting marks it pending. */
