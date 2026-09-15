@@ -28,10 +28,10 @@ const yellowtail = Yellowtail({
 
 export const metadata: Metadata = {
   title: {
-    default: "Serranópolis",
-    template: "%s | Serranópolis",
+    default: "Saltopia",
+    template: "%s | Saltopia",
   },
-  description: "Suba a serra sem sair daqui.",
+  description: "Salto Caveiras · Serra Catarinense. A comunidade do Salto do Rio Caveiras, em Lages.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

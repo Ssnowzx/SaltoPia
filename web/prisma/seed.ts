@@ -5,8 +5,8 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 /**
- * Seeds the nine points of interest of Serranopolis - the community at the Salto do
- * Rio Caveiras reservoir.
+ * Seeds the nine points of interest of Saltopia - the community at the Salto do Rio
+ * Caveiras reservoir.
  *
  * World coordinates describe the map: the lake with its island sits in the middle
  * distance (negative Z), the community on the near shore, the dam and the falls at the

@@ -601,8 +601,10 @@ export function chimneyTopFor(spec: BuildingSpec): readonly [number, number, num
 function windowParts(width: number, height: number, sillY: number): BufferGeometry[] {
   const frame = WORLD_COLORS.timberDark;
   return [
-    // Glass, recessed behind the wall face.
-    box(width, height, 0.1, WORLD_COLORS.frostBlue, 0, sillY + height / 2, -0.05, 0, "glass"),
+    // Glass, recessed well behind the wall face. At a 0.1-deep box centred on -0.05 its
+    // front face landed exactly on z = 0, coplanar with the wall, and the two surfaces
+    // fought for the depth buffer - which is what made every window flicker.
+    box(width, height, 0.1, WORLD_COLORS.frostBlue, 0, sillY + height / 2, -0.14, 0, "glass"),
     // Lintel, sill and jambs, proud of it.
     box(width + 0.16, 0.08, 0.14, frame, 0, sillY + height + 0.04, 0.02, 0, "planks"),
     box(width + 0.22, 0.1, 0.2, WORLD_COLORS.whitewash, 0, sillY - 0.05, 0.04, 0, "plaster"),
@@ -616,7 +618,7 @@ function windowParts(width: number, height: number, sillY: number): BufferGeomet
 /** A door in the wall's own frame, same convention as `windowParts`. */
 function doorParts(width: number, height: number): BufferGeometry[] {
   return [
-    box(width, height, 0.1, WORLD_COLORS.timberDark, 0, height / 2, -0.05, 0, "planks"),
+    box(width, height, 0.1, WORLD_COLORS.timberDark, 0, height / 2, -0.14, 0, "planks"),
     box(width + 0.18, 0.09, 0.14, WORLD_COLORS.timber, 0, height + 0.04, 0.02, 0, "planks"),
     box(0.09, height, 0.14, WORLD_COLORS.timber, -width / 2 - 0.045, height / 2, 0.02, 0, "planks"),
     box(0.09, height, 0.14, WORLD_COLORS.timber, width / 2 + 0.045, height / 2, 0.02, 0, "planks"),

@@ -43,9 +43,9 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
           </Link>
         </nav>
 
-        <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-center" aria-label="Serranópolis - início">
-          <span className="block font-sans text-lg leading-none font-black tracking-[0.18em] text-araucaria">SERRANÓPOLIS</span>
-          <span className="mt-0.5 block font-script text-sm leading-none text-teal">Lages · Serra Catarinense</span>
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-center" aria-label="Saltopia - início">
+          <span className="block font-sans text-lg leading-none font-black tracking-[0.18em] text-araucaria">SALTOPIA</span>
+          <span className="mt-0.5 block font-sans text-[10px] leading-none font-bold tracking-[0.22em] text-teal uppercase">Salto Caveiras · Serra Catarinense</span>
         </Link>
 
         <Link

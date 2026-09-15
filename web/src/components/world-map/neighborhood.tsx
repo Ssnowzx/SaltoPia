@@ -131,7 +131,9 @@ export function Neighborhood(): React.ReactElement {
       </mesh>
 
       <mesh geometry={terrainGeometry} material={terrainMaterial} receiveShadow />
-      <mesh geometry={hillsGeometry} material={materials.flat} receiveShadow />
+      {/* The far hills are beyond any useful shadow frustum; asking them to receive
+          shadow only invites the map's edge to show on them. */}
+      <mesh geometry={hillsGeometry} material={materials.flat} />
       <mesh geometry={lawnGeometry} material={materials.flat} receiveShadow />
       <mesh geometry={roadGeometry} material={materials.flat} receiveShadow />
       <mesh geometry={railGeometry} material={materials.flat} receiveShadow />

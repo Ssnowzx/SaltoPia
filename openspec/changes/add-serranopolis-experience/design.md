@@ -306,6 +306,28 @@ Consequences worth recording, because each was a bug first:
 photograph of Lages". Composition is now the specification, and it is checked by
 putting the render beside the photograph.
 
+### D15 — Two rendering defects worth naming, because both are easy to repeat
+
+**The shadow map's edge is a visible object.** The directional light's orthographic
+frustum was +/-150 while the terrain grew to 420 across. Anything outside that frustum
+samples beyond the depth texture and comes back fully shadowed, so the scene grew a
+dark slab with a hard diagonal edge across half the frame. The frustum must contain
+everything that receives shadow - for a 420-unit terrain that is +/-300, since the
+diagonal is what projects into the light's view. Meshes too far to matter, like the
+horizon hills, are better taken out of `receiveShadow` than covered by a bigger map.
+
+**Coplanar faces flicker.** Window glass was a 0.1-deep box centred at z = -0.05, so
+its front face landed exactly on the wall's face at z = 0. Two surfaces at identical
+depth means whichever the rasteriser resolves first wins per pixel and per frame -
+which is what made every window in the town blink. Glazing now sits 0.09 behind the
+wall face. Any inset detail needs real clearance, not a nominal offset.
+
+### D16 — The project is Saltopia
+
+Renamed on 2026-09-15 from Serranopolis, to the name on the wordmark the user supplied:
+**SALTOPIA**, over a banner reading *Salto Caveiras - Serra Catarinense*, with *Est.
+2028*. The header and title screen carry that lockup.
+
 ## Risks / Trade-offs
 
 - **WebGL unavailable or unstable on the demo machine** → The static fallback is a spec

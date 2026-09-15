@@ -75,12 +75,17 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
             intensity={2.0}
             color="#ffe0b0"
             castShadow
-            shadow-mapSize={[2048, 2048]}
-            shadow-camera-left={-150}
-            shadow-camera-right={150}
-            shadow-camera-top={150}
-            shadow-camera-bottom={-150}
-            shadow-camera-far={480}
+            // The frustum has to contain everything that receives shadow. The terrain is
+            // 420 across, so its diagonal projects to about 300 - at +/-150 everything
+            // beyond sampled outside the map and came back fully shadowed, which drew a
+            // dark slab with a hard diagonal edge across half the frame.
+            shadow-mapSize={[4096, 4096]}
+            shadow-camera-left={-300}
+            shadow-camera-right={300}
+            shadow-camera-top={300}
+            shadow-camera-bottom={-300}
+            shadow-camera-near={1}
+            shadow-camera-far={1400}
             shadow-bias={-0.0005}
             shadow-normalBias={0.06}
             shadow-intensity={0.7}
