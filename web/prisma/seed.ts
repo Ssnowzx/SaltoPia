@@ -43,8 +43,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "O coração da comunidade, de frente para o lago",
     description:
       "Tudo começa aqui: o coreto branco, o café com guarda-sóis, o píer que entra no lago e o cheiro de pinhão assando na panela de ferro. É onde a Festa do Pinhão toma conta da beira d'água toda virada de outono.",
-    world: [54, 0, 6],
-    camera: [52, 22, 44],
+    world: [48, 0, 12],
+    camera: [46, 22, 50],
     experiences: [
       { slug: "pinhao-na-panela", name: "Pinhão na panela de ferro", description: "O pinhão cozido no ponto, servido quente no cone de papel, olhando o lago.", kind: "FOOD", durationMinutes: 20 },
       { slug: "festa-do-pinhao", name: "Festa do Pinhão", description: "Três dias de música, fogo de chão e gente na beira do lago.", kind: "EVENT", durationMinutes: null },
@@ -56,8 +56,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A costela que leva seis horas",
     description:
       "Um galpão aberto dos quatro lados na margem oeste, com a costela espetada em vara de ferro inclinada sobre a brasa. Seis horas de fogo baixo e nada mais. A fumaça sai pelo telhado e se vê do outro lado do lago.",
-    world: [92, 0, 30],
-    camera: [78, 18, 60],
+    world: [140, 0, 38],
+    camera: [128, 22, 74],
     experiences: [
       { slug: "costela-fogo-de-chao", name: "Costela de fogo de chão", description: "Seis horas na brasa, sal grosso e mais nada. Serve na tábua, corta na hora.", kind: "FOOD", durationMinutes: 90 },
       { slug: "roda-de-galpao", name: "Roda de galpão", description: "Violão, causo e chimarrão em volta do fogo até a brasa baixar.", kind: "EVENT", durationMinutes: 120 },
@@ -81,8 +81,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A ilha no meio do lago",
     description:
       "A ilha é um bosque de araucárias que já estavam ali muito antes da represa. Chega-se de barco, a partir do píer da praça; na margem sul há duas cabanas em palafita e um píer próprio, e a trilha dá a volta na ilha em meia hora.",
-    world: [-70, 0, -50],
-    camera: [-52, 26, 6],
+    world: [-60, 0, -44],
+    camera: [-44, 26, 10],
     experiences: [
       { slug: "travessia-de-barco", name: "Travessia de barco", description: "Dez minutos de lancha do píer da praça até a ilha, com o sol batendo na água.", kind: "TOUR", durationMinutes: 30 },
       { slug: "trilha-da-ilha", name: "Trilha da ilha", description: "A volta completa por baixo das araucárias, com guia que sabe a idade de cada uma.", kind: "TRAIL", durationMinutes: 45 },
@@ -94,8 +94,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Uva que amadurece no frio",
     description:
       "Na encosta leste, mil e duzentos metros acima do mar, a uva amadurece devagar e a geada faz parte do plano. As parreiras descem o morro em fileiras até a cantina de pedra.",
-    world: [116, 0, -18],
-    camera: [104, 22, 18],
+    world: [150, 0, -44],
+    camera: [138, 24, -4],
     experiences: [
       { slug: "degustacao-na-cantina", name: "Degustação na cantina", description: "Cinco rótulos de altitude, queijo da serra e o lago pela janela.", kind: "FOOD", durationMinutes: 60 },
       { slug: "caminhada-entre-parreiras", name: "Caminhada entre as parreiras", description: "Do alto da encosta até a cantina, pelo meio das videiras.", kind: "TRAIL", durationMinutes: 45 },
@@ -107,8 +107,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A tradição que não virou museu",
     description:
       "Galpão comprido de cal branca, varanda funda e a porteira de madeira com a lanterna de ferro pendurada, aberta para a rua. Aqui o tropeirismo não está atrás de vidro: tem baile, tem prenda, tem chimarrão rodando.",
-    world: [104, 0, 66],
-    camera: [90, 20, 96],
+    world: [108, 0, 104],
+    camera: [98, 20, 140],
     experiences: [
       { slug: "baile-de-galpao", name: "Baile de galpão", description: "Gaita, chula e o chão de tábua tremendo até tarde.", kind: "EVENT", durationMinutes: 240 },
     ],
@@ -119,8 +119,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "O trem parou, a feira ficou",
     description:
       "Na entrada da comunidade, a estação não recebe trem desde os anos setenta, mas a plataforma nunca esvaziou. Virou feira: queijo, mel de melato, cuca, e os trilhos sumindo na neblina.",
-    world: [126, 0, 96],
-    camera: [116, 20, 128],
+    world: [150, 0, 120],
+    camera: [140, 22, 156],
     experiences: [
       { slug: "feira-da-plataforma", name: "Feira da plataforma", description: "Sábado de manhã, debaixo da cobertura de zinco. Queijo curado, cuca de banana e melato.", kind: "FOOD", durationMinutes: 60 },
     ],
@@ -131,10 +131,48 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "Piscina, lareira e o lago na janela",
     description:
       "A casa laranja de dois andares na beira do lago, com a piscina no gramado, painéis solares no telhado e a lareira acesa metade do ano. De manhã a geada deixa o gramado branco até o sol subir — e é por isso que as pessoas vêm.",
-    world: [32, 0, 62],
-    camera: [34, 20, 96],
+    world: [20, 0, 120],
+    camera: [26, 20, 156],
     experiences: [
       { slug: "noite-de-lareira", name: "Noite de lareira", description: "Quarto com sacada para o lago, café colonial na chegada e lenha à vontade.", kind: "STAY", durationMinutes: null },
+    ],
+  },
+  {
+    slug: "fazenda-do-cedro",
+    name: "Fazenda do Cedro",
+    tagline: "Campo aberto, gado e um café que dura a manhã inteira",
+    description:
+      "Meia hora de estrada de chão depois da comunidade, o mato abre e aparece o campo: galpão vermelho, dois silos e a casa branca no meio do pasto. O café colonial sai às nove, com cuca, melado e queijo da própria leiteria.",
+    world: [202, 0, 28],
+    camera: [186, 26, 68],
+    experiences: [
+      { slug: "cafe-colonial-da-fazenda", name: "Café colonial da fazenda", description: "Mesa posta na varanda com cuca de banana, melado de cana, queijo curado e leite tirado na hora.", kind: "FOOD", durationMinutes: 90 },
+      { slug: "cavalgada-pelo-campo", name: "Cavalgada pelo campo", description: "Duas horas a cavalo pelo pasto alto, com parada no açude para o chimarrão.", kind: "TOUR", durationMinutes: 120 },
+    ],
+  },
+  {
+    slug: "fazenda-santa-barbara",
+    name: "Fazenda Santa Bárbara",
+    tagline: "A sede de 1912 e o galpão de tropeiro",
+    description:
+      "A fazenda mais antiga do planalto, ainda na mesma família. A sede de madeira tem o assoalho original e o galpão guarda os arreios de quatro gerações de tropeiros que desciam a serra por aqui.",
+    world: [214, 0, -96],
+    camera: [198, 26, -56],
+    experiences: [
+      { slug: "visita-a-sede-historica", name: "Visita à sede histórica", description: "A casa de 1912 por dentro, com quem cresceu nela contando cada cômodo.", kind: "TOUR", durationMinutes: 60 },
+      { slug: "tarde-de-ordenha", name: "Tarde de ordenha", description: "Fim de tarde no curral, com as crianças aprendendo a tirar leite no balde.", kind: "EVENT", durationMinutes: 45 },
+    ],
+  },
+  {
+    slug: "fazenda-dos-pinheiros",
+    name: "Fazenda dos Pinheiros",
+    tagline: "Araucárias centenárias e a safra do pinhão",
+    description:
+      "No alto, atrás do morro dos chalés, um pinheiral que ninguém derrubou. Na safra, de abril a julho, a fazenda abre a colheita para quem quiser subir e trazer o pinhão do chão.",
+    world: [176, 0, -176],
+    camera: [162, 28, -136],
+    experiences: [
+      { slug: "colheita-do-pinhao", name: "Colheita do pinhão", description: "Manhã inteira debaixo das araucárias, cesto na mão, com quem conhece a safra.", kind: "TRAIL", durationMinutes: 90 },
     ],
   },
   {
@@ -143,8 +181,8 @@ const PLACES: readonly PlaceSeed[] = [
     tagline: "A pista de pouso do planalto",
     description:
       "No alto do planalto, longe das luzes da comunidade, um pátio de concreto com balizas acesas espera visita. A torre opera desde 2028 e o registro de avistamentos fica aberto na sala de controle — o céu limpo da serra é o melhor do país para isso, e quase toda noite alguém jura ter visto algo.",
-    world: [22, 0, -196],
-    camera: [34, 34, -138],
+    world: [22, 0, -288],
+    camera: [26, 30, -224],
     experiences: [
       { slug: "vigilia-no-patio", name: "Vigília no pátio", description: "Madrugada inteira no concreto, cobertor, chimarrão e o céu da serra aberto de ponta a ponta.", kind: "EVENT", durationMinutes: 300 },
       { slug: "visita-a-torre", name: "Visita à torre de controle", description: "O rádio, a antena e o livro de avistamentos aberto desde a primeira noite.", kind: "TOUR", durationMinutes: 40 },

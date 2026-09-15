@@ -80,10 +80,10 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
             // beyond sampled outside the map and came back fully shadowed, which drew a
             // dark slab with a hard diagonal edge across half the frame.
             shadow-mapSize={[4096, 4096]}
-            shadow-camera-left={-300}
-            shadow-camera-right={300}
-            shadow-camera-top={300}
-            shadow-camera-bottom={-300}
+            shadow-camera-left={-380}
+            shadow-camera-right={380}
+            shadow-camera-top={380}
+            shadow-camera-bottom={-380}
             shadow-camera-near={1}
             shadow-camera-far={1400}
             shadow-bias={-0.0005}

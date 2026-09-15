@@ -20,6 +20,12 @@ export const PIN_ICONS: Readonly<Record<string, string>> = {
     "M7 3h10a2.5 2.5 0 0 1 2.5 2.5V15a2.5 2.5 0 0 1-2.5 2.5H7A2.5 2.5 0 0 1 4.5 15V5.5A2.5 2.5 0 0 1 7 3zm1 3.5v4.5h8V6.5zM8 13a1.4 1.4 0 1 0 0 2.8A1.4 1.4 0 0 0 8 13zm8 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8zM6.5 18.5L4.5 22h2.2l1-1.6h8.6l1 1.6h2.2l-2-3.5z",
   "pousada-da-geada":
     "M12 3.5l8.5 7.5h-2.3v8H5.8v-8H3.5zM15.5 5h2v4.2l-2-1.8zM10 13.5h4v5.5h-4z",
+  "fazenda-do-cedro":
+    "M3 11l9-7 9 7v2h-2v8H5v-8H3zM8 15h8v6H8zM10 15v6M14 15v6M8 18h8",
+  "fazenda-santa-barbara":
+    "M4 10l7-6 7 6v11H4zM9 14h4v7H9zM16.5 8h3v13h-3zM17 5.5a1.5 1.5 0 1 1 2 1.4V8h-2z",
+  "fazenda-dos-pinheiros":
+    "M12 2l4 5h-2.4l3 4h-2.4l3 4.2h-3.6V21h-1.2v-5.8H8.8l3-4.2H9.4l3-4H10z",
   "porto-de-ovnis":
     "M12 4c4.4 0 8 1.6 8 3.6S16.4 11.2 12 11.2 4 9.6 4 7.6 7.6 4 12 4zm0 1.6c-2.6 0-4.8.9-4.8 2s2.2 2 4.8 2 4.8-.9 4.8-2-2.2-2-4.8-2zM9 13l6 0-1.2 7.6h-3.6zM6.5 12.4l1.6 1.2-1.1 1.4-1.6-1.2zM17.5 12.4l1.1 1.4-1.6 1.2-1.1-1.4z",
   "salto-caveiras":

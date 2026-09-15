@@ -19,7 +19,6 @@ import {
 import {
   createLakeSurfaceGeometry,
   createLawnGeometry,
-  createRailGeometry,
   createRiverGeometry,
   createRoadGeometry,
   createWaterfallFoamGeometry,
@@ -103,7 +102,6 @@ export function Neighborhood(): React.ReactElement {
   const hillsGeometry = useMemo(() => createHillsGeometry(), []);
   const roadGeometry = useMemo(() => createRoadGeometry(), []);
   const lawnGeometry = useMemo(() => createLawnGeometry(LAWNS), []);
-  const railGeometry = useMemo(() => createRailGeometry(), []);
   const lakeGeometry = useMemo(() => createLakeSurfaceGeometry(), []);
   const riverGeometry = useMemo(() => createRiverGeometry(), []);
   const foamGeometry = useMemo(() => createWaterfallFoamGeometry(), []);
@@ -136,7 +134,6 @@ export function Neighborhood(): React.ReactElement {
       <mesh geometry={hillsGeometry} material={materials.flat} />
       <mesh geometry={lawnGeometry} material={materials.flat} receiveShadow />
       <mesh geometry={roadGeometry} material={materials.flat} receiveShadow />
-      <mesh geometry={railGeometry} material={materials.flat} receiveShadow />
       <mesh geometry={lakeGeometry} material={materials.lake} />
       <mesh geometry={riverGeometry} material={materials.lake} />
       <mesh geometry={foamGeometry} material={materials.smooth} />

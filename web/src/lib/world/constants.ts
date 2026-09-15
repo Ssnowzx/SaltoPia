@@ -65,9 +65,12 @@ export const WORLD_COLORS = {
   ember: "#c4522e",
   emberGlow: "#ff8a3d",
   /** Earth tracks. */
-  road: "#a7845c",
+  road: "#9c8a6e",
   /** The stone-sett streets Lages is known for. */
-  street: "#8f8c85",
+  barnRed: "#a8442f",
+  barnOchre: "#b87a36",
+  street: "#75726b",
+  roadLine: "#e6dcc4",
   /** Kerbs and pavements. */
   kerb: "#b8b3a8",
   /** Stone paving in the square. */
@@ -143,8 +146,10 @@ export const SUN_DIRECTION = { x: 0.62, y: 0.22, z: -1 } as const;
 
 /** Terrain extent. */
 export const TERRAIN = {
-  size: 420,
-  segments: 210,
+  // Wide enough to carry the UFO port out to the far end of the plateau and still
+  // leave land behind it. The segment count keeps roughly the same metres per vertex.
+  size: 620,
+  segments: 262,
 } as const;
 
 /** The reservoir. */
@@ -159,7 +164,9 @@ export const LAKE = {
   riverLevel: -5,
   riverHalfWidth: 5,
   /** The extent the water surface mesh is built over. */
-  bounds: { minX: -210, maxX: 150, minZ: -150, maxZ: 110 },
+  // The basin covers everything west of the east shore, so the water surface has to
+  // reach the terrain edge: stopping short left a dry trench at the frame edge.
+  bounds: { minX: -318, maxX: 126, minZ: -158, maxZ: 318 },
 } as const;
 
 /** The river below the dam, kept as its own block for the falls geometry. */
@@ -176,29 +183,23 @@ export const BRIDGE_DECK_HEIGHT = 1.5;
 
 /** Streets and tracks. */
 export const ROAD = {
-  streetWidth: 5.2,
+  streetWidth: 4.4,
   /** Kerb and pavement strip either side of a street. */
-  kerbExtra: 1.6,
+  kerbExtra: 1.2,
   drivewayWidth: 3.6,
   trailWidth: 3.0,
   pathWidth: 2.4,
+  /** The broken centre line: dash pitch and width. */
+  centreLineSpacing: 13,
+  centreLineWidth: 0.26,
   /** Lift above the terrain so the ribbon never z-fights with it. */
   lift: 0.16,
 } as const;
 
 /** Atmospheric depth. The far hills dissolve into this. */
 export const FOG = {
-  near: 280,
-  far: 720,
-} as const;
-
-/** The railway. */
-export const RAIL = {
-  bedWidth: 2.9,
-  gauge: 1.15,
-  railWidth: 0.22,
-  lift: 0.14,
-  sleeperSpacing: 1.7,
+  near: 340,
+  far: 940,
 } as const;
 
 /** Clouds drifting over the valley - thin sunset streaks, not cumulus. */
@@ -221,8 +222,6 @@ export const MIST = {
 /** Vehicles. */
 export const VEHICLES = {
   carSpeed: 6.5,
-  trainSpeed: 8.5,
-  trainCarSpacing: 3.9,
   boatSpeed: 4.2,
 } as const;
 
@@ -234,7 +233,7 @@ export const SMOKE = {
 } as const;
 
 /** The Porto de OVNIs on the plateau, the map's most distant attraction. */
-export const UFO_PORT = { x: 22, z: -196 } as const;
+export const UFO_PORT = { x: 22, z: -288 } as const;
 
 /** Map pins. */
 export const PIN = {
@@ -253,10 +252,12 @@ export const CAMERA = {
   near: 0.5,
   far: 1400,
   /** From the south, high enough to see over the community to the lake and island. */
-  initialPosition: [34, 68, 168] as const,
-  target: [16, 2, -54] as const,
+  // Far enough back to hold the whole spread: the places run from the pousada at the
+  // south end to the dam in the north, and a tighter frame cut the southern half off.
+  initialPosition: [44, 88, 210] as const,
+  target: [44, 2, -46] as const,
   minDistance: 40,
-  maxDistance: 205,
+  maxDistance: 290,
   /** No top-down view: the town is composed for a low, cinematic angle. */
   minPolarAngle: 0.78,
   maxPolarAngle: 1.38,

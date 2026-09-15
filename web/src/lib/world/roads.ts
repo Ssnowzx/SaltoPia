@@ -1,7 +1,7 @@
 import { BufferGeometry, CatmullRomCurve3, Color, Float32BufferAttribute, PlaneGeometry, Vector3 } from "three";
 
 import { blob, merge } from "./builders";
-import { BRIDGE_DECK_HEIGHT, LAKE, RAIL, RIVER, ROAD, WORLD_COLORS } from "./constants";
+import { BRIDGE_DECK_HEIGHT, LAKE, RIVER, ROAD, WORLD_COLORS } from "./constants";
 import { RIVER_COURSE, lakeDistance, riverDistance, riverSurfaceHeightAt, terrainHeightAt } from "./terrain";
 import { SURFACE, type SurfaceKey } from "./textures";
 
@@ -41,15 +41,16 @@ export const MAIN_ROAD: readonly Waypoint[] = [
   [82, -6],
   [86, -38],
   [82, -68],
-  [70, -94],
-  [52, -112],
+  [72, -92],
+  [64, -100],
 ];
 
 /** The lakefront street: past the resort, its car park and the square. */
 export const SHORE_STREET: readonly Waypoint[] = [
-  [52, 116],
-  [40, 98],
-  [34, 76],
+  [48, 142],
+  [46, 126],
+  [40, 106],
+  [36, 88],
   [40, 52],
   [52, 30],
   [62, 12],
@@ -73,26 +74,28 @@ export interface Driveway {
 }
 
 export const DRIVEWAYS: readonly Driveway[] = [
-  // The resort on the lakefront.
-  { points: [[34, 76], [26, 70]], width: ROAD.drivewayWidth, surface: "street", yard: [24, 66], yardRadius: 5 },
-  // The shops.
-  { points: [[58, 86], [64, 72]], width: ROAD.drivewayWidth, surface: "street", yard: [64, 68], yardRadius: 4 },
-  // Galpao do Fogo de Chao.
-  { points: [[74, 26], [88, 32]], width: ROAD.drivewayWidth, surface: "track", yard: [91, 33], yardRadius: 4 },
-  // CTG Porteira do Tropeiro.
-  { points: [[58, 86], [88, 76], [100, 72]], width: ROAD.drivewayWidth, surface: "track", yard: [102, 71], yardRadius: 3.5 },
-  // Estacao Velha.
-  { points: [[48, 150], [90, 130], [122, 106]], width: ROAD.drivewayWidth, surface: "street", yard: [124, 102], yardRadius: 4 },
-  // Vinicola de Altitude.
-  { points: [[86, -38], [104, -28], [114, -22]], width: ROAD.drivewayWidth, surface: "track", yard: [115, -21], yardRadius: 3.5 },
+  // Pousada da Geada, at the south end of the lakefront.
+  { points: [[40, 106], [32, 110]], width: ROAD.drivewayWidth, surface: "street", yard: [29, 111], yardRadius: 6 },
+  // Praca do Pinhao and its pier.
+  { points: [[62, 12], [54, 12]], width: ROAD.drivewayWidth, surface: "street", yard: [51, 12], yardRadius: 5 },
+  // The shops, off the road through the middle of the community.
+  { points: [[62, 78], [68, 72]], width: ROAD.drivewayWidth, surface: "street", yard: [69, 70], yardRadius: 4 },
+  // Galpao do Fogo de Chao, inland on the east slope.
+  { points: [[66, 56], [92, 54], [110, 53]], width: ROAD.drivewayWidth, surface: "track", yard: [113, 52], yardRadius: 4 },
+  // CTG Porteira do Tropeiro, out to the south-east.
+  { points: [[50, 122], [72, 116], [90, 110]], width: ROAD.drivewayWidth, surface: "track", yard: [93, 109], yardRadius: 4 },
+  // Estacao Velha, beside the railway at the edge of the map.
+  { points: [[49, 134], [98, 128], [140, 121]], width: ROAD.drivewayWidth, surface: "street", yard: [145, 120], yardRadius: 5 },
+  // Vinicola de Altitude, up on the north slope.
+  { points: [[85, -42], [110, -44], [126, -44]], width: ROAD.drivewayWidth, surface: "track", yard: [129, -44], yardRadius: 4 },
   // The dam and the usina.
   { points: [[82, -68], [100, -82], [114, -92]], width: ROAD.drivewayWidth, surface: "track", yard: [116, -93], yardRadius: 3.5 },
 ];
 
 /** Paved paths around the square. */
 export const PATHS: readonly (readonly Waypoint[])[] = [
-  [[54, 16], [62, 12]],
-  [[54, -4], [66, -8]],
+  [[44, 18], [54, 12]],
+  [[44, 6], [56, 0], [66, -8]],
 ];
 
 /** The footbridge below the dam. */
@@ -102,14 +105,6 @@ export const FOOTBRIDGE: readonly Waypoint[] = [
   [134, -98],
 ];
 
-/** The railway, along the south-east edge past the station. */
-export const RAIL_LINE: readonly Waypoint[] = [
-  [-40, 196],
-  [30, 186],
-  [90, 168],
-  [126, 146],
-  [160, 118],
-];
 
 export interface ParkingLot {
   readonly x: number;
@@ -121,9 +116,9 @@ export interface ParkingLot {
 
 /** Car parks: a paved rectangle, with cars placed by the layout. */
 export const PARKING_LOTS: readonly ParkingLot[] = [
-  { x: 42, z: 72, width: 16, depth: 11, rotationY: -0.35 },
-  { x: 70, z: 62, width: 12, depth: 8, rotationY: -0.3 },
-  { x: 124, z: 100, width: 10, depth: 7, rotationY: 0.4 },
+  { x: 38, z: 104, width: 16, depth: 11, rotationY: -0.3 },
+  { x: 64, z: 40, width: 12, depth: 8, rotationY: -0.3 },
+  { x: 144, z: 106, width: 10, depth: 7, rotationY: 0.5 },
 ];
 
 export const ROAD_POLYLINES: ReadonlyArray<{ readonly points: readonly Waypoint[]; readonly closed: boolean; readonly width: number }> = [
@@ -285,34 +280,6 @@ function appendRectangle(lot: ParkingLot, lift: number, color: Color, surface: S
   }
 }
 
-function appendSleepers(curve: CatmullRomCurve3, spacing: number, width: number, lift: number, color: Color, sink: Sink): void {
-  const length = curve.getLength();
-  const count = Math.floor(length / spacing);
-
-  for (let index = 0; index < count; index += 1) {
-    const t = (index + 0.5) / count;
-    const point = curve.getPointAt(t);
-    const tangent = curve.getTangentAt(t);
-    const perpX = tangent.z;
-    const perpZ = -tangent.x;
-
-    const corner = (sideAlong: number, sideAcross: number): readonly [number, number, number] => {
-      const x = point.x + tangent.x * sideAlong * 0.24 + perpX * sideAcross * (width / 2);
-      const z = point.z + tangent.z * sideAlong * 0.24 + perpZ * sideAcross * (width / 2);
-      return [x, surfaceHeightAt(x, z) + lift, z];
-    };
-
-    const backLeft = corner(-1, 1);
-    const backRight = corner(-1, -1);
-    const frontLeft = corner(1, 1);
-    const frontRight = corner(1, -1);
-
-    for (const [x, y, z] of [backLeft, backRight, frontLeft, backRight, frontRight, frontLeft]) {
-      pushVertex(sink, x, y, z, color, "planks", 0, 0);
-    }
-  }
-}
-
 function toGeometry(sink: Sink, unitsPerTile: number): BufferGeometry {
   const geometry = new BufferGeometry();
   const count = sink.positions.length / 3;
@@ -336,12 +303,38 @@ const KERB = new Color(WORLD_COLORS.kerb);
 const TRACK = new Color(WORLD_COLORS.road);
 const DECK = new Color(WORLD_COLORS.timber);
 const PAVING = new Color(WORLD_COLORS.paving);
+const LINE = new Color(WORLD_COLORS.roadLine);
 
 /** A street: a pavement strip underneath, the stone setts on top. */
+/**
+ * A street: a pale shoulder, the carriageway, and a broken centre line.
+ *
+ * The carriageway is flat colour. The stone texture is random rubble, and at a road's
+ * scale it read as speckled noise rather than a surface - it looked like a rendering
+ * fault, not asphalt.
+ */
 function appendStreet(points: readonly Waypoint[], lift: number, sink: Sink): void {
   const curve = createCurve(points, false);
-  appendRibbon(curve, { width: ROAD.streetWidth + ROAD.kerbExtra, lift, colorAt: () => KERB, surfaceAt: () => "paving" }, sink);
-  appendRibbon(curve, { width: ROAD.streetWidth, lift: lift + 0.03, colorAt: () => STREET, surfaceAt: () => "stone" }, sink);
+  appendRibbon(curve, { width: ROAD.streetWidth + ROAD.kerbExtra, lift, colorAt: () => KERB, surfaceAt: () => "plain" }, sink);
+  appendRibbon(curve, { width: ROAD.streetWidth, lift: lift + 0.03, colorAt: () => STREET, surfaceAt: () => "plain" }, sink);
+  appendCentreLine(curve, lift + 0.05, sink);
+}
+
+/** The broken white line down the middle of a carriageway. */
+function appendCentreLine(curve: CatmullRomCurve3, lift: number, sink: Sink): void {
+  const length = curve.getLength();
+  const dashes = Math.max(1, Math.floor(length / ROAD.centreLineSpacing));
+  for (let index = 0; index < dashes; index += 1) {
+    const from = (index + 0.32) / dashes;
+    const to = (index + 0.68) / dashes;
+    const start = curve.getPointAt(from);
+    const end = curve.getPointAt(to);
+    appendRibbon(
+      createCurve([[start.x, start.z], [end.x, end.z]], false),
+      { width: ROAD.centreLineWidth, lift, colorAt: () => LINE, surfaceAt: () => "plain", step: 1.4 },
+      sink,
+    );
+  }
 }
 
 /** Every street, driveway, path, car park, footbridge and yard, as one geometry. */
@@ -356,14 +349,14 @@ export function createRoadGeometry(): BufferGeometry {
     const street = driveway.surface === "street";
     appendRibbon(
       createCurve(driveway.points, false),
-      { width: driveway.width, lift: ROAD.lift + 0.05, colorAt: () => (street ? STREET : TRACK), surfaceAt: () => (street ? "stone" : "dirt") },
+      { width: driveway.width, lift: ROAD.lift + 0.05, colorAt: () => (street ? STREET : TRACK), surfaceAt: () => (street ? "plain" : "dirt") },
       sink,
     );
-    appendDisc(driveway.yard[0], driveway.yard[1], driveway.yardRadius, ROAD.lift + 0.04, street ? STREET : TRACK, street ? "stone" : "dirt", sink);
+    appendDisc(driveway.yard[0], driveway.yard[1], driveway.yardRadius, ROAD.lift + 0.04, street ? STREET : TRACK, street ? "plain" : "dirt", sink);
   }
 
   for (const lot of PARKING_LOTS) {
-    appendRectangle(lot, ROAD.lift + 0.06, KERB, "paving", sink);
+    appendRectangle(lot, ROAD.lift + 0.06, KERB, "plain", sink);
   }
 
   for (const path of PATHS) {
@@ -396,26 +389,6 @@ export function createLawnGeometry(lawns: ReadonlyArray<{ readonly x: number; re
 }
 
 /** Ballast, sleepers and two rails. */
-export function createRailGeometry(): BufferGeometry {
-  const curve = createCurve(RAIL_LINE, false);
-  const sink = createSink();
-  const ballast = new Color(WORLD_COLORS.ballast);
-  const trestle = new Color(WORLD_COLORS.timberDark);
-  const rail = new Color(WORLD_COLORS.rail);
-
-  appendRibbon(curve, { width: RAIL.bedWidth, lift: RAIL.lift, colorAt: () => ballast, surfaceAt: () => "dirt" }, sink);
-  appendSleepers(curve, RAIL.sleeperSpacing, RAIL.gauge + 0.9, RAIL.lift + 0.08, trestle, sink);
-  for (const side of [-1, 1]) {
-    appendRibbon(
-      curve,
-      { width: RAIL.railWidth, lift: RAIL.lift + 0.2, lateralOffset: (side * RAIL.gauge) / 2, colorAt: () => rail, surfaceAt: () => "metal" },
-      sink,
-    );
-  }
-
-  return toGeometry(sink, 2.2);
-}
-
 // ---------------------------------------------------------------------------------
 // Water
 // ---------------------------------------------------------------------------------
@@ -427,8 +400,8 @@ export function createRailGeometry(): BufferGeometry {
  */
 export function createLakeSurfaceGeometry(): BufferGeometry {
   const { minX, maxX, minZ, maxZ } = LAKE.bounds;
-  const columns = 150;
-  const rows = 110;
+  const columns = 200;
+  const rows = 200;
 
   const grid = new PlaneGeometry(maxX - minX, maxZ - minZ, columns, rows);
   grid.rotateX(-Math.PI / 2);
@@ -535,9 +508,6 @@ export function createWaterfallFoamGeometry(): BufferGeometry {
 
 /** The curve the pickup follows: the main road, out and back. */
 export const CAR_CURVE: CatmullRomCurve3 = createCurve(MAIN_ROAD, false);
-
-/** The curve the train follows. */
-export const TRAIN_CURVE: CatmullRomCurve3 = createCurve(RAIL_LINE, false);
 
 /** The yacht runs the length of the bay. */
 export const YACHT_CURVE: CatmullRomCurve3 = createCurve(

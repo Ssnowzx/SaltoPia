@@ -44,7 +44,7 @@ const SKY_FRAGMENT = /* glsl */ `
     // warm to orange within a few degrees or the sky reads as haze.
     vec3 color = mix(uLow, uMid, smoothstep(0.0, 0.07, h));
     color = mix(color, uHigh, smoothstep(0.06, 0.3, h));
-    color = mix(uHaze, color, smoothstep(-0.06, 0.025, h));
+    color = mix(uHaze, color, smoothstep(-0.17, 0.11, h));
 
     // The sky warms toward the sun.
     float toward = max(dot(direction, normalize(uSunDirection)), 0.0);
@@ -81,7 +81,7 @@ interface SkyDomeProps {
   readonly radius?: number;
 }
 
-export function SkyDome({ radius = 420 }: SkyDomeProps): React.ReactElement {
+export function SkyDome({ radius = 760 }: SkyDomeProps): React.ReactElement {
   const sunDirection = useMemo(() => new Vector3(SUN_DIRECTION.x, SUN_DIRECTION.y, SUN_DIRECTION.z).normalize(), []);
 
   const skyMaterial = useMemo(

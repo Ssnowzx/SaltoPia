@@ -13,7 +13,8 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "typecheck": "tsc --noEmit",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "check:layout": "tsx scripts/check-layout.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

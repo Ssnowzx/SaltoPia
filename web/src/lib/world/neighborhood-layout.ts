@@ -13,8 +13,9 @@ import {
   createStoneWallGeometry,
 } from "./builders";
 import { LAKE, TERRAIN, UFO_PORT, WORLD_COLORS, WORLD_SEED } from "./constants";
+import { createFarmGeometry } from "./farms";
+import { CHALET_SITES, SITES, siteAt } from "./sites";
 import {
-  SALTO_ORIGIN,
   createBosqueSignGeometry,
   createChapelGeometry,
   createCtgGeometry,
@@ -41,7 +42,7 @@ import {
   createStiltCabinGeometry,
   createYachtGeometry,
 } from "./props";
-import { RAIL_LINE, ROAD_POLYLINES, YARDS, type Waypoint } from "./roads";
+import { ROAD_POLYLINES, YARDS, type Waypoint } from "./roads";
 import { createUfoPortGeometry } from "./ufo-port";
 import { eastShoreXAt, farShoreZAt, lakeDistance, peninsulaDistance, riverDistance, terrainHeightAt } from "./terrain";
 
@@ -106,7 +107,10 @@ export type ModelKey =
   | "pousada"
   | "bosqueSign"
   | "salto"
-  | "ufoPort";
+  | "ufoPort"
+  | "farmRed"
+  | "farmOchre"
+  | "farmTimber";
 
 /** Which shading a model wants: foliage reads better soft, everything built reads flat. */
 export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
@@ -162,6 +166,9 @@ export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
   bosqueSign: "flat",
   salto: "flat",
   ufoPort: "flat",
+  farmRed: "flat",
+  farmOchre: "flat",
+  farmTimber: "flat",
 };
 
 const HOUSE_BASE: Omit<BuildingSpec, "wallColor" | "roofColor"> = {
@@ -235,6 +242,9 @@ export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = 
   bosqueSign: () => createBosqueSignGeometry(),
   salto: () => createSaltoGeometry(),
   ufoPort: () => createUfoPortGeometry(),
+  farmRed: () => createFarmGeometry(WORLD_COLORS.barnRed),
+  farmOchre: () => createFarmGeometry(WORLD_COLORS.barnOchre),
+  farmTimber: () => createFarmGeometry(WORLD_COLORS.timber),
 };
 
 /** One object placed in the world. Y comes from the terrain, or the waterline for boats. */
@@ -268,34 +278,145 @@ function afloatBig(model: ModelKey, x: number, z: number, rotationY = 0, scale =
  * has them: the big lakefront places near the water, the rest stepping back up the
  * slope behind the road.
  */
-const HOUSES: readonly Placement[] = [
-  // Lakefront, looking west over the water.
-  placed("lakeHouse", 46, 34, Math.PI * 0.9),
-  placed("lakeHouse", 72, -10, Math.PI * 0.75),
-  placed("cabana", 34, 44, 2.6),
-  placed("cabana", 58, 0, 2.4),
-  // Behind the road, on the slope.
-  placed("houseWhitewash", 84, 54, 2.9),
-  placed("houseYellow", 96, 50, 3.1),
-  placed("houseTimber", 92, 12, 2.7),
-  placed("houseMint", 104, 6, 3.0),
-  placed("houseWhitewash", 112, 40, 2.8),
-  placed("houseYellow", 76, 92, 3.0),
-  placed("houseTimber", 92, 96, 2.9),
-  placed("houseMint", 108, 88, 3.1),
-  placed("houseWhitewash", 120, 66, 2.8),
-  placed("houseYellow", 106, -30, 2.6),
-  placed("houseTimber", 122, 16, 2.9),
-  placed("cabana", 132, 44, 3.0),
-  placed("houseMint", 66, 118, 3.0),
-  placed("houseWhitewash", 90, 126, 2.9),
+function distanceToPolyline(px: number, pz: number, points: readonly Waypoint[], closed: boolean): number {
+  let best = Number.POSITIVE_INFINITY;
+  const count = closed ? points.length : points.length - 1;
+  for (let index = 0; index < count; index += 1) {
+    const [ax, az] = points[index];
+    const [bx, bz] = points[(index + 1) % points.length];
+    best = Math.min(best, distanceToSegment(px, pz, ax, az, bx, bz));
+  }
+  return best;
+}
+
+/** Scenery keeps off the roads, the yards, the rails and the water. */
+/**
+ * How much ground each building takes, for the spacing pass. Approximate on purpose -
+ * it is a keep-out radius, not a measurement.
+ */
+const FOOTPRINT: Readonly<Partial<Record<ModelKey, number>>> = {
+  pousada: 11,
+  praca: 11,
+  galpao: 9,
+  ctg: 9,
+  estacao: 11,
+  vinicola: 8,
+  mirante: 6,
+  salto: 16,
+  chapel: 4,
+  pier: 5,
+  ufoPort: 40,
+  farmRed: 26,
+  farmOchre: 26,
+  farmTimber: 26,
+  lakeHouse: 8.4,
+  houseWhitewash: 3.6,
+  houseYellow: 3.6,
+  houseTimber: 3.6,
+  houseMint: 3.6,
+  cabana: 2.8,
+  shopBrick: 4.2,
+  shopYellow: 4.2,
+  shopMint: 4.2,
+  shopTimber: 4.2,
+  aFrameShingle: 3.4,
+  aFrameSlate: 3.4,
+  aFrameTile: 3.4,
+  stiltCabin: 4.0,
+};
+
+function footprintOf(placement: Placement): number {
+  return (FOOTPRINT[placement.model] ?? 2) * placement.scale;
+}
+
+/** Candidate nudges, nearest first, so a building moves as little as it has to. */
+const NUDGES: ReadonlyArray<readonly [number, number]> = (() => {
+  const offsets: Array<readonly [number, number]> = [[0, 0]];
+  for (let ring = 1; ring <= 7; ring += 1) {
+    for (let step = 0; step < 12; step += 1) {
+      const angle = (step / 12) * Math.PI * 2 + ring * 0.27;
+      offsets.push([Math.cos(angle) * ring * 2.6, Math.sin(angle) * ring * 2.6]);
+    }
+  }
+  return offsets;
+})();
+
+/** Clearance from the centre of the nearest road ribbon, negative when overlapping it. */
+function roadClearance(x: number, z: number): number {
+  let clearance = Number.POSITIVE_INFINITY;
+  for (const road of ROAD_POLYLINES) {
+    clearance = Math.min(clearance, distanceToPolyline(x, z, road.points, road.closed) - road.width / 2);
+  }
+  for (const yard of YARDS) {
+    clearance = Math.min(clearance, Math.hypot(x - yard.x, z - yard.z) - yard.radius);
+  }
+  return clearance;
+}
+
+/**
+ * Nudges buildings off each other, off the roads and out of the water.
+ *
+ * Hand-placed coordinates drift out of true every time a road or a landmark moves, and
+ * the result was a house standing inside another house on top of the street. Each one
+ * now takes the nearest spot that clears everything already placed, so the guarantee
+ * holds however the network is redrawn.
+ */
+function spaceApart(movable: readonly Placement[], fixed: readonly Placement[]): readonly Placement[] {
+  const settled: Placement[] = [...fixed];
+  const placed: Placement[] = [];
+
+  for (const building of movable) {
+    const radius = footprintOf(building);
+    const spot =
+      NUDGES.find(([dx, dz]) => {
+        const x = building.x + dx;
+        const z = building.z + dz;
+        if (lakeDistance(x, z) < radius + 1.5) return false;
+        if (roadClearance(x, z) < radius * 0.85) return false;
+        return settled.every((other) => Math.hypot(x - other.x, z - other.z) >= (radius + footprintOf(other)) * 0.92);
+      }) ?? [0, 0];
+
+    const moved = { ...building, x: building.x + spot[0], z: building.z + spot[1] };
+    settled.push(moved);
+    placed.push(moved);
+  }
+
+  return placed;
+}
+
+const AUTHORED_HOUSES: readonly Placement[] = [
+  // Lakefront, looking west over the water, from the south end up to the square.
+  placed("lakeHouse", 30, 86, Math.PI * 0.95),
+  placed("lakeHouse", 44, 40, Math.PI * 0.9),
+  placed("lakeHouse", 70, -14, Math.PI * 0.75),
+  placed("cabana", 22, 124, 2.8),
+  placed("cabana", 34, 60, 2.6),
+  placed("cabana", 54, -10, 2.4),
+  // Behind the road, stepping back up the slope and out along it in both directions.
+  placed("houseYellow", 64, 120, 3.0),
+  placed("houseTimber", 116, 114, 2.9),
+  placed("houseMint", 78, 104, 3.0),
+  placed("houseYellow", 100, 88, 3.1),
+  placed("houseWhitewash", 86, 74, 2.9),
+  placed("houseMint", 112, 74, 3.1),
+  placed("houseWhitewash", 124, 82, 2.8),
+  placed("cabana", 136, 96, 3.0),
+  placed("houseYellow", 152, 84, 2.7),
+  placed("houseMint", 134, 62, 3.1),
+  placed("houseTimber", 120, 22, 2.9),
+  placed("houseWhitewash", 96, 22, 2.8),
+  placed("houseYellow", 104, -6, 2.6),
+  placed("houseTimber", 90, -26, 2.7),
+  placed("houseWhitewash", 112, -36, 2.8),
+  placed("houseMint", 142, 30, 3.0),
 ];
 
-/** The chalets along the far shore, packed tight at the waterline. */
-const FAR_SHORE_CHALETS: readonly Placement[] = Array.from({ length: 22 }, (_, index) => {
+/** The chalet village on the ridge behind the far shore, stepping up the slope. */
+const FAR_SHORE_CHALETS: readonly Placement[] = CHALET_SITES.map(([x, z], index) => {
   const models: readonly ModelKey[] = ["aFrameShingle", "aFrameSlate", "aFrameTile"];
-  const x = -92 + index * 9.5;
-  return placed(models[index % 3], x, farShoreZAt(x) + 7, 0.05 * (index % 3) - 0.05, 1.9);
+  // They look out over the water, with just enough variation that the row of roofs
+  // does not line up into a single edge.
+  return placed(models[index % 3], x, z, 0.14 * (index % 5) - 0.28, 1.9);
 });
 
 /** The stilt cabins and piers along the peninsula's south shore. */
@@ -316,53 +437,77 @@ const PENINSULA_CABINS: readonly Placement[] = [
  * Landmark coordinates match the `world_x` / `world_z` seeded for each place, so a pin
  * and its building agree without either knowing about the other.
  */
-export const LANDMARKS: readonly Placement[] = [
-  // The lakefront resort in the foreground - the building the photograph opens on.
-  placed("pousada", 32, 62, Math.PI * 0.92),
-  // The square on the shore, with its pier.
-  placed("praca", 54, 6),
-  placed("pier", 40, 4, Math.PI * 0.5),
-  placed("chapel", 68, 22, Math.PI),
-  // The rest of the community, spread along the shore road.
-  placed("galpao", 92, 30, Math.PI),
-  placed("ctg", 104, 66, Math.PI),
-  placed("estacao", 126, 96, Math.PI),
-  placed("vinicola", 116, -18, Math.PI * 0.85),
-  placed("mirante", -132, -96, 0.3),
-  placed("bosqueSign", -60, -44, 0.6),
-  placed("salto", SALTO_ORIGIN.x, SALTO_ORIGIN.z),
-  placed("ufoPort", UFO_PORT.x, UFO_PORT.z),
 
-  // The row of shops facing the street, awnings toward the water.
-  placed("shopBrick", 62, 72, Math.PI * 0.92),
-  placed("shopYellow", 70, 70, Math.PI * 0.92),
-  placed("shopMint", 78, 68, Math.PI * 0.92),
-  placed("shopTimber", 86, 66, Math.PI * 0.92),
+/** Every landmark, positioned from the site table. */
+const SITE_LANDMARKS: readonly Placement[] = ([
+  ["pousada", "pousada-da-geada"],
+  ["praca", "praca-do-pinhao"],
+  ["galpao", "galpao-do-fogo"],
+  ["ctg", "ctg-porteira-do-tropeiro"],
+  ["estacao", "estacao-velha"],
+  ["vinicola", "vinicola-de-altitude"],
+  ["mirante", "mirante-da-neblina"],
+  ["bosqueSign", "bosque-das-araucarias"],
+  ["salto", "salto-caveiras"],
+  ["ufoPort", "porto-de-ovnis"],
+  ["farmRed", "fazenda-do-cedro"],
+  ["farmOchre", "fazenda-santa-barbara"],
+  ["farmTimber", "fazenda-dos-pinheiros"],
+] as ReadonlyArray<readonly [ModelKey, string]>).map(([model, slug]) => {
+  const site = siteAt(slug);
+  return placed(model, site.x, site.z, site.rotationY);
+});
 
-  ...HOUSES,
-  ...FAR_SHORE_CHALETS,
+/** The shops along the road through the middle of the community. */
+const AUTHORED_SHOPS: readonly Placement[] = [
+  placed("shopBrick", 62, 96, Math.PI * 0.95),
+  placed("shopYellow", 66, 80, Math.PI * 0.95),
+  placed("shopMint", 72, 64, Math.PI * 0.95),
+  placed("shopTimber", 80, 46, Math.PI * 0.95),
+];
+
+/** The landmarks, which never move: pads, pins and driveways all point at them. */
+const PINNED: readonly Placement[] = [
+  ...SITE_LANDMARKS,
+  placed("pier", 38, 8, Math.PI * 0.5),
+  placed("chapel", 74, -42, Math.PI),
   ...PENINSULA_CABINS,
+  ...FAR_SHORE_CHALETS,
+];
+
+const SPACED_BUILDINGS: readonly Placement[] = [
+  ...PINNED,
+  ...spaceApart([...AUTHORED_HOUSES, ...AUTHORED_SHOPS], PINNED),
+];
+
+/** The dwellings, which get a mown lawn around them. Shops face the street instead. */
+const HOUSES: readonly Placement[] = SPACED_BUILDINGS.filter((placement) =>
+  ["lakeHouse", "houseWhitewash", "houseYellow", "houseTimber", "houseMint", "cabana"].includes(placement.model),
+);
+
+export const LANDMARKS: readonly Placement[] = [
+  ...SPACED_BUILDINGS,
 
   // Palms along the foreground shore, as in the photograph.
   ...([
-    [18, 52], [22, 62], [16, 72], [26, 80], [34, 86], [12, 86],
-    [30, 36], [24, 28], [40, 18], [44, 46], [52, 52], [8, 96],
+    [16, 54], [20, 64], [13, 74], [23, 82], [10, 92], [6, 104],
+    [27, 34], [21, 26], [35, 16], [30, 44], [18, 112], [3, 118],
   ] as ReadonlyArray<readonly [number, number]>).map(([x, z], index) =>
     placed("palm", x, z, index * 0.7, 0.9 + (index % 3) * 0.12),
   ),
 
   // Parked cars in the car parks and the yards.
-  placed("sedanWhite", 38, 70, -0.35),
-  placed("sedanDark", 41, 72, -0.35),
-  placed("sedanSilver", 44, 74, -0.35),
-  placed("sedanWhite", 41, 67, -0.35),
-  placed("sedanDark", 45, 69, -0.35),
-  placed("sedanSilver", 68, 61, -0.3),
-  placed("sedanWhite", 71, 63, -0.3),
-  placed("sedanDark", 74, 65, -0.3),
-  placed("sedanSilver", 123, 99, 0.4),
-  placed("sedanWhite", 126, 101, 0.4),
-  placed("sedanDark", 112, -90, 1.2),
+  placed("sedanWhite", 34, 102, -0.3),
+  placed("sedanDark", 37, 104, -0.3),
+  placed("sedanSilver", 40, 106, -0.3),
+  placed("sedanWhite", 37, 100, -0.3),
+  placed("sedanDark", 41, 102, -0.3),
+  placed("sedanSilver", 61, 39, -0.3),
+  placed("sedanWhite", 64, 41, -0.3),
+  placed("sedanDark", 67, 43, -0.3),
+  placed("sedanSilver", 142, 105, 0.5),
+  placed("sedanWhite", 145, 107, 0.5),
+  placed("sedanDark", 201, 42, 0.9),
 
   // The vineyard on the slope above the winery.
   ...[126, 132].flatMap((x) => [-26, -22, -18, -14, -10].map((z) => placed("vineRow", x, z))),
@@ -430,9 +575,11 @@ export const LAWNS: ReadonlyArray<{ readonly x: number; readonly z: number; read
     z: house.z,
     radius: house.model === "lakeHouse" ? 10 : house.model === "cabana" ? 5 : 7,
   })),
-  { x: 32, z: 62, radius: 15 },
-  { x: 116, z: -18, radius: 9 },
-  { x: 104, z: 66, radius: 10 },
+  ...SITES.filter((site) => site.slug !== "porto-de-ovnis" && site.slug !== "bosque-das-araucarias").map((site) => ({
+    x: site.x,
+    z: site.z,
+    radius: site.pad * 0.6,
+  })),
 ];
 
 interface Clearing {
@@ -443,26 +590,15 @@ interface Clearing {
 
 /** Ground kept clear of scattered scenery so landmarks and homes stay legible. */
 const CLEARINGS: readonly Clearing[] = [
-  { x: 32, z: 62, radius: 18 },
-  { x: 54, z: 6, radius: 15 },
-  { x: 68, z: 22, radius: 9 },
-  { x: 92, z: 30, radius: 13 },
-  { x: 104, z: 66, radius: 14 },
-  { x: 126, z: 96, radius: 16 },
-  { x: 116, z: -18, radius: 11 },
-  { x: 129, z: -18, radius: 11 },
-  { x: -132, z: -96, radius: 9 },
-  { x: 118, z: -92, radius: 12 },
+  ...SITES.map((site) => ({ x: site.x, z: site.z, radius: site.clearing })),
+  ...CHALET_SITES.map(([x, z]) => ({ x, z, radius: 7 })),
+  // The approach lane south of the UFO port's apron.
+  { x: UFO_PORT.x, z: UFO_PORT.z + 45, radius: 16 },
+  // The chapel, the pier and the usina, which have no pin of their own.
+  { x: 74, z: -42, radius: 9 },
+  { x: 38, z: 8, radius: 7 },
+  { x: 128, z: -112, radius: 8 },
   { x: 134, z: -98, radius: 8 },
-  { x: -60, z: -44, radius: 4 },
-  { x: UFO_PORT.x, z: UFO_PORT.z, radius: 24 },
-  { x: 42, z: 72, radius: 12 },
-  { x: 70, z: 62, radius: 9 },
-  { x: 124, z: 100, radius: 8 },
-  { x: 74, z: 69, radius: 16 },
-  ...HOUSES.map((house) => ({ x: house.x, z: house.z, radius: house.model === "lakeHouse" ? 10 : 6.5 })),
-  ...FAR_SHORE_CHALETS.map((chalet) => ({ x: chalet.x, z: chalet.z, radius: 7 })),
-  ...PENINSULA_CABINS.map((cabin) => ({ x: cabin.x, z: cabin.z, radius: 5 })),
 ];
 
 function isInClearing(x: number, z: number, extra = 0): boolean {
@@ -477,23 +613,10 @@ function distanceToSegment(px: number, pz: number, ax: number, az: number, bx: n
   return Math.hypot(px - (ax + abx * t), pz - (az + abz * t));
 }
 
-function distanceToPolyline(px: number, pz: number, points: readonly Waypoint[], closed: boolean): number {
-  let best = Number.POSITIVE_INFINITY;
-  const count = closed ? points.length : points.length - 1;
-  for (let index = 0; index < count; index += 1) {
-    const [ax, az] = points[index];
-    const [bx, bz] = points[(index + 1) % points.length];
-    best = Math.min(best, distanceToSegment(px, pz, ax, az, bx, bz));
-  }
-  return best;
-}
-
-/** Scenery keeps off the roads, the yards, the rails and the water. */
 function isOnInfrastructure(x: number, z: number): boolean {
   if (ROAD_POLYLINES.some((road) => distanceToPolyline(x, z, road.points, road.closed) < road.width / 2 + 2.2)) return true;
   if (YARDS.some((yard) => Math.hypot(x - yard.x, z - yard.z) < yard.radius + 2)) return true;
   if (LAWNS.some((lawn) => Math.hypot(x - lawn.x, z - lawn.z) < lawn.radius - 1)) return true;
-  if (distanceToPolyline(x, z, RAIL_LINE, false) < 3.8) return true;
   if (x > LAKE.dam.x && riverDistance(x, z) < 12) return true;
   return lakeDistance(x, z) < 3;
 }
@@ -580,11 +703,19 @@ export function createScatter(): readonly Placement[] {
 
   // Woods running back over the plateau, so the horizon is forested land receding into
   // haze rather than bare domes. They thin out toward the UFO port's clearing.
-  const onPlateau = (): readonly [number, number] => [-205 + random() * 410, -126 - random() * 82];
+  const onPlateau = (): readonly [number, number] => [-215 + random() * 430, -126 - random() * 92];
   scatter("conifer", 230, [0.8, 1.5], onPlateau, onLand, 2);
   scatter("broadleafWarm", 190, [0.9, 1.7], onPlateau, onLand, 2);
   scatter("broadleaf", 150, [0.9, 1.7], onPlateau, onLand, 2);
   scatter("araucaria", 46, [0.9, 1.35], onPlateau, onLand, 3);
+
+  // The high plateau carrying the UFO port. Left bare it read as desert from the port's
+  // own camera, which is the one view where it fills the frame.
+  const onFarPlateau = (): readonly [number, number] => [-230 + random() * 460, -220 - random() * 100];
+  scatter("conifer", 220, [0.8, 1.5], onFarPlateau, onLand, 3);
+  scatter("broadleafWarm", 150, [0.9, 1.7], onFarPlateau, onLand, 3);
+  scatter("araucaria", 54, [0.9, 1.4], onFarPlateau, onLand, 4);
+  scatter("rock", 60, [0.7, 2.4], onFarPlateau, onLand, 3);
 
   return placements;
 }
