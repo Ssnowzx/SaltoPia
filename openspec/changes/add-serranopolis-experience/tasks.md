@@ -50,6 +50,7 @@
 - [x] 7.3 Implement `flyTo` at `duration: 2` / `power2.inOut`; verify the camera arrives at the framed view within 2 seconds
 - [x] 7.4 Make a new flight supersede one in progress from its current position; verify two rapid pin activations produce no jump or double-move
 - [x] 7.5 Resolve flights instantly under reduced motion; verify with the emulated setting that the camera arrives with no interpolation
+- [x] 7.6 Settle the view back onto the composed wide shot once an aimed zoom is pulled back out; verify in the browser that zooming in on the fairground and back out returns the framing and leaves the near houses whole — **verified live: the view aimed at the fairground eases home over ~4 s, and the composed frame now clears the first row of houses**
 
 ## 8. Pin overlay
 

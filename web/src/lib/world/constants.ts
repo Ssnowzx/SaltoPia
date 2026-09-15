@@ -252,16 +252,34 @@ export const CAMERA = {
   /** From the south, high enough to see over the community to the lake and island. */
   // Far enough back to hold the whole spread: the places run from the pousada at the
   // south end to the dam in the north, and a tighter frame cut the southern half off.
-  initialPosition: [44, 92, 220] as const,
+  // High enough that the near shore is inside the frame: from lower down the bottom edge
+  // sliced through the first row of houses, which reads as the map being cut off.
+  initialPosition: [44, 104, 226] as const,
   target: [44, 2, -45] as const,
   minDistance: 40,
-  maxDistance: 290,
+  maxDistance: 320,
   /** No top-down view: the town is composed for a low, cinematic angle. */
   minPolarAngle: 0.78,
   maxPolarAngle: 1.24,
   /** The world is built to be seen from the south, so the orbit is held to an arc. */
   minAzimuthAngle: -0.42,
   maxAzimuthAngle: 0.42,
+} as const;
+
+/**
+ * How the composed wide shot is recovered after an aimed zoom.
+ *
+ * Zooming toward the cursor moves what the camera looks at, and zooming back out does not
+ * put it back: a visitor who inspects one roof and pulls away is left aimed at that roof,
+ * with the near houses cut off below the frame. Past `fromDollyShare` of the dolly range -
+ * the band where the view is meant to read as the portrait of the whole neighbourhood -
+ * the aim eases back to CAMERA.target.
+ */
+export const HOME_FRAMING = {
+  /** Where in the dolly range the pull begins; 1 is fully pulled back. */
+  fromDollyShare: 0.78,
+  /** Strength of the ease, in e-folds per second at the far end of the range. */
+  ratePerSecond: 1.6,
 } as const;
 
 /** Idle drift - a slow sway within the azimuth arc. */

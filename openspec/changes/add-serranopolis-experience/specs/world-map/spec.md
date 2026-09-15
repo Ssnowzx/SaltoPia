@@ -70,6 +70,12 @@ The visitor SHALL be able to orbit by dragging and zoom by wheel or pinch. Orbit
 MUST be bounded so that the camera cannot go below the terrain, cannot invert, and cannot
 travel far enough to lose the neighbourhood from frame.
 
+A zoom is aimed: it moves toward whatever the visitor pointed at, which moves what the
+camera is looking at. Zooming in and back out therefore does not return the camera to
+where it started. Whenever the camera is back in its widest band, the view SHALL settle
+onto the composed wide shot, so that pulling back always gives the same framing of the
+neighbourhood rather than whatever the last aimed zoom left behind.
+
 #### Scenario: World left untouched
 - **WHEN** no input has been received for 3 seconds and no flight is in progress
 - **THEN** the camera resumes its idle drift
@@ -78,6 +84,12 @@ travel far enough to lose the neighbourhood from frame.
 #### Scenario: Visitor drags past a bound
 - **WHEN** the visitor drags or zooms beyond a configured limit
 - **THEN** the camera stops at the limit without snapping back or passing through terrain
+
+#### Scenario: Visitor zooms in on something and back out
+- **WHEN** the visitor zooms toward a point and then zooms back out to the widest view
+- **THEN** the view settles onto the composed wide shot of the neighbourhood
+- **AND** the nearest buildings are whole rather than cut by the edge of the frame
+- **AND** the settling is a movement, so under reduced motion it resolves at once
 
 ### Requirement: Flight to a point of interest
 

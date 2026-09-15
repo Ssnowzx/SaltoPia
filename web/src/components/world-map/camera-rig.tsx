@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { TOUCH, Vector3 } from "three";
 
-import { CAMERA, DRIFT, FLIGHT } from "@/lib/world/constants";
+import { CAMERA, DRIFT, FLIGHT, HOME_FRAMING } from "@/lib/world/constants";
 import { terrainHeightAt } from "@/lib/world/terrain";
 import type { Place } from "@/types";
 
@@ -36,11 +36,23 @@ interface CameraRigProps {
 /** Keeps the drift from pressing against the azimuth stops. */
 const DRIFT_MARGIN = 0.03;
 
+/** The composed wide shot's aim, which an aimed zoom walks away from. */
+const HOME_TARGET = new Vector3(CAMERA.target[0], CAMERA.target[1], CAMERA.target[2]);
+
+/** Scratch for the recentring pan, so the frame loop allocates nothing. */
+const HOME_SHIFT = new Vector3();
+
 /** Where the orbit target may go: over the map, between the water and the ridge tops. */
 const TARGET_BOUNDS = { minX: -230, maxX: 240, minZ: -300, maxZ: 190, minY: -2, maxY: 60 } as const;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+/** How strongly the aim is drawn home at this dolly distance, from 0 to 1. */
+function homePull(distance: number): number {
+  const share = (distance - CAMERA.minDistance) / (CAMERA.maxDistance - CAMERA.minDistance);
+  return clamp((share - HOME_FRAMING.fromDollyShare) / (1 - HOME_FRAMING.fromDollyShare), 0, 1);
 }
 
 export function CameraRig({
@@ -159,15 +171,14 @@ export function CameraRig({
   }, [focus, reducedMotion, camera, onFlightStart, onFlightEnd]);
 
   // Idle drift: resumes after the visitor has been still, never during a flight.
-  useFrame(() => {
+  useFrame((_, delta) => {
     const controls = controlsRef.current;
     if (!controls) return;
 
     const now = performance.now() / 1000;
-    const idle =
-      !reducedMotion &&
-      flightRef.current === null &&
-      now - lastInteractionRef.current > DRIFT.resumeAfterSeconds;
+    const still =
+      flightRef.current === null && now - lastInteractionRef.current > DRIFT.resumeAfterSeconds;
+    const idle = !reducedMotion && still;
 
     if (idle) {
       driftRef.current ??= { base: controls.getAzimuthalAngle(), startedAt: now };
@@ -185,6 +196,23 @@ export function CameraRig({
     controls.target.x = clamp(controls.target.x, TARGET_BOUNDS.minX, TARGET_BOUNDS.maxX);
     controls.target.z = clamp(controls.target.z, TARGET_BOUNDS.minZ, TARGET_BOUNDS.maxZ);
     controls.target.y = clamp(controls.target.y, TARGET_BOUNDS.minY, TARGET_BOUNDS.maxY);
+
+    // Back in the wide band and left alone, the aim eases home: an aimed zoom leaves the
+    // camera looking wherever the visitor pointed, so pulling away from a close look gave
+    // them that roof seen from far off, with the near houses cut off below the frame.
+    //
+    // Camera and target move together, which makes this a pan. Easing the target alone
+    // lengthened the distance between them as it moved, which fed straight back into the
+    // pull and cancelled the visitor's zoom as they made it.
+    if (still) {
+      const pull = homePull(camera.position.distanceTo(controls.target));
+      if (pull > 0) {
+        const step = reducedMotion ? 1 : 1 - Math.exp(-HOME_FRAMING.ratePerSecond * pull * delta);
+        HOME_SHIFT.copy(HOME_TARGET).sub(controls.target).multiplyScalar(step);
+        controls.target.add(HOME_SHIFT);
+        camera.position.add(HOME_SHIFT);
+      }
+    }
 
     controls.update();
   });

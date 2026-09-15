@@ -504,6 +504,16 @@ district, which is what makes its place pages hold together over 7800 pixels.
 The gallery and the experience grid both lay out from their own length, because a place
 with one experience was leaving a hole where a row was expected.
 
+An aimed zoom moves what the camera looks at, not just how close it is: OrbitControls
+re-derives the orbit target from the camera's own forward ray on every dolly. Zooming in
+on one thing and out again therefore leaves the visitor aimed at that thing from far away,
+with the near houses below the bottom of the frame. The rig eases the aim home whenever the
+camera is back in its widest band, and does it by moving camera and target together - a
+pan. Easing the target alone lengthens the distance between the two as it moves, which
+feeds straight back into the strength of the pull and cancels the visitor's zoom while they
+are still making it.
+
+
 A place's gallery is a folder, `public/images/places/<slug>/`, read at build time rather
 than listed in the database. Pictures arrive in batches and are named by whoever makes
 them; ninety rows of nothing but a path would turn the seed, which is for words, into a
