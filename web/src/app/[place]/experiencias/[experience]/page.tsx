@@ -6,6 +6,7 @@ import { ContentShell } from "@/components/content/content-shell";
 import { KIND_LABELS, durationLabel } from "@/components/content/experience-card";
 import { ExperienceGrid } from "@/components/content/experience-grid";
 import { PlaceCrest } from "@/components/content/place-crest";
+import { placeTheme } from "@/components/content/place-theme";
 import { Reveal } from "@/components/content/reveal";
 import { ShareBlock } from "@/components/content/share-block";
 import { getExperience, getPlaces } from "@/lib/places";
@@ -50,9 +51,10 @@ export default async function ExperiencePage({ params }: ExperiencePageProps): P
 
   return (
     <ContentShell places={places}>
+      <div style={placeTheme(place.accent)}>
       <header className="relative flex min-h-[70svh] flex-col justify-end overflow-hidden px-6 pt-40 pb-14 text-mist sm:px-8">
-        <Image src={experience.image} alt="" fill priority sizes="100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(17,58,64,0.88)_0%,rgba(17,58,64,0.35)_50%,rgba(17,58,64,0.05)_80%)]" />
+        <Image src={experience.image} alt="" fill priority quality={90} sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_top,color-mix(in_srgb,var(--place-deep)_92%,transparent)_0%,color-mix(in_srgb,var(--place-accent)_45%,transparent)_50%,transparent_82%)]" />
         <div className="relative mx-auto w-full max-w-5xl">
           <a href={`/${place.slug}`} className="inline-flex items-center gap-2 font-sans text-[11px] font-bold tracking-[0.3em] text-gold uppercase underline-offset-4 hover:underline">
             ← {place.name}
@@ -64,30 +66,30 @@ export default async function ExperiencePage({ params }: ExperiencePageProps): P
         </div>
       </header>
 
-      <Reveal className="mx-auto grid w-full max-w-5xl gap-12 px-6 py-20 sm:px-8 md:grid-cols-[1.5fr_1fr]">
+      <Reveal className="mx-auto grid w-full max-w-5xl gap-12 px-5 py-20 sm:px-8 md:grid-cols-[1.5fr_1fr]">
         <div>
-          <p className="font-script text-3xl text-teal">A experiência</p>
+          <p className="font-script text-3xl text-[var(--place-accent)]">A experiência</p>
           <p className="mt-4 font-sans text-lg leading-relaxed text-bark/85 sm:text-xl">{experience.description}</p>
         </div>
         <aside className="rounded-card bg-mist p-8 shadow-[0_18px_44px_rgba(46,36,28,0.12)]">
           <PlaceCrest slug={place.slug} name={place.name} className="w-24" />
           <dl className="mt-6 space-y-5">
             <div>
-              <dt className="font-sans text-[11px] font-bold tracking-[0.3em] text-teal uppercase">Onde</dt>
+              <dt className="font-sans text-[11px] font-bold tracking-[0.3em] text-[var(--place-accent)] uppercase">Onde</dt>
               <dd className="mt-1 font-sans text-sm font-semibold text-bark">
                 <a href={`/${place.slug}`} className="underline-offset-4 hover:underline">{place.name}</a> — {place.tagline}
               </dd>
             </div>
             <div>
-              <dt className="font-sans text-[11px] font-bold tracking-[0.3em] text-teal uppercase">Duração</dt>
+              <dt className="font-sans text-[11px] font-bold tracking-[0.3em] text-[var(--place-accent)] uppercase">Duração</dt>
               <dd className="mt-1 font-sans text-sm font-semibold text-bark">{durationLabel(experience.durationMinutes)}</dd>
             </div>
             <div>
-              <dt className="font-sans text-[11px] font-bold tracking-[0.3em] text-teal uppercase">Tipo</dt>
+              <dt className="font-sans text-[11px] font-bold tracking-[0.3em] text-[var(--place-accent)] uppercase">Tipo</dt>
               <dd className="mt-1 font-sans text-sm font-semibold text-bark">{KIND_LABELS[experience.kind]}</dd>
             </div>
             <div>
-              <dt className="font-sans text-[11px] font-bold tracking-[0.3em] text-teal uppercase">Como reservar</dt>
+              <dt className="font-sans text-[11px] font-bold tracking-[0.3em] text-[var(--place-accent)] uppercase">Como reservar</dt>
               <dd className="mt-1 font-sans text-sm font-semibold text-bark">
                 <a href="/planejar" className="text-teal underline-offset-4 hover:underline">Planejar visita</a>
               </dd>
@@ -97,7 +99,7 @@ export default async function ExperiencePage({ params }: ExperiencePageProps): P
       </Reveal>
 
       {others.length > 0 ? (
-        <Reveal className="bg-mist/60">
+        <Reveal className="bg-[var(--place-wash)] [--ticket-ground:var(--place-wash)]">
           <ExperienceGrid title={`Mais em ${place.name}`} items={others.map((other) => ({ experience: other, place }))} />
         </Reveal>
       ) : null}
@@ -105,6 +107,7 @@ export default async function ExperiencePage({ params }: ExperiencePageProps): P
       <Reveal>
         <ShareBlock title={experience.name} path={`/${place.slug}/experiencias/${experience.slug}`} />
       </Reveal>
+      </div>
     </ContentShell>
   );
 }

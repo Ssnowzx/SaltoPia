@@ -11,6 +11,8 @@ interface RevealProps {
   readonly children: React.ReactNode;
   readonly className?: string;
   readonly id?: string;
+  /** For a section that carries a place's colours as custom properties. */
+  readonly style?: React.CSSProperties;
 }
 
 /**
@@ -20,7 +22,7 @@ interface RevealProps {
  * a layout effect, so without scripting - or under reduced motion - nothing is ever
  * hidden. The observer disconnects after the first entry: a section plays once.
  */
-export function Reveal({ children, className, id }: RevealProps): React.ReactElement {
+export function Reveal({ children, className, id, style }: RevealProps): React.ReactElement {
   const ref = useRef<HTMLElement>(null);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -51,7 +53,7 @@ export function Reveal({ children, className, id }: RevealProps): React.ReactEle
   }, [reducedMotion]);
 
   return (
-    <section ref={ref} id={id} className={className}>
+    <section ref={ref} id={id} className={className} style={style}>
       {children}
     </section>
   );

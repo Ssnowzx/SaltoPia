@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `place` ADD COLUMN `accent` VARCHAR(9) NOT NULL DEFAULT '#1f6068';

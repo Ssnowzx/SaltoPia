@@ -6,8 +6,14 @@ per experience. Paste the **PHOTO** block first, then one place or experience bl
 ask for the aspect given. Save each result at its path — the site picks it up with no
 code change (after a hard refresh; the dev server caches optimised images by URL):
 
-- hero of a place: `web/public/images/heroes/<slug>.webp` — 16:9, 1600×900
-- photo of an experience: `web/public/images/experiences/<slug>.webp` — 4:3, 1200×900
+- hero of a place: `web/public/images/heroes/<slug>.webp` — 16:9, **2560×1440**
+- photo of an experience: `web/public/images/experiences/<slug>.webp` — 4:3, **1920×1440**
+
+Ask for the largest the generator will give and save at those sizes or above. A hero
+fills the whole window, so on a Retina laptop it is drawn across roughly 3000 pixels: a
+1600-wide file is stretched to nearly twice its size and reads as a photograph taken on
+an old phone. The files in the repository were enlarged from 1600 to buy some of that
+back, which cannot add detail the original never had.
 
 The setting is real: the Salto do Rio Caveiras, outside Lages, Santa Catarina — a small
 1940s dam and brick powerhouse on the Caveiras river, araucaria pines, rolling coxilhas,

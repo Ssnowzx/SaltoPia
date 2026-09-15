@@ -16,8 +16,10 @@ interface PlaceHeroProps {
 export function PlaceHero({ place }: PlaceHeroProps): React.ReactElement {
   return (
     <header className="relative flex min-h-svh flex-col items-center justify-end overflow-hidden px-5 pb-12 text-center text-mist sm:px-6 sm:pb-16">
-      <Image src={place.heroImage} alt="" fill priority sizes="100vw" className="object-cover" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(17,58,64,0.82)_0%,rgba(17,58,64,0.28)_45%,rgba(17,58,64,0)_75%)]" />
+      <Image src={place.heroImage} alt="" fill priority quality={90} sizes="100vw" className="object-cover" />
+      {/* The veil under the type is the place's own colour, so the photograph and the
+          page below it belong to the same picture. */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_top,color-mix(in_srgb,var(--place-deep)_88%,transparent)_0%,color-mix(in_srgb,var(--place-accent)_38%,transparent)_45%,transparent_78%)]" />
 
       <div className="relative flex flex-col items-center">
         <PlaceCrest slug={place.slug} name={place.name} className="w-24 drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)] sm:w-40" />

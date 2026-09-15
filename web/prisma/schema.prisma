@@ -39,6 +39,10 @@ model Place {
   /// none - most places have none, which is what makes the ones that do stand out.
   offer String? @db.VarChar(40)
 
+  /// The place's own colour, as a hex string. Its page is built around this rather than
+  /// around the site palette, so no two places read alike.
+  accent String @default("#1f6068") @db.VarChar(9)
+
   /// Ordering in menus and listings. Named position because `order` is reserved in SQL.
   position  Int     @default(0)
   published Boolean @default(false)

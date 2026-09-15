@@ -489,6 +489,21 @@ across the map rather than clustered, so no corner of the frame is all ribbons. 
 a pin the size of a thumbnail from across the map, and the ring is behind
 `prefers-reduced-motion`.
 
+### D28 — A place page is built around the place's colour
+
+Every place carries an `accent`, and `placeTheme` mixes the wash, the veil, the deep and
+the ink from it into custom properties on the page root. No band knows which place it is
+drawing: they ask for `var(--place-accent)`. Fifteen places are therefore fifteen pages
+rather than one page fifteen times, and changing a colour is a change to content.
+
+The page alternates pale and saturated, and the experiences sit on a full block of the
+accent. A couple of cards on a pale page reads as an empty page; the same cards on a
+saturated ground read as a collection. The reference does exactly this, in one colour per
+district, which is what makes its place pages hold together over 7800 pixels.
+
+The gallery and the experience grid both lay out from their own length, because a place
+with one experience was leaving a hole where a row was expected.
+
 ### D22 — Light from two temperatures
 
 The key light is warm and aimed at the community; the fill is a cool sky hemisphere.

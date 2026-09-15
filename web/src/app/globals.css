@@ -228,7 +228,9 @@ body {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--color-straw);
+  /* The notch is a hole, so it has to be the colour of the ground behind the card - which
+     on a place page is that place's own. */
+  background: var(--ticket-ground, var(--color-straw));
 }
 
 .ticket-perforation::before {

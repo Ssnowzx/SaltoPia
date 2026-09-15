@@ -10,8 +10,14 @@ and the navigation that stays with the visitor throughout.
 
 A place page SHALL present, in order: a full-viewport cinematic hero carrying the place's
 crest and a scroll cue; a narrative block introducing the place; a horizontally scrolling
-marquee band with a persistent call to action; a grid of experience cards; a share block;
-and the site footer.
+marquee band with a persistent call to action; a grid of experience cards on a block of
+the place's own colour; a gallery of the place's own photographs; a share block; and the
+site footer.
+
+The call to action in the marquee MUST NOT overlap the moving content.
+
+The experience grid and the gallery SHALL both lay themselves out by how many items they
+have, so that a place with one experience does not leave a hole where a row was expected.
 
 Unlike the hub, a place page SHALL scroll normally and MUST NOT render a 3D surface.
 
@@ -25,6 +31,24 @@ Unlike the hub, a place page SHALL scroll normally and MUST NOT render a 3D surf
 - **WHEN** a place has no published experiences
 - **THEN** the experience grid is omitted rather than rendered empty
 - **AND** every other section still renders
+
+### Requirement: Each place has its own colour
+
+Every place SHALL carry a colour of its own, and its page SHALL be built around that
+colour rather than around the site palette: the veil under the hero's type, the marquee,
+the ground the experiences sit on and the share block all take it, and the page alternates
+pale and saturated bands.
+
+The colour MUST be content, not code, so that changing it does not change a component.
+Text on the saturated ground MUST stay legible.
+
+#### Scenario: Two places compared
+- **WHEN** a visitor moves from one place's page to another's
+- **THEN** the two pages read as different places rather than as one template twice
+
+#### Scenario: A place's colour is changed
+- **WHEN** a place's colour is changed in the content
+- **THEN** every band on its page follows, with no component edited
 
 ### Requirement: Marquee band
 

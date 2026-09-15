@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ContentShell } from "@/components/content/content-shell";
 import { ExperienceGrid } from "@/components/content/experience-grid";
 import { Reveal } from "@/components/content/reveal";
+import { placeTheme } from "@/components/content/place-theme";
 import { getPlaces } from "@/lib/places";
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default async function ExperiencesPage(): Promise<React.ReactElement> {
         </p>
       </header>
       {withExperiences.map((place) => (
-        <Reveal key={place.slug} id={place.slug} className="odd:bg-mist/60">
+        <Reveal key={place.slug} id={place.slug} className="bg-[var(--place-wash)] [--ticket-ground:var(--place-wash)]" style={placeTheme(place.accent)}>
           <ExperienceGrid
             title={place.name}
             intro={place.tagline}
