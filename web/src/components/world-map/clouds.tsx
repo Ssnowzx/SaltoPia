@@ -95,9 +95,9 @@ export function Clouds(): React.ReactElement {
     return Array.from({ length: CLOUDS.count }, (_, index) => ({
       x: (random() - 0.5) * CLOUDS.spread,
       y: CLOUDS.minHeight + random() * (CLOUDS.maxHeight - CLOUDS.minHeight),
-      z: -170 + random() * 220,
-      // Stretched into streaks: sunset clouds lie flat along the horizon.
-      scale: 1.4 + random() * 2.0,
+      z: -260 + random() * 300,
+      // Rounded puffs, as in the reference - distinct shapes, not streaks.
+      scale: 1.5 + random() * 1.6,
       speed: CLOUDS.driftSpeed * (0.6 + random() * 0.8),
       variant: index % 3,
     }));
@@ -137,7 +137,7 @@ export function Clouds(): React.ReactElement {
           geometry={cloudGeometries[cloud.variant]}
           material={material}
           position={[cloud.x, cloud.y, cloud.z]}
-          scale={[cloud.scale * 1.6, cloud.scale * 0.55, cloud.scale]}
+          scale={[cloud.scale * 1.15, cloud.scale * 0.78, cloud.scale]}
         />
       ))}
 

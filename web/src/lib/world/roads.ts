@@ -2,35 +2,26 @@ import { BufferGeometry, CatmullRomCurve3, Color, Float32BufferAttribute, PlaneG
 
 import { blob, merge } from "./builders";
 import { BRIDGE_DECK_HEIGHT, LAKE, RAIL, RIVER, ROAD, WORLD_COLORS } from "./constants";
-import {
-  RIVER_COURSE,
-  islandDistance,
-  lakeDistance,
-  riverDistance,
-  riverSurfaceHeightAt,
-  terrainHeightAt,
-} from "./terrain";
+import { RIVER_COURSE, lakeDistance, riverDistance, riverSurfaceHeightAt, terrainHeightAt } from "./terrain";
 import { SURFACE, type SurfaceKey } from "./textures";
 
 /**
- * Streets, tracks, water - everything that is a ribbon draped over the terrain, plus
+ * Streets, tracks and water - everything that is a ribbon draped over the terrain, plus
  * the lake surface.
  *
- * The street network is a real one: a main road enters from the south-east corner,
- * loops the community's block with two cross streets, and each landmark has its own
- * driveway ending in a yard or a car park. No road passes through a building; the
- * layout keeps every building clear of every centre line.
+ * The network follows the east shore the way the road does in the reference
+ * photograph: one road runs the length of the community a little inland, a lower street
+ * serves the lakefront resort and its car park, and each landmark has its own driveway
+ * ending in a yard. No road passes through a building.
  */
 
-/** A 2D waypoint, in world XZ. */
 export type Waypoint = readonly [number, number];
 
 /** Whether a point sits on a bridge deck over the river below the dam. */
 export function isOnBridge(x: number, z: number): boolean {
-  return x > 86 && riverDistance(x, z) < RIVER.halfWidth + 3;
+  return x > LAKE.dam.x && riverDistance(x, z) < RIVER.halfWidth + 3;
 }
 
-/** Height of a road or rail surface: the terrain, except over the river, where a deck holds. */
 export function surfaceHeightAt(x: number, z: number): number {
   const ground = terrainHeightAt(x, z);
   return isOnBridge(x, z) ? Math.max(ground, BRIDGE_DECK_HEIGHT) : ground;
@@ -40,40 +31,39 @@ export function surfaceHeightAt(x: number, z: number): number {
 // The network
 // ---------------------------------------------------------------------------------
 
-/** The main street: in from the south-east and round the community's block. */
-export const MAIN_LOOP: readonly Waypoint[] = [
-  [100, 62],
-  [78, 50],
-  [58, 36],
-  [40, 20],
-  [22, 14],
-  [4, 14],
-  [-16, 15],
-  [-36, 20],
-  [-54, 30],
-  [-56, 48],
-  [-38, 56],
-  [-14, 58],
-  [12, 56],
-  [36, 56],
-  [60, 60],
-  [84, 66],
+/** The road along the community, a little inland of the shore. */
+export const MAIN_ROAD: readonly Waypoint[] = [
+  [48, 150],
+  [52, 116],
+  [58, 86],
+  [66, 56],
+  [74, 26],
+  [82, -6],
+  [86, -38],
+  [82, -68],
+  [70, -94],
+  [52, -112],
 ];
 
-/** Cross streets through the block. Both ends sit on the loop. */
-export const SIDE_STREETS: readonly (readonly Waypoint[])[] = [
-  [[-16, 15], [-15, 36], [-14, 58]],
-  [[22, 14], [20, 36], [12, 56]],
+/** The lakefront street: past the resort, its car park and the square. */
+export const SHORE_STREET: readonly Waypoint[] = [
+  [52, 116],
+  [40, 98],
+  [34, 76],
+  [40, 52],
+  [52, 30],
+  [62, 12],
+  [66, -8],
+  [82, -6],
 ];
 
-/** The road that brings the visitor into town. */
+/** The road in from the south-east. */
 export const ENTRY_ROAD: readonly Waypoint[] = [
-  [100, 62],
-  [116, 66],
-  [134, 74],
+  [48, 150],
+  [72, 168],
+  [104, 182],
 ];
 
-/** A road from the loop to one landmark, ending in a yard in front of it. */
 export interface Driveway {
   readonly points: readonly Waypoint[];
   readonly width: number;
@@ -83,45 +73,44 @@ export interface Driveway {
 }
 
 export const DRIVEWAYS: readonly Driveway[] = [
-  // Pousada da Geada, on the lake.
-  { points: [[40, 20], [38, 10]], width: ROAD.drivewayWidth, surface: "street", yard: [38, 6], yardRadius: 4.5 },
-  // Galpao do Fogo de Chao, on the west shore.
-  { points: [[-36, 20], [-46, 12]], width: ROAD.drivewayWidth, surface: "track", yard: [-50, 8], yardRadius: 4 },
-  // CTG Porteira do Tropeiro, from the south street to its gate.
-  { points: [[-38, 56], [-39, 51]], width: ROAD.drivewayWidth, surface: "track", yard: [-40, 48], yardRadius: 2.8 },
-  // Estacao Velha, at the entry.
-  { points: [[84, 66], [86, 69]], width: ROAD.drivewayWidth, surface: "street", yard: [86, 71], yardRadius: 3.5 },
-  // The collector east: to the winery, then on to the dam and the usina.
-  { points: [[58, 36], [70, 26], [80, 26]], width: ROAD.drivewayWidth, surface: "track", yard: [82, 26], yardRadius: 3.5 },
-  { points: [[70, 26], [84, 6], [95, -10], [95, -18]], width: ROAD.drivewayWidth, surface: "track", yard: [95, -19], yardRadius: 3.5 },
-  // Mirante da Neblina - the trail up the west hill.
-  { points: [[-54, 30], [-68, 20], [-78, 4], [-82, -14], [-80, -20]], width: ROAD.trailWidth, surface: "track", yard: [-80, -21], yardRadius: 3 },
+  // The resort on the lakefront.
+  { points: [[34, 76], [26, 70]], width: ROAD.drivewayWidth, surface: "street", yard: [24, 66], yardRadius: 5 },
+  // The shops.
+  { points: [[58, 86], [64, 72]], width: ROAD.drivewayWidth, surface: "street", yard: [64, 68], yardRadius: 4 },
+  // Galpao do Fogo de Chao.
+  { points: [[74, 26], [88, 32]], width: ROAD.drivewayWidth, surface: "track", yard: [91, 33], yardRadius: 4 },
+  // CTG Porteira do Tropeiro.
+  { points: [[58, 86], [88, 76], [100, 72]], width: ROAD.drivewayWidth, surface: "track", yard: [102, 71], yardRadius: 3.5 },
+  // Estacao Velha.
+  { points: [[48, 150], [90, 130], [122, 106]], width: ROAD.drivewayWidth, surface: "street", yard: [124, 102], yardRadius: 4 },
+  // Vinicola de Altitude.
+  { points: [[86, -38], [104, -28], [114, -22]], width: ROAD.drivewayWidth, surface: "track", yard: [115, -21], yardRadius: 3.5 },
+  // The dam and the usina.
+  { points: [[82, -68], [100, -82], [114, -92]], width: ROAD.drivewayWidth, surface: "track", yard: [116, -93], yardRadius: 3.5 },
 ];
 
-/** Paved paths: from the square to the street and to the chapel door. */
+/** Paved paths around the square. */
 export const PATHS: readonly (readonly Waypoint[])[] = [
-  [[0, 8], [0, 14]],
-  [[-11, -2], [-15, -1]],
+  [[54, 16], [62, 12]],
+  [[54, -4], [66, -8]],
 ];
 
-/** The footbridge below the dam, from the usina bank to the lookout deck. */
+/** The footbridge below the dam. */
 export const FOOTBRIDGE: readonly Waypoint[] = [
-  [99, -30],
-  [99, -37.5],
-  [99, -44],
+  [122, -110],
+  [128, -104],
+  [134, -98],
 ];
 
-/** The railway, along the south edge past the station's platform. */
+/** The railway, along the south-east edge past the station. */
 export const RAIL_LINE: readonly Waypoint[] = [
-  [-118, 86],
-  [-60, 84],
-  [0, 83],
-  [60, 83],
-  [88, 83],
-  [118, 80],
+  [-40, 196],
+  [30, 186],
+  [90, 168],
+  [126, 146],
+  [160, 118],
 ];
 
-/** Car parks: a paved rectangle, with cars placed by the layout. */
 export interface ParkingLot {
   readonly x: number;
   readonly z: number;
@@ -130,29 +119,27 @@ export interface ParkingLot {
   readonly rotationY: number;
 }
 
+/** Car parks: a paved rectangle, with cars placed by the layout. */
 export const PARKING_LOTS: readonly ParkingLot[] = [
-  { x: 42, z: 8, width: 12, depth: 8, rotationY: 0 },
-  { x: 16, z: 22, width: 11, depth: 7, rotationY: 0 },
-  { x: 86, z: 72, width: 9, depth: 6, rotationY: 0 },
+  { x: 42, z: 72, width: 16, depth: 11, rotationY: -0.35 },
+  { x: 70, z: 62, width: 12, depth: 8, rotationY: -0.3 },
+  { x: 124, z: 100, width: 10, depth: 7, rotationY: 0.4 },
 ];
 
-/** Every road centre line, for anything that needs to keep clear of them. */
 export const ROAD_POLYLINES: ReadonlyArray<{ readonly points: readonly Waypoint[]; readonly closed: boolean; readonly width: number }> = [
-  { points: MAIN_LOOP, closed: true, width: ROAD.streetWidth + ROAD.kerbExtra },
-  ...SIDE_STREETS.map((points) => ({ points, closed: false, width: ROAD.streetWidth + ROAD.kerbExtra })),
+  { points: MAIN_ROAD, closed: false, width: ROAD.streetWidth + ROAD.kerbExtra },
+  { points: SHORE_STREET, closed: false, width: ROAD.streetWidth + ROAD.kerbExtra },
   { points: ENTRY_ROAD, closed: false, width: ROAD.streetWidth + ROAD.kerbExtra },
   ...DRIVEWAYS.map((driveway) => ({ points: driveway.points, closed: false, width: driveway.width })),
   { points: FOOTBRIDGE, closed: false, width: 2.2 },
   ...PATHS.map((points) => ({ points, closed: false, width: ROAD.pathWidth })),
 ];
 
-/** Every yard, for the same reason. */
 export const YARDS: ReadonlyArray<{ readonly x: number; readonly z: number; readonly radius: number }> = [
   ...DRIVEWAYS.map((driveway) => ({ x: driveway.yard[0], z: driveway.yard[1], radius: driveway.yardRadius })),
   ...PARKING_LOTS.map((lot) => ({ x: lot.x, z: lot.z, radius: Math.max(lot.width, lot.depth) / 2 })),
 ];
 
-/** Builds a smooth XZ curve through waypoints. Y is left at zero - callers drape it. */
 export function createCurve(points: readonly Waypoint[], closed: boolean): CatmullRomCurve3 {
   return new CatmullRomCurve3(
     points.map(([x, z]) => new Vector3(x, 0, z)),
@@ -165,7 +152,6 @@ export function createCurve(points: readonly Waypoint[], closed: boolean): Catmu
 // Ribbon geometry
 // ---------------------------------------------------------------------------------
 
-/** Accumulates vertices for one mesh. */
 interface Sink {
   readonly positions: number[];
   readonly colors: number[];
@@ -183,7 +169,6 @@ interface RibbonOptions {
   readonly lift: number;
   readonly lateralOffset?: number;
   readonly heightAt?: (x: number, z: number) => number;
-  /** Colour at a point; `lateral` runs -1 (left edge) to 1 (right edge). */
   readonly colorAt: (x: number, z: number, lateral: number) => Color;
   readonly surfaceAt: (x: number, z: number) => SurfaceKey;
   readonly foamAt?: (x: number, z: number) => number;
@@ -201,15 +186,12 @@ function pushVertex(sink: Sink, x: number, y: number, z: number, color: Color, s
 }
 
 /**
- * Appends a draped ribbon along a curve.
- *
- * The perpendicular is `up x tangent`, and each quad is wound (left0, right0, left1),
- * (right0, right1, left1). With that pairing the face normal is +Y for any direction
- * of travel, so nothing is back-face culled whichever way a road is drawn.
+ * Appends a draped ribbon along a curve. Each quad is wound (left0, right0, left1),
+ * (right0, right1, left1), which gives a +Y face normal whichever way the curve runs.
  */
 function appendRibbon(curve: CatmullRomCurve3, options: RibbonOptions, sink: Sink): void {
   const length = curve.getLength();
-  const divisions = Math.max(4, Math.ceil(length / (options.step ?? 1.1)));
+  const divisions = Math.max(4, Math.ceil(length / (options.step ?? 1.2)));
   const samples = curve.getSpacedPoints(divisions);
   const offset = options.lateralOffset ?? 0;
   const lanes = options.lanes ?? 1;
@@ -262,7 +244,6 @@ function appendRibbon(curve: CatmullRomCurve3, options: RibbonOptions, sink: Sin
   }
 }
 
-/** Appends a flat disc draped on the terrain. */
 function appendDisc(x: number, z: number, radius: number, lift: number, color: Color, surface: SurfaceKey, sink: Sink): void {
   const segments = 20;
   const centreY = surfaceHeightAt(x, z) + lift;
@@ -281,15 +262,12 @@ function appendDisc(x: number, z: number, radius: number, lift: number, color: C
   }
 }
 
-/** Appends a flat rectangle draped on the terrain, turned about Y. */
 function appendRectangle(lot: ParkingLot, lift: number, color: Color, surface: SurfaceKey, sink: Sink): void {
   const cos = Math.cos(lot.rotationY);
   const sin = Math.sin(lot.rotationY);
-  const corner = (u: number, v: number): readonly [number, number] => [
-    lot.x + u * cos + v * sin,
-    lot.z - u * sin + v * cos,
-  ];
-  const cells = 4;
+  const corner = (u: number, v: number): readonly [number, number] => [lot.x + u * cos + v * sin, lot.z - u * sin + v * cos];
+  const cells = 5;
+
   for (let i = 0; i < cells; i += 1) {
     for (let j = 0; j < cells; j += 1) {
       const u0 = -lot.width / 2 + (i / cells) * lot.width;
@@ -307,7 +285,6 @@ function appendRectangle(lot: ParkingLot, lift: number, color: Color, surface: S
   }
 }
 
-/** Appends short cross-ties along a curve - the sleepers under the rails. */
 function appendSleepers(curve: CatmullRomCurve3, spacing: number, width: number, lift: number, color: Color, sink: Sink): void {
   const length = curve.getLength();
   const count = Math.floor(length / spacing);
@@ -318,12 +295,10 @@ function appendSleepers(curve: CatmullRomCurve3, spacing: number, width: number,
     const tangent = curve.getTangentAt(t);
     const perpX = tangent.z;
     const perpZ = -tangent.x;
-    const along = 0.24;
-    const across = width / 2;
 
     const corner = (sideAlong: number, sideAcross: number): readonly [number, number, number] => {
-      const x = point.x + tangent.x * sideAlong * along + perpX * sideAcross * across;
-      const z = point.z + tangent.z * sideAlong * along + perpZ * sideAcross * across;
+      const x = point.x + tangent.x * sideAlong * 0.24 + perpX * sideAcross * (width / 2);
+      const z = point.z + tangent.z * sideAlong * 0.24 + perpZ * sideAcross * (width / 2);
       return [x, surfaceHeightAt(x, z) + lift, z];
     };
 
@@ -338,7 +313,6 @@ function appendSleepers(curve: CatmullRomCurve3, spacing: number, width: number,
   }
 }
 
-/** Turns a sink into geometry with planar UVs, so the atlas repeats in world units. */
 function toGeometry(sink: Sink, unitsPerTile: number): BufferGeometry {
   const geometry = new BufferGeometry();
   const count = sink.positions.length / 3;
@@ -364,8 +338,8 @@ const DECK = new Color(WORLD_COLORS.timber);
 const PAVING = new Color(WORLD_COLORS.paving);
 
 /** A street: a pavement strip underneath, the stone setts on top. */
-function appendStreet(points: readonly Waypoint[], closed: boolean, lift: number, sink: Sink): void {
-  const curve = createCurve(points, closed);
+function appendStreet(points: readonly Waypoint[], lift: number, sink: Sink): void {
+  const curve = createCurve(points, false);
   appendRibbon(curve, { width: ROAD.streetWidth + ROAD.kerbExtra, lift, colorAt: () => KERB, surfaceAt: () => "paving" }, sink);
   appendRibbon(curve, { width: ROAD.streetWidth, lift: lift + 0.03, colorAt: () => STREET, surfaceAt: () => "stone" }, sink);
 }
@@ -374,20 +348,15 @@ function appendStreet(points: readonly Waypoint[], closed: boolean, lift: number
 export function createRoadGeometry(): BufferGeometry {
   const sink = createSink();
 
-  appendStreet(MAIN_LOOP, true, ROAD.lift, sink);
-  for (const street of SIDE_STREETS) appendStreet(street, false, ROAD.lift + 0.02, sink);
-  appendStreet(ENTRY_ROAD, false, ROAD.lift + 0.02, sink);
+  appendStreet(MAIN_ROAD, ROAD.lift, sink);
+  appendStreet(SHORE_STREET, ROAD.lift + 0.02, sink);
+  appendStreet(ENTRY_ROAD, ROAD.lift + 0.02, sink);
 
   for (const driveway of DRIVEWAYS) {
     const street = driveway.surface === "street";
     appendRibbon(
       createCurve(driveway.points, false),
-      {
-        width: driveway.width,
-        lift: ROAD.lift + 0.05,
-        colorAt: () => (street ? STREET : TRACK),
-        surfaceAt: () => (street ? "stone" : "dirt"),
-      },
+      { width: driveway.width, lift: ROAD.lift + 0.05, colorAt: () => (street ? STREET : TRACK), surfaceAt: () => (street ? "stone" : "dirt") },
       sink,
     );
     appendDisc(driveway.yard[0], driveway.yard[1], driveway.yardRadius, ROAD.lift + 0.04, street ? STREET : TRACK, street ? "stone" : "dirt", sink);
@@ -452,20 +421,14 @@ export function createRailGeometry(): BufferGeometry {
 // ---------------------------------------------------------------------------------
 
 /**
- * The lake surface: a grid over the basin at water level, trimmed to the shoreline
- * with a margin that tucks under the beach. `depth` deepens away from the shore so the
- * material can shade the middle darker.
+ * The lake surface: a grid over the bay at water level, trimmed to the shoreline with
+ * a margin that tucks under the beach. `depth` deepens away from the shore so the
+ * material can shade the open water darker.
  */
 export function createLakeSurfaceGeometry(): BufferGeometry {
-  // The margin has to clear the shoreline's wobble, or the grid's own edge shows as a
-  // straight cut across the far shore - which is exactly what it did at 14 units.
-  const margin = Math.max(LAKE.radiusX, LAKE.radiusZ) * 0.35 + 16;
-  const minX = LAKE.centre.x - LAKE.radiusX - margin;
-  const maxX = Math.max(LAKE.centre.x + LAKE.radiusX, LAKE.channel.x + LAKE.channel.halfWidth) + margin;
-  const minZ = LAKE.centre.z - LAKE.radiusZ - margin;
-  const maxZ = LAKE.centre.z + LAKE.radiusZ + margin;
-  const columns = 110;
-  const rows = 78;
+  const { minX, maxX, minZ, maxZ } = LAKE.bounds;
+  const columns = 150;
+  const rows = 110;
 
   const grid = new PlaneGeometry(maxX - minX, maxZ - minZ, columns, rows);
   grid.rotateX(-Math.PI / 2);
@@ -488,17 +451,15 @@ export function createLakeSurfaceGeometry(): BufferGeometry {
 
   for (let tri = 0; tri < index.count; tri += 3) {
     const corners = [index.getX(tri), index.getX(tri + 1), index.getX(tri + 2)];
-    // Keep any triangle that touches the water; the rest of it hides under the beach.
-    if (corners.every((vertex) => distances[vertex] > 5)) continue;
+    // Keep any triangle that touches water; the rest of it hides under the beach.
+    if (corners.every((vertex) => distances[vertex] > 6)) continue;
 
     for (const vertex of corners) {
       const x = source.getX(vertex);
       const z = source.getZ(vertex);
       positions.push(x, LAKE.level, z);
       colors.push(1, 1, 1);
-      const shoreDepth = Math.min(1, Math.max(0, -distances[vertex] / 14));
-      const islandDepth = Math.min(1, Math.max(0, islandDistance(x, z) / 10));
-      depths.push(Math.min(shoreDepth, islandDepth));
+      depths.push(Math.min(1, Math.max(0, -distances[vertex] / 22)));
       foams.push(0);
       uvs.push(x / 3, z / 3);
     }
@@ -514,7 +475,6 @@ export function createLakeSurfaceGeometry(): BufferGeometry {
   return geometry;
 }
 
-/** Whether a point along the river is on the falling water or the churn below it. */
 function foamAt(x: number): number {
   if (x < RIVER.fallsStartX - 0.5) return 0;
   if (x < RIVER.fallsEndX + 1.5) return 1;
@@ -553,18 +513,18 @@ export function createRiverGeometry(): BufferGeometry {
 /** Spray and churn at the foot of the falls. */
 export function createWaterfallFoamGeometry(): BufferGeometry {
   const parts: BufferGeometry[] = [];
-  const centreZ = RIVER_COURSE[1][1];
+  const baseZ = RIVER_COURSE[1][1];
   const puffs: ReadonlyArray<readonly [number, number, number]> = [
-    [95.5, 0.55, -3.6],
-    [96.5, 0.7, -1.2],
-    [97.5, 0.6, 1.4],
-    [96.0, 0.5, 3.4],
-    [99.5, 0.45, -2.4],
-    [100.0, 0.4, 1.0],
-    [102.0, 0.35, -0.6],
+    [119, 0.55, -3.6],
+    [120, 0.7, -1.2],
+    [121, 0.6, 1.4],
+    [122, 0.5, 3.4],
+    [124, 0.45, -2.4],
+    [126, 0.4, 1.0],
+    [128, 0.35, -0.6],
   ];
   for (const [x, radius, dz] of puffs) {
-    parts.push(blob(radius * 2.2, WORLD_COLORS.foam, x, RIVER.level + 0.3, centreZ + dz, 0.32, 1, "foliage"));
+    parts.push(blob(radius * 2.2, WORLD_COLORS.foam, x, RIVER.level + 0.3, baseZ + dz, 0.32, 1, "foliage"));
   }
   return merge(parts);
 }
@@ -573,20 +533,20 @@ export function createWaterfallFoamGeometry(): BufferGeometry {
 // Vehicle routes
 // ---------------------------------------------------------------------------------
 
-/** The curve the pickup follows. */
-export const CAR_CURVE: CatmullRomCurve3 = createCurve(MAIN_LOOP, true);
+/** The curve the pickup follows: the main road, out and back. */
+export const CAR_CURVE: CatmullRomCurve3 = createCurve(MAIN_ROAD, false);
 
 /** The curve the train follows. */
 export const TRAIN_CURVE: CatmullRomCurve3 = createCurve(RAIL_LINE, false);
 
-/** The yacht circles the island. */
+/** The yacht runs the length of the bay. */
 export const YACHT_CURVE: CatmullRomCurve3 = createCurve(
-  [[6, -22], [-22, -30], [-32, -54], [-10, -74], [26, -74], [44, -54], [30, -30]],
+  [[-10, 40], [-40, 10], [-60, -30], [-40, -80], [10, -100], [50, -70], [30, -20], [10, 20]],
   true,
 );
 
-/** The sailboat tacks about the west basin. */
+/** The sailboat tacks about the open water. */
 export const SAILBOAT_CURVE: CatmullRomCurve3 = createCurve(
-  [[-18, -28], [-42, -38], [-44, -60], [-20, -70], [-12, -50]],
+  [[-30, 30], [-80, 0], [-110, -70], [-60, -100], [-10, -60], [-20, -10]],
   true,
 );

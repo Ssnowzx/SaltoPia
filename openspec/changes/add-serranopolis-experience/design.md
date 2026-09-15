@@ -282,6 +282,30 @@ already carries an offset. Building in a neutral local frame and transforming on
 removes the whole class of error, and it is why every opening now also gets a back wall
 and both side walls for free.
 
+### D14 — The map is composed to the reference photograph, not to a map
+
+The world was rebuilt a third time, this time framed shot-for-shot against the
+reference the user supplied: the bay fills the left of the frame and runs toward the
+viewer, a wooded peninsula with stilt cabins and piers reaches in from the west, the
+community climbs the east shore on the right, a lakefront resort with pool, solar
+panels and a car park sits in the foreground, a row of A-frame chalets lines the far
+shore, and low golden hills close the horizon in overlapping bands.
+
+Consequences worth recording, because each was a bug first:
+
+- The shoreline is authored as two curves - an east shore given as (z, x) control
+  points and a far shore as (x, z) - intersected as half-spaces, with the peninsula cut
+  back out. An ellipse cannot make a bay that opens toward the camera.
+- The far hills sit at z = -212 and beyond. At z = -150 their front edge reached z =
+  -92, which is in front of the far shore at z = -120, so they stood between the camera
+  and the chalets instead of behind them. A dome's radius is its reach, not its centre.
+- The hills are banded by distance and drained toward a haze colour in proportion, so
+  the horizon reads as layers. A single row at one colour reads as a wall.
+
+*Why:* the user's instruction moved from "like the reference site" to "like this
+photograph of Lages". Composition is now the specification, and it is checked by
+putting the render beside the photograph.
+
 ## Risks / Trade-offs
 
 - **WebGL unavailable or unstable on the demo machine** → The static fallback is a spec

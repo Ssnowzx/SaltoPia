@@ -1,15 +1,19 @@
 import { BufferAttribute, BufferGeometry, Color, PlaneGeometry } from "three";
 
-import { LAKE, RIVER, TERRAIN, WORLD_COLORS, WORLD_SEED } from "./constants";
+import { LAKE, TERRAIN, WORLD_COLORS, WORLD_SEED } from "./constants";
 import { fractalNoise2D } from "./noise";
 
 /**
- * The shape of the land around the reservoir.
+ * The shape of the land around the Caveiras reservoir.
+ *
+ * The composition follows the reference photograph: the bay fills the left of the frame
+ * and runs toward the viewer, the community sits on the east shore to the right, a
+ * wooded peninsula with stilt cabins juts in from the left, and a row of chalets lines
+ * the far shore under low golden hills.
  *
  * `terrainHeightAt` is the single source of ground height. The mesh, every placed
  * building, every road and every map pin sample it, so nothing can end up floating or
- * buried - which is the usual failure when a layout hardcodes Y values against a
- * terrain that later moves.
+ * buried.
  */
 
 /** Smoothstep between two edges, clamped. Edges may be reversed. */
@@ -18,52 +22,98 @@ export function smoothstep(edge0: number, edge1: number, value: number): number 
   return t * t * (3 - 2 * t);
 }
 
-interface Ellipse {
-  readonly x: number;
-  readonly z: number;
-  readonly radiusX: number;
-  readonly radiusZ: number;
+/** Smoothly interpolates a curve given as control points, sorted by their key. */
+function alongCurve(points: ReadonlyArray<readonly [number, number]>, key: number): number {
+  if (key <= points[0][0]) return points[0][1];
+  const last = points[points.length - 1];
+  if (key >= last[0]) return last[1];
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const [k0, v0] = points[index];
+    const [k1, v1] = points[index + 1];
+    if (key <= k1) return v0 + (v1 - v0) * smoothstep(k0, k1, key);
+  }
+  return last[1];
 }
 
 /**
- * Approximate signed distance to a noisy ellipse, negative inside. The shoreline noise
- * is sampled around the angle so it is continuous all the way round.
+ * The bay's east shore: where the water ends and the community begins, as a function of
+ * depth into the scene. Water lies west of this line.
  */
-function ellipseDistance(x: number, z: number, ellipse: Ellipse, wobble: number, seed: number): number {
-  const dx = x - ellipse.x;
-  const dz = z - ellipse.z;
-  const angle = Math.atan2(dz / ellipse.radiusZ, dx / ellipse.radiusX);
-  const boundary =
-    1 + wobble * (fractalNoise2D(Math.cos(angle) * 2.5 + 7, Math.sin(angle) * 2.5 + 7, WORLD_SEED + seed, 2) - 0.5) * 2;
-  const normalised = Math.sqrt((dx * dx) / (ellipse.radiusX * ellipse.radiusX) + (dz * dz) / (ellipse.radiusZ * ellipse.radiusZ));
-  return (normalised - boundary) * Math.sqrt(ellipse.radiusX * ellipse.radiusZ);
+const EAST_SHORE: ReadonlyArray<readonly [number, number]> = [
+  [-118, -14],
+  [-96, 6],
+  [-74, 30],
+  [-52, 44],
+  [-30, 52],
+  [-8, 48],
+  [16, 38],
+  [44, 28],
+  [78, 20],
+  [120, 14],
+];
+
+/** The far shore, where the chalets stand. Water lies south of this line. */
+const FAR_SHORE: ReadonlyArray<readonly [number, number]> = [
+  [-150, -132],
+  [-90, -126],
+  [-40, -120],
+  [10, -118],
+  [60, -122],
+  [120, -130],
+];
+
+export function eastShoreXAt(z: number): number {
+  const base = alongCurve(EAST_SHORE, z);
+  return base + (fractalNoise2D(z * 0.05, 11, WORLD_SEED + 3, 2) - 0.5) * 9;
 }
 
-/** Signed distance to the lake, negative on the water. */
+export function farShoreZAt(x: number): number {
+  const base = alongCurve(FAR_SHORE, x);
+  return base + (fractalNoise2D(x * 0.04, 23, WORLD_SEED + 5, 2) - 0.5) * 8;
+}
+
+/** The wooded peninsula that juts into the bay from the west. */
+const PENINSULA = { x: -104, z: -52, radiusX: 74, radiusZ: 26 } as const;
+
+/** Signed distance to the peninsula, negative on it. */
+export function peninsulaDistance(x: number, z: number): number {
+  const dx = x - PENINSULA.x;
+  const dz = z - PENINSULA.z;
+  const angle = Math.atan2(dz / PENINSULA.radiusZ, dx / PENINSULA.radiusX);
+  const wobble = 1 + 0.14 * (fractalNoise2D(Math.cos(angle) * 2.5 + 7, Math.sin(angle) * 2.5 + 7, WORLD_SEED + 13, 2) - 0.5) * 2;
+  const normalised = Math.sqrt(
+    (dx * dx) / (PENINSULA.radiusX * PENINSULA.radiusX) + (dz * dz) / (PENINSULA.radiusZ * PENINSULA.radiusZ),
+  );
+  return (normalised - wobble) * Math.sqrt(PENINSULA.radiusX * PENINSULA.radiusZ);
+}
+
+/**
+ * Signed distance to open water, negative on the lake.
+ *
+ * The bay is the intersection of two half-spaces - west of the east shore, south of the
+ * far shore - with the peninsula cut back out of it.
+ */
 export function lakeDistance(x: number, z: number): number {
-  const basin = ellipseDistance(x, z, { x: LAKE.centre.x, z: LAKE.centre.z, radiusX: LAKE.radiusX, radiusZ: LAKE.radiusZ }, 0.13, 3);
-  const channel = Math.max(Math.abs(x - LAKE.channel.x) - LAKE.channel.halfWidth, Math.abs(z - LAKE.channel.z) - LAKE.channel.halfDepth);
-  return Math.min(basin, channel);
+  const east = x - eastShoreXAt(z);
+  const far = farShoreZAt(x) - z;
+  return Math.max(east, far, -peninsulaDistance(x, z));
 }
 
-/** Signed distance to the island, negative on it. */
-export function islandDistance(x: number, z: number): number {
-  return ellipseDistance(x, z, { x: LAKE.island.x, z: LAKE.island.z, radiusX: LAKE.island.radiusX, radiusZ: LAKE.island.radiusZ }, 0.16, 11);
-}
+/** Kept for callers that ask about the peninsula by its older name. */
+export const islandDistance = peninsulaDistance;
 
-/** Whether a point is on the lake surface (and not on the island). */
+/** Whether a point is on open water. */
 export function isOnLake(x: number, z: number): boolean {
-  return lakeDistance(x, z) < 0 && islandDistance(x, z) > 0;
+  return lakeDistance(x, z) < 0;
 }
 
-/** The river's course below the dam, as it leaves the valley to the east. */
+/** The river leaving the reservoir at its north-east corner, below the dam. */
 export const RIVER_COURSE: ReadonlyArray<readonly [number, number]> = [
-  [85, -38],
-  [95, -37.5],
-  [106, -32],
-  [118, -20],
-  [132, -6],
-  [148, 10],
+  [108, -104],
+  [124, -98],
+  [140, -86],
+  [156, -68],
 ];
 
 function distanceToSegment(px: number, pz: number, ax: number, az: number, bx: number, bz: number): number {
@@ -74,7 +124,6 @@ function distanceToSegment(px: number, pz: number, ax: number, az: number, bx: n
   return Math.hypot(px - (ax + abx * t), pz - (az + abz * t));
 }
 
-/** Distance to the river's centre line below the dam. */
 export function riverDistance(x: number, z: number): number {
   let best = Number.POSITIVE_INFINITY;
   for (let index = 0; index < RIVER_COURSE.length - 1; index += 1) {
@@ -85,15 +134,14 @@ export function riverDistance(x: number, z: number): number {
   return best;
 }
 
-/** Height of the river's surface: lake level on the dam crest, then the drop to river level. */
+/** Height of the river's surface: lake level at the dam, then the drop. */
 export function riverSurfaceHeightAt(x: number): number {
-  return LAKE.level + (RIVER.level - LAKE.level) * smoothstep(RIVER.fallsStartX, RIVER.fallsEndX, x);
+  return LAKE.level + (LAKE.riverLevel - LAKE.level) * smoothstep(LAKE.dam.x, LAKE.dam.x + 7, x);
 }
 
-/** The hilltop the Mirante da Neblina stands on. */
-const MIRANTE_HILL = { x: -80, z: -28, height: 14, radius: 30 } as const;
+/** The hill the lookout stands on, west of the peninsula. */
+const MIRANTE_HILL = { x: -132, z: -96, height: 20, radius: 40 } as const;
 
-/** A circle of ground levelled so a building can stand square on it. */
 interface FlatPad {
   readonly x: number;
   readonly z: number;
@@ -101,74 +149,64 @@ interface FlatPad {
   readonly falloff: number;
 }
 
-/** One pad per landmark and per block of houses. Coordinates match the seeded places. */
+/** One pad per landmark and per block, so buildings stand square. */
 const FLAT_PADS: readonly FlatPad[] = [
-  { x: 0, z: -2, radius: 16, falloff: 8 },
-  { x: -22, z: 0, radius: 9, falloff: 5 },
-  { x: -4, z: 18, radius: 14, falloff: 6 },
-  { x: -52, z: -2, radius: 11, falloff: 6 },
-  { x: -44, z: 34, radius: 13, falloff: 6 },
-  { x: 80, z: 68, radius: 14, falloff: 6 },
-  { x: 86, z: 22, radius: 9, falloff: 6 },
-  { x: 34, z: -4, radius: 12, falloff: 6 },
-  { x: -80, z: -28, radius: 7, falloff: 5 },
-  { x: 95, z: -27, radius: 8, falloff: 5 },
-  { x: 99, z: -47, radius: 6, falloff: 4 },
-  { x: 4, z: 34, radius: 26, falloff: 8 },
+  { x: 24, z: 62, radius: 22, falloff: 10 },
+  { x: 62, z: 60, radius: 18, falloff: 8 },
+  { x: 54, z: 6, radius: 15, falloff: 8 },
+  { x: 92, z: 30, radius: 13, falloff: 7 },
+  { x: 104, z: 66, radius: 13, falloff: 7 },
+  { x: 126, z: 96, radius: 15, falloff: 7 },
+  { x: 116, z: -18, radius: 11, falloff: 7 },
+  { x: -132, z: -96, radius: 8, falloff: 6 },
+  { x: 118, z: -96, radius: 10, falloff: 6 },
+  { x: 128, z: -112, radius: 8, falloff: 5 },
+  { x: -60, z: -52, radius: 12, falloff: 8 },
 ];
 
 function distance(x0: number, z0: number, x1: number, z1: number): number {
   return Math.hypot(x0 - x1, z0 - z1);
 }
 
-/**
- * Ground height before any levelling.
- *
- * Gentle ground around the reservoir, rising to low hills at the back and sides, with a
- * hill under the lookout to the west. The lake basin and island are cut and raised out
- * of that; the river below the dam is trenched.
- */
+/** Ground height before any levelling. */
 function naturalHeightAt(x: number, z: number): number {
-  const half = TERRAIN.size / 2;
-  const radius = Math.sqrt(x * x + z * z) / half;
-
-  // The rim rises to the north and sides only; the south stays low and open.
-  const rim = smoothstep(0.5, 1.02, radius) * 16 * (1 - smoothstep(20, 80, z));
+  // The east shore climbs gently away from the water; the far side rises into hills.
+  const eastRise = smoothstep(0, 90, x - eastShoreXAt(z)) * 20;
+  const farRise = smoothstep(0, 70, farShoreZAt(x) - z + 0) * 0;
+  const beyondFar = smoothstep(0, 60, farShoreZAt(x) - z) * 0;
+  const northRise = smoothstep(-110, -190, z) * 26;
 
   const hill =
     MIRANTE_HILL.height *
-    (1 - smoothstep(4, MIRANTE_HILL.radius, distance(x, z, MIRANTE_HILL.x, MIRANTE_HILL.z)));
+    (1 - smoothstep(6, MIRANTE_HILL.radius, distance(x, z, MIRANTE_HILL.x, MIRANTE_HILL.z)));
 
-  const rolling = (fractalNoise2D(x * 0.016, z * 0.016, WORLD_SEED) - 0.5) * 5;
-  const detail = (fractalNoise2D(x * 0.06, z * 0.06, WORLD_SEED + 7, 3) - 0.5) * 1.4;
+  const rolling = (fractalNoise2D(x * 0.014, z * 0.014, WORLD_SEED) - 0.5) * 6;
+  const detail = (fractalNoise2D(x * 0.055, z * 0.055, WORLD_SEED + 7, 3) - 0.5) * 1.5;
 
-  let ground = 2.8 + rim + hill + rolling + detail;
+  let ground = LAKE.level + 1.6 + eastRise + farRise + beyondFar + northRise + hill + rolling + detail;
 
-  // The lake basin: flat floor, gentle shore.
+  // The peninsula is low and wooded.
+  const peninsula = peninsulaDistance(x, z);
+  if (peninsula < 6) {
+    const top = LAKE.level + 2.6 + rolling * 0.4;
+    ground += (top - ground) * smoothstep(6, -6, peninsula);
+  }
+
+  // The basin: the floor drops away from the shore.
   const lake = lakeDistance(x, z);
-  ground += (LAKE.floor - ground) * smoothstep(7, -2.5, lake);
-
-  // The island rises back out of it.
-  const island = islandDistance(x, z);
-  const islandTop = LAKE.level + LAKE.island.height + rolling * 0.3;
-  ground += (islandTop - ground) * smoothstep(2.5, -4, island);
+  ground += (LAKE.floor - ground) * smoothstep(8, -6, lake);
 
   // The river below the dam.
   const river = riverDistance(x, z);
-  const riverFloor = riverSurfaceHeightAt(x) - (RIVER.level - RIVER.floor);
-  const riverTrench = smoothstep(RIVER.halfWidth + 6, RIVER.halfWidth * 0.9, river) * smoothstep(86, 90, x);
-  ground += (riverFloor - ground) * riverTrench;
+  const riverFloor = riverSurfaceHeightAt(x) - 2.6;
+  ground += (riverFloor - ground) * smoothstep(LAKE.riverHalfWidth + 6, LAKE.riverHalfWidth * 0.9, river) * smoothstep(LAKE.dam.x - 2, LAKE.dam.x + 3, x);
 
   return ground;
 }
 
-const PAD_HEIGHTS: ReadonlyMap<FlatPad, number> = new Map(
-  FLAT_PADS.map((pad) => [pad, naturalHeightAt(pad.x, pad.z)]),
-);
+const PAD_HEIGHTS: ReadonlyMap<FlatPad, number> = new Map(FLAT_PADS.map((pad) => [pad, naturalHeightAt(pad.x, pad.z)]));
 
-/**
- * Ground height at a world position.
- */
+/** Ground height at a world position. */
 export function terrainHeightAt(x: number, z: number): number {
   let height = naturalHeightAt(x, z);
 
@@ -184,48 +222,31 @@ export function terrainHeightAt(x: number, z: number): number {
   return height;
 }
 
-/** Steepness of the ground at a point - drives where bare rock shows through. */
-function slopeAt(x: number, z: number): number {
-  const step = 0.9;
-  const dx = terrainHeightAt(x + step, z) - terrainHeightAt(x - step, z);
-  const dz = terrainHeightAt(x, z + step) - terrainHeightAt(x, z - step);
-  return Math.hypot(dx, dz) / (2 * step);
-}
-
 /** The grass/straw/sand/rock blend at a point. */
 function surfaceColorAt(x: number, z: number, height: number): Color {
   const grass = new Color(WORLD_COLORS.grass);
   const grassDeep = new Color(WORLD_COLORS.grassDeep);
   const straw = new Color(WORLD_COLORS.straw);
   const sand = new Color(WORLD_COLORS.sand);
-  const rock = new Color(WORLD_COLORS.rock);
-  const rockDark = new Color(WORLD_COLORS.rockDark);
-  const lakeBed = new Color("#6b8a7a");
+  const hillGold = new Color(WORLD_COLORS.hilltop);
+  const lakeBed = new Color("#5f8f86");
 
-  const patch = fractalNoise2D(x * 0.045, z * 0.045, WORLD_SEED + 31, 3);
+  const patch = fractalNoise2D(x * 0.04, z * 0.04, WORLD_SEED + 31, 3);
   const base = grassDeep.clone().lerp(grass, patch);
 
-  base.lerp(straw, smoothstep(18, 30, height) * 0.5);
-  base.lerp(rock, smoothstep(26, 40, height));
-  base.lerp(rockDark, smoothstep(0.8, 1.6, slopeAt(x, z)) * 0.85);
+  // The far hills go golden, as they do in the photograph at this hour.
+  base.lerp(hillGold, smoothstep(-105, -150, z) * 0.9);
+  base.lerp(straw, smoothstep(16, 30, height) * 0.4);
 
   // Sand along the shore, lake bed below the water.
-  const lake = lakeDistance(x, z);
-  const island = islandDistance(x, z);
-  const shore = Math.min(Math.abs(lake), Math.abs(island));
-  base.lerp(sand, (1 - smoothstep(0.5, 5, shore)) * 0.85);
+  const shore = Math.abs(lakeDistance(x, z));
+  base.lerp(sand, (1 - smoothstep(0.5, 6, shore)) * 0.9);
   base.lerp(lakeBed, smoothstep(LAKE.level + 0.2, LAKE.floor, height));
-
-  const river = riverDistance(x, z);
-  base.lerp(sand, (1 - smoothstep(RIVER.halfWidth + 1, RIVER.halfWidth + 5, river)) * smoothstep(86, 90, x) * 0.7);
 
   return base;
 }
 
-/**
- * Builds the terrain mesh geometry with baked vertex colours. A repeating grass texture
- * is multiplied over it by the material.
- */
+/** Builds the terrain mesh geometry with baked vertex colours. */
 export function createTerrainGeometry(): BufferGeometry {
   const geometry = new PlaneGeometry(TERRAIN.size, TERRAIN.size, TERRAIN.segments, TERRAIN.segments);
   geometry.rotateX(-Math.PI / 2);

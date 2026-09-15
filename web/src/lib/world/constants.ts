@@ -29,8 +29,10 @@ export const WORLD_COLORS = {
   /** Basalt in shadow. */
   rockDark: "#5e615d",
   /** Forest on the far hills - olive, going tan on the tops, like the plateau in the photo. */
-  forest: "#6f9145",
-  hilltop: "#9fa855",
+  forest: "#8a9a4e",
+  hilltop: "#c4a765",
+  /** What distance drains the far hills toward. */
+  hillHaze: "#e0b878",
   /** Araucaria foliage. */
   canopy: "#2f6b4d",
   /** Araucaria foliage in shade. */
@@ -78,8 +80,8 @@ export const WORLD_COLORS = {
   rail: "#8a8e93",
   ballast: "#8b8378",
   /** Clouds: lit tops and shaded undersides. */
-  cloud: "#f4dcc0",
-  cloudShade: "#c9ad9a",
+  cloud: "#f8ecd6",
+  cloudShade: "#dcc4a6",
   /** Lit lantern glass. */
   lantern: "#f2c14e",
   /** Vine rows. */
@@ -141,8 +143,8 @@ export const SUN_DIRECTION = { x: 0.62, y: 0.22, z: -1 } as const;
 
 /** Terrain extent. */
 export const TERRAIN = {
-  size: 300,
-  segments: 170,
+  size: 420,
+  segments: 210,
 } as const;
 
 /** The reservoir. */
@@ -150,25 +152,23 @@ export const LAKE = {
   /** Water surface height. */
   level: 0.6,
   /** Lake bed height. */
-  floor: -3.4,
-  /** Centre and radii of the basin, before the shoreline noise. */
-  centre: { x: 8, z: -46 },
-  radiusX: 76,
-  radiusZ: 40,
-  /** The channel that carries the lake to the dam on the east side. */
-  channel: { x: 80, z: -38, halfWidth: 8, halfDepth: 6 },
-  /** The island in the middle. */
-  island: { x: 2, z: -46, radiusX: 17, radiusZ: 11, height: 2.6 },
+  floor: -4.2,
+  /** Where the dam sits, at the reservoir's north-east corner. */
+  dam: { x: 112, z: -104 },
+  /** River level below the dam. */
+  riverLevel: -5,
+  riverHalfWidth: 5,
+  /** The extent the water surface mesh is built over. */
+  bounds: { minX: -210, maxX: 150, minZ: -150, maxZ: 110 },
 } as const;
 
-/** The river below the dam. */
+/** The river below the dam, kept as its own block for the falls geometry. */
 export const RIVER = {
   level: -5,
   floor: -7.5,
-  halfWidth: 4.5,
-  /** Where the water leaves the dam crest and where it reaches river level. */
-  fallsStartX: 88,
-  fallsEndX: 94,
+  halfWidth: 5,
+  fallsStartX: 112,
+  fallsEndX: 119,
 } as const;
 
 /** Where a road or rail deck sits when it crosses water. */
@@ -188,8 +188,8 @@ export const ROAD = {
 
 /** Atmospheric depth. The far hills dissolve into this. */
 export const FOG = {
-  near: 300,
-  far: 820,
+  near: 420,
+  far: 1150,
 } as const;
 
 /** The railway. */
@@ -203,10 +203,10 @@ export const RAIL = {
 
 /** Clouds drifting over the valley - thin sunset streaks, not cumulus. */
 export const CLOUDS = {
-  count: 9,
-  minHeight: 72,
-  maxHeight: 112,
-  spread: 300,
+  count: 11,
+  minHeight: 64,
+  maxHeight: 108,
+  spread: 420,
   driftSpeed: 1.1,
 } as const;
 
@@ -246,20 +246,20 @@ export const QUALITY = {
 
 /** Camera framing and the bounds that keep the neighbourhood in frame. */
 export const CAMERA = {
-  fov: 48,
+  fov: 52,
   near: 0.5,
   far: 1400,
   /** From the south, high enough to see over the community to the lake and island. */
-  initialPosition: [0, 48, 118] as const,
-  target: [0, 2, -40] as const,
-  minDistance: 30,
-  maxDistance: 230,
+  initialPosition: [34, 68, 168] as const,
+  target: [16, 2, -54] as const,
+  minDistance: 40,
+  maxDistance: 300,
   /** No top-down view: the town is composed for a low, cinematic angle. */
-  minPolarAngle: 0.62,
-  maxPolarAngle: 1.32,
+  minPolarAngle: 0.78,
+  maxPolarAngle: 1.38,
   /** The world is built to be seen from the south, so the orbit is held to an arc. */
-  minAzimuthAngle: -0.6,
-  maxAzimuthAngle: 0.6,
+  minAzimuthAngle: -0.42,
+  maxAzimuthAngle: 0.42,
 } as const;
 
 /** Idle drift - a slow sway within the azimuth arc. */

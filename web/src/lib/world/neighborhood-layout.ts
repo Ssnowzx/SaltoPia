@@ -42,7 +42,7 @@ import {
   createYachtGeometry,
 } from "./props";
 import { RAIL_LINE, ROAD_POLYLINES, YARDS, type Waypoint } from "./roads";
-import { islandDistance, lakeDistance, riverDistance, terrainHeightAt } from "./terrain";
+import { eastShoreXAt, farShoreZAt, lakeDistance, peninsulaDistance, riverDistance, terrainHeightAt } from "./terrain";
 
 /**
  * What the community at the Salto is made of, as data.
@@ -254,177 +254,175 @@ function afloat(model: ModelKey, x: number, z: number, rotationY = 0, scale = 1)
   return { model, x, z, rotationY, scale, yOffset: 0, afloat: true };
 }
 
-/** The houses of the community, spread along the streets with room for lawns. */
+/**
+ * The houses of the community, along the east shore the way the reference photograph
+ * has them: the big lakefront places near the water, the rest stepping back up the
+ * slope behind the road.
+ */
 const HOUSES: readonly Placement[] = [
-  // On the lake, north of the main street.
-  placed("lakeHouse", -38, 2, Math.PI),
-  placed("houseMint", 16, -1, 0.1),
-  placed("lakeHouse", 54, 4, Math.PI),
-  placed("cabana", -64, 14, 0.4),
-  placed("cabana", 66, -4, 2.9),
-  // Inside the block.
-  placed("houseWhitewash", -30, 26, 0.3),
-  placed("houseYellow", -4, 30, 0.1),
-  placed("houseTimber", 6, 42, -0.2),
-  placed("houseMint", -26, 46, 3.0),
-  placed("houseWhitewash", 34, 30, 0.2),
-  placed("houseYellow", 44, 44, -0.3),
-  placed("houseTimber", 30, 46, 3.1),
-  placed("cabana", -4, 48, 0.2),
-  // South of the block.
-  placed("houseYellow", -30, 64, 3.0),
-  placed("houseWhitewash", -4, 66, 3.1),
-  placed("houseMint", 28, 66, 2.9),
-  placed("houseTimber", 52, 70, 3.0),
+  // Lakefront, looking west over the water.
+  placed("lakeHouse", 46, 34, Math.PI * 0.9),
+  placed("lakeHouse", 72, -10, Math.PI * 0.75),
+  placed("cabana", 34, 44, 2.6),
+  placed("cabana", 58, 0, 2.4),
+  // Behind the road, on the slope.
+  placed("houseWhitewash", 84, 54, 2.9),
+  placed("houseYellow", 96, 50, 3.1),
+  placed("houseTimber", 92, 12, 2.7),
+  placed("houseMint", 104, 6, 3.0),
+  placed("houseWhitewash", 112, 40, 2.8),
+  placed("houseYellow", 76, 92, 3.0),
+  placed("houseTimber", 92, 96, 2.9),
+  placed("houseMint", 108, 88, 3.1),
+  placed("houseWhitewash", 120, 66, 2.8),
+  placed("houseYellow", 106, -30, 2.6),
+  placed("houseTimber", 122, 16, 2.9),
+  placed("cabana", 132, 44, 3.0),
+  placed("houseMint", 66, 118, 3.0),
+  placed("houseWhitewash", 90, 126, 2.9),
 ];
 
-/** Chalets along the far shore, facing the water. */
-const FAR_SHORE_CHALETS: readonly Placement[] = [-44, -34, -24, -14, -4, 6, 16, 26, 36, 46, 56].map((x, index) => {
+/** The chalets along the far shore, packed tight at the waterline. */
+const FAR_SHORE_CHALETS: readonly Placement[] = Array.from({ length: 18 }, (_, index) => {
   const models: readonly ModelKey[] = ["aFrameShingle", "aFrameSlate", "aFrameTile"];
-  return placed(models[index % 3], x * 1.15 + (index % 2) * 1.5, -90 + (index % 3) * 1.6, index % 2 === 0 ? 0.08 : -0.06, 1.25);
+  const x = -76 + index * 9;
+  return placed(models[index % 3], x, farShoreZAt(x) + 5.5, 0.04 * (index % 3) - 0.04, 1.1);
 });
 
+/** The stilt cabins and piers along the peninsula's south shore. */
+const PENINSULA_CABINS: readonly Placement[] = [
+  placed("stiltCabin", -148, -30),
+  placed("stiltCabin", -128, -28.5, 0.1),
+  placed("stiltCabin", -104, -27.5),
+  placed("stiltCabin", -80, -28.5, -0.1),
+  placed("stiltCabin", -56, -31),
+  placed("pier", -140, -28, Math.PI),
+  placed("pier", -92, -27, Math.PI),
+  placed("pier", -66, -30, Math.PI),
+];
+
 /**
- * The landmarks and the town around the square.
+ * The landmarks and the community around them.
  *
  * Landmark coordinates match the `world_x` / `world_z` seeded for each place, so a pin
  * and its building agree without either knowing about the other.
  */
 export const LANDMARKS: readonly Placement[] = [
-  placed("praca", 0, -2),
-  placed("chapel", -22, 0, Math.PI / 2),
-  placed("galpao", -52, -2),
-  placed("ctg", -40, 36),
-  placed("estacao", 88, 76, Math.PI),
-  placed("vinicola", 86, 22),
-  placed("pousada", 34, -4),
-  placed("mirante", -80, -28),
-  placed("bosqueSign", 4, -47, 0.6),
+  // The lakefront resort in the foreground - the building the photograph opens on.
+  placed("pousada", 32, 62, Math.PI * 0.92),
+  // The square on the shore, with its pier.
+  placed("praca", 54, 6),
+  placed("pier", 40, 4, Math.PI * 0.5),
+  placed("chapel", 68, 22, Math.PI),
+  // The rest of the community, spread along the shore road.
+  placed("galpao", 92, 30, Math.PI),
+  placed("ctg", 104, 66, Math.PI),
+  placed("estacao", 126, 96, Math.PI),
+  placed("vinicola", 116, -18, Math.PI * 0.85),
+  placed("mirante", -132, -96, 0.3),
+  placed("bosqueSign", -60, -44, 0.6),
   placed("salto", SALTO_ORIGIN.x, SALTO_ORIGIN.z),
 
-  // The row of shops on the main street, facing it.
-  placed("shopBrick", -12, 21, Math.PI),
-  placed("shopYellow", -2, 21, Math.PI),
-  placed("shopMint", 8, 21, Math.PI),
-  placed("shopTimber", 70, 46, -Math.PI / 2, 0.9),
+  // The row of shops facing the street, awnings toward the water.
+  placed("shopBrick", 62, 72, Math.PI * 0.92),
+  placed("shopYellow", 70, 70, Math.PI * 0.92),
+  placed("shopMint", 78, 68, Math.PI * 0.92),
+  placed("shopTimber", 86, 66, Math.PI * 0.92),
 
   ...HOUSES,
   ...FAR_SHORE_CHALETS,
+  ...PENINSULA_CABINS,
 
-  // The island's south shore: cabins standing out over the water on their stilts,
-  // with a pier between them - the whole point of a stilt cabin is that it is wet.
-  placed("stiltCabin", -8, -34.5),
-  placed("stiltCabin", 12, -35.5, 0.2),
-  placed("pier", 2, -35, Math.PI),
+  // Palms along the foreground shore, as in the photograph.
+  ...([
+    [18, 52], [22, 62], [16, 72], [26, 80], [34, 86], [12, 86],
+    [30, 36], [24, 28], [40, 18], [44, 46], [52, 52], [8, 96],
+  ] as ReadonlyArray<readonly [number, number]>).map(([x, z], index) =>
+    placed("palm", x, z, index * 0.7, 0.9 + (index % 3) * 0.12),
+  ),
 
-  // The square's pier and the inn's.
-  placed("pier", 0, -13, Math.PI),
-  placed("pier", 34, -15, Math.PI),
+  // Parked cars in the car parks and the yards.
+  placed("sedanWhite", 38, 70, -0.35),
+  placed("sedanDark", 41, 72, -0.35),
+  placed("sedanSilver", 44, 74, -0.35),
+  placed("sedanWhite", 41, 67, -0.35),
+  placed("sedanDark", 45, 69, -0.35),
+  placed("sedanSilver", 68, 61, -0.3),
+  placed("sedanWhite", 71, 63, -0.3),
+  placed("sedanDark", 74, 65, -0.3),
+  placed("sedanSilver", 123, 99, 0.4),
+  placed("sedanWhite", 126, 101, 0.4),
+  placed("sedanDark", 112, -90, 1.2),
 
-  // People, where people actually are: the square, the promenade, the piers, the
-  // shopfronts, the station platform and the picnic tables at the falls.
-  ...(
-    [
-      [2.5, 4, 0.2], [-3, 5, 2.4], [4.5, 6.5, 1.1], [-5, 2, 3.0],
-      [6, -8, 0.4], [-7, -9, 2.7], [1, -11, 0.1], [-1.5, -9.5, 1.6],
-      [-10, 20, 0.3], [-4, 19.5, 2.9], [3, 20, 1.2], [9, 19.5, 3.1],
-      [31, -13, 0.5], [36, -12, 2.6], [40, -9, 1.4],
-      [86, 73, 0.2], [90, 73.5, 2.8],
-      [101, -51, 0.9], [97, -53, 2.2], [105, -46, 0.3],
-      [-40, 44, 1.0], [-36, 45, 2.4],
-      [-52, 4, 0.7], [-48, 5, 2.9],
-    ] as ReadonlyArray<readonly [number, number, number]>
-  ).map(([x, z, rotation], index) => {
+  // The vineyard on the slope above the winery.
+  ...[126, 132].flatMap((x) => [-26, -22, -18, -14, -10].map((z) => placed("vineRow", x, z))),
+
+  // Lamps along the shore street and the square.
+  ...([[46, 24], [50, 12], [58, -2], [36, 60], [44, 80], [60, 82], [98, 70], [124, 92]] as ReadonlyArray<readonly [number, number]>).map(
+    ([x, z]) => placed("lamppost", x, z),
+  ),
+
+  // Fences and taipas across the campo behind the town.
+  placed("fence", 100, 118, 0.3),
+  placed("fence", 136, 60, 0.4),
+  placed("stoneWall", 140, 20, 0.2),
+  placed("stoneWall", 96, -46, 0.3),
+
+  // People, where people actually are.
+  ...([
+    [30, 56, 0.3], [36, 58, 2.6], [26, 54, 1.4], [40, 62, 3.0],
+    [58, 12, 0.5], [50, 10, 2.4], [56, 2, 1.1], [62, 6, 2.9],
+    [66, 76, 0.2], [74, 74, 2.8], [82, 72, 1.0], [70, 78, 2.2],
+    [124, 94, 0.2], [128, 92, 2.8],
+    [136, -100, 0.9], [132, -104, 2.2],
+    [104, 72, 1.0], [100, 70, 2.4],
+    [92, 36, 0.7], [88, 34, 2.9],
+  ] as ReadonlyArray<readonly [number, number, number]>).map(([x, z, rotation], index) => {
     const models: readonly ModelKey[] = ["personA", "personB", "personC", "personD"];
     return placed(models[index % 4], x, z, rotation);
   }),
-  placed("personSeated", 6.6, 5.2, 2.6),
-  placed("personSeated", -6.2, 4.4, 1.2),
-  placed("personSeated", 101, -52.4, 0.4),
-  placed("personSeated", 32, -14.6, 3.0),
+  placed("personSeated", 34, 52, 2.6),
+  placed("personSeated", 52, 4, 1.2),
+  placed("personSeated", 134, -102, 0.4),
 
-  // Parasols along the lakeside promenade.
-  placed("parasolRed", -8, -7),
-  placed("parasolTeal", -4, -8.5),
-  placed("parasolRed", 5, -9),
-  placed("parasolTeal", 30, -12),
-  placed("parasolRed", 39, -11),
+  // Parasols by the water.
+  placed("parasolRed", 28, 48),
+  placed("parasolTeal", 34, 40),
+  placed("parasolRed", 44, 26),
+  placed("parasolTeal", 24, 74),
 
-  // Boats moored and pulled up.
-  afloat("sailboatMoored", -4, -25, 0.4),
-  afloat("sailboatMoored", 6, -27, -0.3),
-  afloat("yachtMoored", 37, -25, 0.2),
-  afloat("yachtMoored", 9, -33, 2.8, 0.9),
-  afloat("kayak", 12, -37, 1.1),
-  afloat("kayak", -3, -35, 0.4),
-  afloat("kayak", 18, -35, 2.2),
-  afloat("kayak", -30, -24, 0.9),
-  afloat("sailboatMoored", -22, -33, 1.2),
-  afloat("sailboatMoored", 24, -30, 2.4),
-  afloat("sailboatMoored", -14, -45, 0.7),
-  afloat("yachtMoored", -34, -40, 1.9, 0.85),
-  afloat("yachtMoored", 30, -46, 0.6, 0.95),
-  afloat("kayak", 26, -22, 1.8),
-  afloat("kayak", -18, -20, 0.2),
-  afloat("kayak", 34, -40, 2.6),
+  // Boats: moored at the piers and pulled up on the shore.
+  afloat("yachtMoored", -84, -22, 0.2),
+  afloat("yachtMoored", -120, -20, 2.9),
+  afloat("yachtMoored", 26, -6, 1.8, 0.95),
+  afloat("yachtMoored", -30, -70, 0.6),
+  afloat("sailboatMoored", -10, -20, 1.2),
+  afloat("sailboatMoored", -46, -6, 2.4),
+  afloat("sailboatMoored", -20, -54, 0.7),
+  afloat("sailboatMoored", -70, -60, 2.1),
+  afloat("sailboatMoored", 6, -86, 1.5),
+  afloat("kayak", -6, 12, 1.1),
+  afloat("kayak", -24, 24, 0.4),
+  afloat("kayak", -52, 16, 2.2),
+  afloat("kayak", -14, -40, 0.9),
+  afloat("kayak", -96, -8, 1.8),
 
-  // Palms along the shore, thickest around the inn and the square.
-  placed("palm", 27, -9, 0, 1.05),
-  placed("palm", 43, -1, 0, 0.95),
-  placed("palm", 47, -10, 0, 1.1),
-  placed("palm", 40, -13, 0, 0.9),
-  placed("palm", -12, -10, 0, 1.0),
-  placed("palm", 9, -9, 0, 0.95),
-  placed("palm", -44, -8, 0, 1.0),
-  placed("palm", 58, -1, 0, 0.9),
-  placed("palm", 24, 4, 0, 1.0),
-  placed("palm", -32, -6, 0, 0.95),
-
-  // Parked cars in the car parks and yards.
-  placed("sedanWhite", 39, 7, 0.1),
-  placed("sedanDark", 42.5, 7, 0.15),
-  placed("sedanSilver", 46, 7, 0.05),
-  placed("sedanWhite", 40, 10.8, 3.2),
-  placed("sedanDark", 13, 21, 0.05),
-  placed("sedanSilver", 16.5, 21, 0.1),
-  placed("sedanWhite", 19.5, 21, 0),
-  placed("sedanWhite", 84, 71, 0.1),
-  placed("sedanDark", 88, 71, 0.05),
-  placed("sedanSilver", 84, 28, 0.6),
-  placed("sedanDark", 80, -24, 1.4),
-
-  // The vineyard, on the slope east of the winery.
-  ...[92, 98].flatMap((x) => [14, 17, 20, 23, 26, 29].map((z) => placed("vineRow", x, z))),
-
-  // Lamps around the square and along the street.
-  ...Array.from({ length: 6 }, (_, index) => {
-    const angle = (index / 6) * Math.PI * 2 + Math.PI / 6;
-    return placed("lamppost", Math.cos(angle) * 13.5, -2 + Math.sin(angle) * 13.5);
-  }),
-  placed("lamppost", 28, 11),
-  placed("lamppost", -30, 17),
-  placed("lamppost", 50, 30),
-  placed("lamppost", -50, 40),
-
-  // Fences and taipas across the campo.
-  placed("fence", -66, 30, 0.3),
-  placed("fence", 60, 52, 0.4),
-  placed("stoneWall", -70, 44, 0.3),
-  placed("stoneWall", -62, -20, 0.1),
-  placed("stoneWall", 100, 40, 0.2),
-
-  // Boulders in the plunge pool and along the falls.
-  placed("rock", 97, -41.5, 0.4, 2.0),
-  placed("rock", 101, -33.5, 1.2, 1.8),
-  placed("rock", 93, -43, 2.1, 1.6),
-  placed("rock", 92, -32, 0.7, 1.7),
+  // Boulders below the falls.
+  placed("rock", 124, -102, 0.4, 2.0),
+  placed("rock", 130, -95, 1.2, 1.8),
+  placed("rock", 118, -108, 2.1, 1.6),
 ];
 
-/** Lawns around the houses and the inn. */
+/** Lawns around the houses and the resort. */
 export const LAWNS: ReadonlyArray<{ readonly x: number; readonly z: number; readonly radius: number }> = [
-  ...HOUSES.map((house) => ({ x: house.x, z: house.z, radius: house.model === "lakeHouse" ? 9.5 : house.model === "cabana" ? 4.5 : 6.5 })),
-  { x: 34, z: -4, radius: 13 },
-  { x: 86, z: 22, radius: 8 },
+  ...HOUSES.map((house) => ({
+    x: house.x,
+    z: house.z,
+    radius: house.model === "lakeHouse" ? 10 : house.model === "cabana" ? 5 : 7,
+  })),
+  { x: 32, z: 62, radius: 15 },
+  { x: 116, z: -18, radius: 9 },
+  { x: 104, z: 66, radius: 10 },
 ];
 
 interface Clearing {
@@ -435,30 +433,25 @@ interface Clearing {
 
 /** Ground kept clear of scattered scenery so landmarks and homes stay legible. */
 const CLEARINGS: readonly Clearing[] = [
-  { x: 0, z: -2, radius: 15 },
-  { x: -22, z: 0, radius: 9 },
-  { x: -2, z: 21, radius: 14 },
-  { x: -52, z: -2, radius: 12 },
-  { x: -40, z: 36, radius: 14 },
-  { x: 88, z: 76, radius: 16 },
-  { x: 86, z: 22, radius: 10 },
-  { x: 96, z: 21, radius: 10 },
-  { x: 34, z: -4, radius: 14 },
-  { x: -80, z: -28, radius: 8 },
-  { x: 95, z: -25, radius: 10 },
-  { x: 99, z: -47, radius: 7 },
-  { x: 101, z: -49, radius: 7 },
-  // The approach the camera flies down to the falls stays open.
-  { x: 62, z: -12, radius: 12 },
-  { x: 70, z: -30, radius: 9 },
-  { x: 42, z: 8, radius: 8 },
-  { x: 16, z: 22, radius: 7 },
-  { x: 70, z: 46, radius: 6 },
-  ...HOUSES.map((house) => ({ x: house.x, z: house.z, radius: house.model === "lakeHouse" ? 9 : 6 })),
-  ...FAR_SHORE_CHALETS.map((chalet) => ({ x: chalet.x, z: chalet.z, radius: 5.2 })),
-  { x: -8, z: -34.5, radius: 5 },
-  { x: 12, z: -35.5, radius: 5 },
-  { x: 2, z: -35, radius: 5 },
+  { x: 32, z: 62, radius: 18 },
+  { x: 54, z: 6, radius: 15 },
+  { x: 68, z: 22, radius: 9 },
+  { x: 92, z: 30, radius: 13 },
+  { x: 104, z: 66, radius: 14 },
+  { x: 126, z: 96, radius: 16 },
+  { x: 116, z: -18, radius: 11 },
+  { x: 129, z: -18, radius: 11 },
+  { x: -132, z: -96, radius: 9 },
+  { x: 118, z: -92, radius: 12 },
+  { x: 134, z: -98, radius: 8 },
+  { x: -60, z: -44, radius: 4 },
+  { x: 42, z: 72, radius: 12 },
+  { x: 70, z: 62, radius: 9 },
+  { x: 124, z: 100, radius: 8 },
+  { x: 74, z: 69, radius: 16 },
+  ...HOUSES.map((house) => ({ x: house.x, z: house.z, radius: house.model === "lakeHouse" ? 10 : 6.5 })),
+  ...FAR_SHORE_CHALETS.map((chalet) => ({ x: chalet.x, z: chalet.z, radius: 5 })),
+  ...PENINSULA_CABINS.map((cabin) => ({ x: cabin.x, z: cabin.z, radius: 5 })),
 ];
 
 function isInClearing(x: number, z: number, extra = 0): boolean {
@@ -490,16 +483,17 @@ function isOnInfrastructure(x: number, z: number): boolean {
   if (YARDS.some((yard) => Math.hypot(x - yard.x, z - yard.z) < yard.radius + 2)) return true;
   if (LAWNS.some((lawn) => Math.hypot(x - lawn.x, z - lawn.z) < lawn.radius - 1)) return true;
   if (distanceToPolyline(x, z, RAIL_LINE, false) < 3.8) return true;
-  if (x > 73 && riverDistance(x, z) < 12) return true;
-  return lakeDistance(x, z) < 4 && islandDistance(x, z) > 0;
+  if (x > LAKE.dam.x && riverDistance(x, z) < 12) return true;
+  return lakeDistance(x, z) < 3;
 }
 
 /**
- * Scatters trees, bushes and rocks across the valley and the island.
+ * Scatters trees, bushes and rocks.
  *
- * Seeded, so the forest is identical on every load. Araucarias stand alone across the
- * campo and mass onto the island; round broadleaf trees - many of them turning yellow -
- * fill in around the houses; conifers hold the high ground; rocks sit on the rim.
+ * Seeded, so the woods are identical on every load. The peninsula is a dense stand of
+ * olive broadleaf with araucarias through it; the community's slope is dotted with
+ * round trees; a conifer forest closes the right of the frame, as it does in the
+ * reference photograph.
  */
 export function createScatter(): readonly Placement[] {
   const random = createRandom(WORLD_SEED);
@@ -519,59 +513,59 @@ export function createScatter(): readonly Placement[] {
     while (placedCount < count && attempts < count * 30) {
       attempts += 1;
       const [x, z] = propose();
-      if (Math.abs(x) > half - 6 || Math.abs(z) > half - 6) continue;
+      if (Math.abs(x) > half - 8 || Math.abs(z) > half - 8) continue;
       if (isInClearing(x, z, clearance)) continue;
       if (isOnInfrastructure(x, z)) continue;
       const height = terrainHeightAt(x, z);
-      if (height < LAKE.level + 0.4) continue;
+      if (height < LAKE.level + 0.3) continue;
       if (!accept(x, z, height)) continue;
-      placements.push({ model, x, z, rotationY: random() * Math.PI * 2, scale: scaleRange[0] + random() * (scaleRange[1] - scaleRange[0]), yOffset: 0 });
+      placements.push({
+        model,
+        x,
+        z,
+        rotationY: random() * Math.PI * 2,
+        scale: scaleRange[0] + random() * (scaleRange[1] - scaleRange[0]),
+        yOffset: 0,
+      });
       placedCount += 1;
     }
   };
 
-  const anywhere = (extent = 0.94): (() => readonly [number, number]) => () => [
-    (random() - 0.5) * TERRAIN.size * extent,
-    (random() - 0.5) * TERRAIN.size * extent,
-  ];
-  const onIsland = (): readonly [number, number] => [
-    LAKE.island.x + (random() - 0.5) * LAKE.island.radiusX * 2,
-    LAKE.island.z + (random() - 0.5) * LAKE.island.radiusZ * 2,
-  ];
-  const inCommunity = (): readonly [number, number] => [(random() - 0.5) * 150, -14 + random() * 90];
-  const nearShore = (): readonly [number, number] => {
-    const angle = random() * Math.PI * 2;
-    const reach = 1.08 + random() * 0.3;
-    return [LAKE.centre.x + Math.cos(angle) * LAKE.radiusX * reach, LAKE.centre.z + Math.sin(angle) * LAKE.radiusZ * reach];
+  const onPeninsula = (): readonly [number, number] => [-180 + random() * 155, -78 + random() * 50];
+  const inCommunity = (): readonly [number, number] => [30 + random() * 130, -50 + random() * 180];
+  const onFarShore = (): readonly [number, number] => {
+    const x = -160 + random() * 300;
+    return [x, farShoreZAt(x) - random() * 40];
   };
+  const onRightEdge = (): readonly [number, number] => [130 + random() * 70, -120 + random() * 250];
 
-  const offIsland = (x: number, z: number): boolean => islandDistance(x, z) > 3;
-  const lowGround = (x: number, z: number, height: number): boolean => height > 0 && height < 20 && offIsland(x, z);
-  const islandGround = (x: number, z: number): boolean => islandDistance(x, z) < -1.5;
+  const onLand = (x: number, z: number): boolean => lakeDistance(x, z) > 2;
+  const peninsulaGround = (x: number, z: number): boolean => peninsulaDistance(x, z) < -2;
+  const inland = (x: number, z: number): boolean => x - eastShoreXAt(z) > 2;
 
-  // The island: a dense stand of araucarias.
-  scatter("araucaria", 22, [0.85, 1.2], onIsland, islandGround, 0);
-  scatter("araucariaB", 16, [0.85, 1.2], onIsland, islandGround, 0);
-  scatter("araucariaYoung", 10, [0.8, 1.3], onIsland, islandGround, 0);
-  scatter("broadleaf", 8, [0.8, 1.2], onIsland, islandGround, 0);
+  // The peninsula: dense olive woods with araucarias standing through them.
+  scatter("broadleafWarm", 90, [0.9, 1.4], onPeninsula, peninsulaGround, 0);
+  scatter("broadleaf", 70, [0.9, 1.4], onPeninsula, peninsulaGround, 0);
+  scatter("araucaria", 20, [0.9, 1.25], onPeninsula, peninsulaGround, 0);
+  scatter("araucariaB", 16, [0.9, 1.25], onPeninsula, peninsulaGround, 0);
 
-  // Araucarias along the shore and across the campo.
-  scatter("araucaria", 40, [0.8, 1.25], nearShore, lowGround, 3);
-  scatter("araucariaB", 30, [0.8, 1.25], anywhere(0.9), lowGround, 3);
-  scatter("araucariaYoung", 26, [0.7, 1.3], anywhere(0.9), lowGround, 3);
+  // The community's slope.
+  scatter("broadleafWarm", 120, [0.8, 1.4], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 2);
+  scatter("broadleaf", 100, [0.8, 1.4], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 2);
+  scatter("araucaria", 28, [0.8, 1.2], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 3);
+  scatter("araucariaYoung", 24, [0.7, 1.3], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 3);
+  scatter("bush", 130, [0.7, 1.5], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 1);
 
-  // Round broadleaf trees through the community, many turning yellow.
-  scatter("broadleaf", 70, [0.8, 1.4], inCommunity, lowGround, 2);
-  scatter("broadleafWarm", 90, [0.8, 1.4], inCommunity, lowGround, 2);
-  scatter("broadleaf", 50, [0.8, 1.4], anywhere(0.8), lowGround, 2);
-  scatter("bush", 120, [0.7, 1.5], inCommunity, lowGround, 1);
+  // The conifer forest closing the right of the frame.
+  scatter("conifer", 170, [0.8, 1.5], onRightEdge, onLand, 2);
+  scatter("conifer", 60, [0.8, 1.4], onFarShore, onLand, 2);
 
-  // Conifers on the higher ground.
-  scatter("conifer", 140, [0.75, 1.45], () => [(random() - 0.5) * TERRAIN.size * 0.96, -random() * half * 0.9], (x, z, height) => height > 7 && offIsland(x, z));
-  scatter("conifer", 50, [0.7, 1.3], anywhere(0.96), (x, z, height) => height > 9 && offIsland(x, z));
+  // Woods behind the far shore.
+  scatter("broadleafWarm", 110, [0.9, 1.5], onFarShore, onLand, 2);
+  scatter("broadleaf", 80, [0.9, 1.5], onFarShore, onLand, 2);
 
-  // Basalt on the rim.
-  scatter("rock", 50, [0.6, 2.2], anywhere(0.96), (_x, _z, height) => height > 14);
+  // Basalt on the high ground.
+  scatter("rock", 45, [0.6, 2.2], inCommunity, (_x, _z, height) => height > 14);
 
   return placements;
 }
