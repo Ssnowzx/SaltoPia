@@ -23,7 +23,7 @@
 
 - [x] 4.1 Build the persistent navigation bar (Destinos menu, Experiências, wordmark, primary CTA); verify it renders identically on hub, place and experience pages
 - [x] 4.2 Make the Destinos menu list all eight places and navigate correctly; verify each entry lands on its place page
-- [ ] 4.3 Collapse the navigation at 400px width; verify no item becomes unreachable and no horizontal overflow appears
+- [x] 4.3 Collapse the navigation at 400px width; verify no item becomes unreachable and no horizontal overflow appears
 - [ ] 4.4 Build the shared footer; verify it renders on every content page
 
 ## 5. Iris page transition

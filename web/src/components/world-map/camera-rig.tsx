@@ -5,7 +5,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import { useEffect, useRef } from "react";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { Vector3 } from "three";
+import { TOUCH, Vector3 } from "three";
 
 import { CAMERA, DRIFT, FLIGHT } from "@/lib/world/constants";
 import { terrainHeightAt } from "@/lib/world/terrain";
@@ -199,6 +199,9 @@ export function CameraRig({
       zoomToCursor
       enableDamping
       dampingFactor={0.06}
+      // One finger turns, two pinch to zoom. Without this a drag on a phone does
+      // nothing, because the default touch action is a two-finger rotate.
+      touches={{ ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_ROTATE }}
       minDistance={CAMERA.minDistance}
       maxDistance={CAMERA.maxDistance}
       minPolarAngle={CAMERA.minPolarAngle}

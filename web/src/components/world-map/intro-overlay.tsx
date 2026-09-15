@@ -18,7 +18,7 @@ interface IntroOverlayProps {
 
 export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.ReactElement {
   return (
-    <div data-ready={ready} className="intro absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center">
+    <div data-ready={ready} className="intro absolute inset-0 z-10 flex flex-col items-center justify-center px-5 text-center sm:px-6">
       {/* The veil the world reads through. There is nothing behind it but the world -
           an opaque sky was tried while the scene built and read as a coloured slab. */}
       <div
@@ -27,10 +27,10 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
       />
 
       <div className="relative flex flex-col items-center">
-        <p className="intro-lede font-script text-3xl text-teal sm:text-4xl">Bem-vindo a</p>
+        <p className="intro-lede font-script text-2xl text-teal sm:text-4xl">Bem-vindo a</p>
         {/* The card's own margin is part of the picture, so the box is wider than the
             emblem looks. Sized by what reads, not by the file. */}
-        <h1 className="-mt-6 w-full max-w-[1000px]">
+        <h1 className="-mt-3 w-full max-w-[1000px] sm:-mt-6">
           <Image
             src="/logo-saltopia.png"
             alt="Saltopia - Salto Caveiras, Serra Catarinense"
@@ -43,7 +43,7 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
         {/* The map is behind this, and dark type on a busy picture is unreadable however
             dark it is. The halo is the page's own cream, so the text sits on the light
             it needs without a panel getting in the way of the world. */}
-        <p className="intro-lede -mt-2 max-w-xl font-sans text-base font-semibold text-bark sm:text-lg">
+        <p className="intro-lede -mt-1 max-w-xl font-sans text-sm font-semibold text-bark sm:-mt-2 sm:text-lg">
           A comunidade do Salto do Rio Caveiras, em Lages — araucárias, lago, fogo de chão e a
           usina que iluminou a cidade.
         </p>
@@ -51,7 +51,7 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
           type="button"
           onClick={onExplore}
           disabled={!ready}
-          className="mt-8 rounded-button bg-teal-deep px-8 py-4 font-sans text-sm font-bold tracking-[0.12em] text-mist uppercase shadow-[0_12px_30px_rgba(196,82,46,0.35)] transition-transform duration-200 not-disabled:hover:scale-105 not-disabled:hover:bg-teal-dark focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none disabled:opacity-60"
+          className="mt-6 rounded-button bg-teal-deep px-7 py-4 sm:mt-8 sm:px-8 font-sans text-sm font-bold tracking-[0.12em] text-mist uppercase shadow-[0_12px_30px_rgba(196,82,46,0.35)] transition-transform duration-200 not-disabled:hover:scale-105 not-disabled:hover:bg-teal-dark focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none disabled:opacity-60"
         >
           {ready ? "Explorar Saltopia" : "Chegando a Saltopia…"}
         </button>

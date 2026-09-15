@@ -460,6 +460,21 @@ south-east entrance the length of the community, over the channel bridge and up 
 plateau to the Ovni Porto's gate, and two vehicles drive it out and back, half a cycle
 apart.
 
+### D26 — One composition, widened to fit the viewport
+
+The hub is composed for a wide screen, and a phone held upright is half as wide for the
+same height. Rather than author a second camera, the vertical field of view widens by
+however much the viewport falls short of 16:9, which holds the horizontal field - the one
+the town is laid out across - at what it was meant to be; the orbit's distance limits
+follow. It is capped at 86 degrees, past which the view tips toward the sky.
+
+Below `sm` the navigation folds into one menu: side by side in a 393px pill the call to
+action ran across the wordmark. The place card becomes a sheet along the bottom, because a
+centred panel covered the very place the camera had just flown to, and on wider screens it
+is anchored between the header and the foot of the window rather than centred on the
+window - centred, it ran under the header on a phone held sideways. Its link is focused
+with `preventScroll`, or the browser scrolls the place's name out of the card's top.
+
 ### D22 — Light from two temperatures
 
 The key light is warm and aimed at the community; the fill is a cool sky hemisphere.

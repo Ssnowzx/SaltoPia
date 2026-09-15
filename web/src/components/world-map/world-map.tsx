@@ -18,6 +18,7 @@ import { PinProjector } from "./pin-projector";
 import { PlaceCard } from "./place-card";
 import { PostEffects } from "./post-effects";
 import { SceneReady } from "./scene-ready";
+import { ViewportFraming } from "./viewport-framing";
 import { SkyDome } from "./sky-dome";
 import { Smoke } from "./smoke";
 import { Vehicles } from "./vehicles";
@@ -157,7 +158,7 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
     <div className="relative h-full w-full">
       {/* The wrapper takes the blur when a modal dialog opens; the place card is not
           modal - the point of the flight is to see the place sharp behind it. */}
-      <div className="h-full w-full transition-[filter] duration-300 ease-out">
+      <div className="h-full w-full touch-none transition-[filter] duration-300 ease-out">
         <Canvas
           // Capped so a dense display cannot multiply fragment cost - world-map spec.
           dpr={[1, RENDERER.maxPixelRatio]}
@@ -192,6 +193,7 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
             <SceneReady onReady={handleSceneReady} />
           </Suspense>
 
+          <ViewportFraming />
           <PinProjector places={places} nodes={pinNodes} hidden={!exploring || isFlying} />
 
           <CameraRig
