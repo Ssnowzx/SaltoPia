@@ -112,6 +112,92 @@ body {
 }
 
 /*
+ * Navigations are full documents, so the iris above runs as a cross-document view
+ * transition - the same mechanism the reference uses on its root group.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+/* Scroll-driven reveal. A section is only ever hidden after scripting marks it pending. */
+[data-reveal="pending"] {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 700ms var(--ease-ui),
+    transform 700ms var(--ease-ui);
+}
+
+/* The marquee: the track holds its content twice and moves exactly one half. */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee 38s linear infinite;
+}
+
+/* The hero's scroll cue, a line that drops and fades. */
+@keyframes scroll-cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+    opacity: 1;
+  }
+  70% {
+    transform: scaleY(1);
+    transform-origin: top;
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    transform-origin: top;
+    opacity: 0;
+  }
+}
+
+/*
+ * The ticket card. The perforation is a dashed rule with a notch punched either side,
+ * so the card keeps a rectangular box and still reads as a stub torn off a roll.
+ */
+.ticket {
+  position: relative;
+}
+
+.ticket-perforation {
+  position: relative;
+  height: 0;
+  margin: 0 18px;
+  border-top: 2px dashed color-mix(in srgb, var(--color-bark) 25%, transparent);
+}
+
+.ticket-perforation::before,
+.ticket-perforation::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-straw);
+}
+
+.ticket-perforation::before {
+  left: -29px;
+}
+
+.ticket-perforation::after {
+  right: -29px;
+}
+
+/*
  * Reduced motion. The experience stays navigable — animation is removed, never
  * the ability to reach a destination. See the design-system spec.
  */

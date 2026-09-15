@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import type { Place } from "@/types";
@@ -46,13 +45,13 @@ export function PlaceCard({ place, onClose }: PlaceCardProps): React.ReactElemen
         <p className="font-sans text-sm font-semibold text-teal">{place.tagline}</p>
         <p className="mt-3 line-clamp-4 font-sans text-sm leading-relaxed text-bark">{place.description}</p>
         <div className="mt-6 flex flex-col items-center gap-3">
-          <Link
+          <a
             ref={visitRef}
             href={`/${place.slug}`}
             className="rounded-button bg-teal-deep px-7 py-3 font-sans text-sm font-bold tracking-[0.08em] text-mist uppercase transition-colors duration-200 hover:bg-teal-dark focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none"
           >
             Visitar
-          </Link>
+          </a>
           <button
             type="button"
             onClick={onClose}

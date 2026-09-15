@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { type DirectionalLight, Object3D, PCFShadowMap } from "three";
 
 import { SiteHeader } from "@/components/site-header";
@@ -78,19 +78,49 @@ function SunLight(): React.ReactElement {
   );
 }
 
+/** Session-storage key set once the visitor has entered the world. */
+const EXPLORED_KEY = "saltopia:explored";
+
+function readExplored(): boolean {
+  try {
+    return window.sessionStorage.getItem(EXPLORED_KEY) === "1";
+  } catch {
+    // Storage can be unavailable; the intro simply plays again.
+    return false;
+  }
+}
+
+/** Session storage raises no events within a tab; the value is read once per render. */
+function subscribeToNothing(): () => void {
+  return () => undefined;
+}
+
 /** Where the key light points: the middle of the community. */
 const SUN_TARGET = { x: 50, y: 0, z: 10 } as const;
 
 export function WorldMap({ places }: WorldMapProps): React.ReactElement {
   const reducedMotion = usePrefersReducedMotion();
-  const [exploring, setExploring] = useState(false);
+  const [entered, setEntered] = useState(false);
+  // Coming back from a place page must not replay the title state - page-transitions
+  // spec. The flag lives in session storage, which survives the full-document
+  // navigation, and is read as external state so the first client render agrees with
+  // the server's.
+  const exploredBefore = useSyncExternalStore(subscribeToNothing, readExplored, () => false);
+  const exploring = entered || exploredBefore;
   const [focus, setFocus] = useState<Place | null>(null);
   const [isFlying, setIsFlying] = useState(false);
   const pinNodes: PinNodes = useRef(new Map());
 
   const handleFlightStart = useCallback(() => setIsFlying(true), []);
   const handleFlightEnd = useCallback(() => setIsFlying(false), []);
-  const handleExplore = useCallback(() => setExploring(true), []);
+  const handleExplore = useCallback(() => {
+    setEntered(true);
+    try {
+      window.sessionStorage.setItem(EXPLORED_KEY, "1");
+    } catch {
+      // Storage can be unavailable; nothing to remember.
+    }
+  }, []);
   const handleClose = useCallback(() => setFocus(null), []);
 
   const cardOpen = focus !== null && !isFlying;

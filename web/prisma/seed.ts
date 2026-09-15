@@ -263,7 +263,7 @@ async function main(): Promise<void> {
         name: place.name,
         tagline: place.tagline,
         description: place.description,
-        crestImage: `/images/crests/${place.slug}.webp`,
+        crestImage: `/images/crests/${place.slug}.svg`,
         heroImage: `/images/heroes/${place.slug}.webp`,
         worldX,
         worldY,

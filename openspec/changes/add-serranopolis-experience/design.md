@@ -399,6 +399,22 @@ whose Ferris wheel and carousel are live meshes that turn, and Deck do Lago, a t
 restaurant on the shore with its deck on piles over the water. Both are sites like any
 other - pad, clearing, driveway, pin, seeded copy - so nothing about them is special-cased.
 
+### D24 — Content pages are full documents; the heroes are renders of the world
+
+Every navigation between the hub and a content page is a full-document load through a
+plain anchor, and the iris runs as the browser's cross-document view transition
+(`@view-transition { navigation: auto }` on the root group, exactly as the reference
+does it). Next's client router would need its experimental view-transition flag to do
+the same, and the demo cannot afford an experimental path. The `no-html-link-for-pages`
+lint rule is switched off for this reason. Coming back to the hub reads a session flag
+so the title state does not replay.
+
+The place heroes are renders of the map from each place's own flight camera, made by
+`scratchpad/meatopia/shot-heroes.js` with the interface hidden; the experience images
+are crops of them, and the crests are SVGs drawn from the pin glyphs
+(`scripts/build-crests.ts`). Nothing is fetched from anywhere. Illustrations from the
+Grok brief in `docs/image-prompts.md` replace them at the same paths when they arrive.
+
 ### D22 — Light from two temperatures
 
 The key light is warm and aimed at the community; the fill is a cool sky hemisphere.

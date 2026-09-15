@@ -79,3 +79,16 @@ export async function getPlaceBySlug(slug: string): Promise<Place | null> {
 
   return record ? toPlace(record) : null;
 }
+
+/**
+ * One experience under its place, or null - including when the experience exists but
+ * belongs to another place. Slugs are unique within a place, not across the site.
+ */
+export async function getExperience(
+  placeSlug: string,
+  experienceSlug: string,
+): Promise<{ readonly place: Place; readonly experience: Experience } | null> {
+  const place = await getPlaceBySlug(placeSlug);
+  const experience = place?.experiences.find((candidate) => candidate.slug === experienceSlug);
+  return place && experience ? { place, experience } : null;
+}

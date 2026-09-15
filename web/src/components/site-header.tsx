@@ -1,13 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 
 import type { Place } from "@/types";
 
 /**
  * The navigation bar every page carries, in the reference's form: a floating pill
  * with the destinations menu, the wordmark and the primary call to action.
+ *
+ * Its links are plain anchors on purpose: every navigation is a full document, which is
+ * what lets the browser run the iris as a cross-document view transition.
  */
 
 /** The wordmark, at its natural aspect so the header can scale it by height alone. */
@@ -32,22 +34,22 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
             <ul className="absolute top-full left-0 mt-3 w-64 rounded-card bg-mist p-2 shadow-[0_18px_50px_rgba(46,36,28,0.22)]">
               {places.map((place) => (
                 <li key={place.slug}>
-                  <Link
+                  <a
                     href={`/${place.slug}`}
                     className="block rounded-button px-3 py-2 font-sans text-xs font-bold tracking-[0.08em] text-bark uppercase transition-colors hover:bg-straw hover:text-teal"
                   >
                     {place.name}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
           </details>
-          <Link href="/experiencias" className="hidden font-script text-2xl text-teal sm:block">
+          <a href="/experiencias" className="hidden font-script text-2xl text-teal sm:block">
             Experiências
-          </Link>
+          </a>
         </nav>
 
-        <Link href="/" className="absolute left-1/2 -translate-x-1/2" aria-label="Saltopia - início">
+        <a href="/" className="absolute left-1/2 -translate-x-1/2" aria-label="Saltopia - início">
           <Image
             src={LOGO.src}
             alt="Saltopia - Salto Caveiras, Serra Catarinense"
@@ -56,14 +58,14 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
             priority
             className="h-8 w-auto sm:h-10"
           />
-        </Link>
+        </a>
 
-        <Link
+        <a
           href="/planejar"
           className="rounded-button bg-teal-deep px-4 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-mist uppercase transition-colors hover:bg-teal-dark sm:px-5 sm:text-sm"
         >
           Planejar visita
-        </Link>
+        </a>
       </div>
     </header>
   );

@@ -21,8 +21,8 @@
 
 ## 4. Navigation and page shell
 
-- [ ] 4.1 Build the persistent navigation bar (Destinos menu, Experiências, wordmark, primary CTA); verify it renders identically on hub, place and experience pages
-- [ ] 4.2 Make the Destinos menu list all eight places and navigate correctly; verify each entry lands on its place page
+- [x] 4.1 Build the persistent navigation bar (Destinos menu, Experiências, wordmark, primary CTA); verify it renders identically on hub, place and experience pages
+- [x] 4.2 Make the Destinos menu list all eight places and navigate correctly; verify each entry lands on its place page
 - [ ] 4.3 Collapse the navigation at 400px width; verify no item becomes unreachable and no horizontal overflow appears
 - [ ] 4.4 Build the shared footer; verify it renders on every content page
 
@@ -67,28 +67,28 @@
 - [x] 9.2 Open the card after the flight settles, without changing the route; verify the URL is unchanged after activating a pin
 - [ ] 9.3 Blur the 3D surface behind the card over 300ms; verify the blur is applied on open and fully removed on close
 - [ ] 9.4 Trap focus in the card when opened by keyboard, and return focus to the originating pin on Escape; verify with keyboard only
-- [ ] 9.5 Make VISITAR navigate to the place page through the iris transition; verify the full hub → card → page sequence
+- [x] 9.5 Make VISITAR navigate to the place page through the iris transition; verify the full hub → card → page sequence
 
 ## 10. Place pages
 
-- [ ] 10.1 Build the `/[place]` route with the six-section anatomy from the `place-pages` spec; verify no WebGL context is created on these pages
-- [ ] 10.2 Build the full-viewport cinematic hero with crest and scroll cue; verify at 400px and 1920px widths
-- [ ] 10.3 Build the seamless infinite marquee band with a persistent CTA; verify by recording one full loop that no seam or restart is visible
-- [ ] 10.4 Freeze the marquee and make its full text readable under reduced motion; verify with the emulated setting
-- [ ] 10.5 Build the experience card grid using the ticket silhouette; verify it collapses to one column at 400px with no horizontal overflow
-- [ ] 10.6 Omit the grid entirely when a place has no experiences; verify with a place whose experience list is empty
-- [ ] 10.7 Build the share block and wire the footer; verify links resolve
+- [x] 10.1 Build the `/[place]` route with the six-section anatomy from the `place-pages` spec; verify no WebGL context is created on these pages
+- [x] 10.2 Build the full-viewport cinematic hero with crest and scroll cue; verify at 400px and 1920px widths
+- [x] 10.3 Build the seamless infinite marquee band with a persistent CTA; verify by recording one full loop that no seam or restart is visible
+- [x] 10.4 Freeze the marquee and make its full text readable under reduced motion; verify with the emulated setting
+- [x] 10.5 Build the experience card grid using the ticket silhouette; verify it collapses to one column at 400px with no horizontal overflow
+- [x] 10.6 Omit the grid entirely when a place has no experiences; verify with a place whose experience list is empty
+- [x] 10.7 Build the share block and wire the footer; verify links resolve
 
 ## 11. Experience pages
 
-- [ ] 11.1 Build the `/[place]/experiencias/[experience]` route with hero, description, practical details and back-to-place link; verify the back link returns to the correct parent
-- [ ] 11.2 Return a not-found response for an experience requested under the wrong place; verify with a deliberately mismatched URL
+- [x] 11.1 Build the `/[place]/experiencias/[experience]` route with hero, description, practical details and back-to-place link; verify the back link returns to the correct parent
+- [x] 11.2 Return a not-found response for an experience requested under the wrong place; verify with a deliberately mismatched URL
 
 ## 12. Scroll behaviour
 
-- [ ] 12.1 Wire Lenis smooth scroll on content pages only; verify the hub creates no Lenis instance
-- [ ] 12.2 Build scroll-driven section reveals playing once each; verify a section does not re-animate on a second pass
-- [ ] 12.3 Render all sections in their final visible state when reduced motion is set or scripting is unavailable; verify with JavaScript disabled that no section is left transparent
+- [x] 12.1 Wire Lenis smooth scroll on content pages only; verify the hub creates no Lenis instance
+- [x] 12.2 Build scroll-driven section reveals playing once each; verify a section does not re-animate on a second pass
+- [x] 12.3 Render all sections in their final visible state when reduced motion is set or scripting is unavailable; verify with JavaScript disabled that no section is left transparent
 
 ## 13. Metadata and polish
 

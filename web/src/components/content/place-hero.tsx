@@ -1,0 +1,40 @@
+import Image from "next/image";
+
+import type { Place } from "@/types";
+
+import { PlaceCrest } from "./place-crest";
+
+interface PlaceHeroProps {
+  readonly place: Place;
+}
+
+/**
+ * The full-viewport opening of a place page: the place seen from the world, its crest,
+ * its name, and a cue to scroll. The image is a render of the map from the place's own
+ * flight camera, so the page opens on the same view the visitor just flew to.
+ */
+export function PlaceHero({ place }: PlaceHeroProps): React.ReactElement {
+  return (
+    <header className="relative flex min-h-svh flex-col items-center justify-end overflow-hidden px-6 pb-16 text-center text-mist">
+      <Image src={place.heroImage} alt="" fill priority sizes="100vw" className="object-cover" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(17,58,64,0.82)_0%,rgba(17,58,64,0.28)_45%,rgba(17,58,64,0)_75%)]" />
+
+      <div className="relative flex flex-col items-center">
+        <PlaceCrest slug={place.slug} name={place.name} className="w-32 drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)] sm:w-40" />
+        <p className="mt-6 font-script text-3xl text-gold sm:text-4xl">Bem-vindo a</p>
+        <h1 className="mt-1 max-w-4xl font-sans text-4xl leading-none font-extrabold tracking-[0.04em] uppercase drop-shadow-[0_4px_18px_rgba(0,0,0,0.4)] sm:text-6xl">
+          {place.name}
+        </h1>
+        <p className="mt-4 max-w-xl font-sans text-base font-semibold text-mist/90 sm:text-lg">{place.tagline}</p>
+      </div>
+
+      <a
+        href="#historia"
+        className="relative mt-12 flex flex-col items-center gap-2 font-sans text-[11px] font-bold tracking-[0.3em] text-mist/80 uppercase transition-colors hover:text-gold focus-visible:text-gold focus-visible:outline-none"
+      >
+        Descer
+        <span aria-hidden="true" className="block h-10 w-px bg-current motion-safe:animate-[scroll-cue_1.6s_ease-in-out_infinite]" />
+      </a>
+    </header>
+  );
+}
