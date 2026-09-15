@@ -85,11 +85,25 @@ const ENTRY_TIMEOUT_MS = 8000;
 /** Session-storage key set once the visitor has entered the world. */
 const EXPLORED_KEY = "saltopia:explored";
 
+/**
+ * Whether this load is a return to the hub from inside the site.
+ *
+ * The flag alone is not enough: it lives for the whole tab session, so once the visitor
+ * had entered the world, every later reload skipped the title state and the site
+ * appeared to jump straight into the map. Only a browser-back, or a navigation whose
+ * referrer is one of our own pages, counts as coming back. A reload, a typed address or
+ * a fresh visit opens on the title, which is what the page-transitions spec asks for.
+ */
 function readExplored(): boolean {
   try {
-    return window.sessionStorage.getItem(EXPLORED_KEY) === "1";
+    if (window.sessionStorage.getItem(EXPLORED_KEY) !== "1") return false;
+
+    const [entry] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+    if (entry?.type === "back_forward") return true;
+    if (entry?.type === "reload") return false;
+    return document.referrer.startsWith(`${window.location.origin}/`);
   } catch {
-    // Storage can be unavailable; the intro simply plays again.
+    // Storage or the timing entry can be unavailable; the title state simply plays.
     return false;
   }
 }
