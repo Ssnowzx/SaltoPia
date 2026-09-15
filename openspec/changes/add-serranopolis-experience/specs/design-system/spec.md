@@ -15,16 +15,16 @@ that role MUST NOT vary by surface.
 
 | Token | Value | Role |
 | --- | --- | --- |
-| `--color-ember` | `#C4522E` | Primary accent: pins, links, script headings |
-| `--color-ember-deep` | `#A8431F` | Filled button background |
-| `--color-ember-dark` | `#83341A` | Filled button hover/active |
-| `--color-mist` | `#FFF9EC` | Card and panel surface |
-| `--color-straw` | `#F3E4C8` | Page background, marquee band |
-| `--color-sage` | `#9CC4B2` | Secondary accent on dark surfaces |
-| `--color-araucaria` | `#1E4A3A` | Deep surface, footer, marquee text |
-| `--color-bark` | `#2E241C` | Body text |
-| `--color-frost` | `#7FA3B8` | Cold/altitude accent, water |
-| `--color-gold` | `#D9A441` | Highlight, pinhão and highland-grass notes |
+| `--color-teal` | `#1F6068` | Primary accent: links, script headings, glyphs |
+| `--color-teal-deep` | `#174C53` | Filled button background |
+| `--color-teal-dark` | `#113A40` | Filled button hover/active |
+| `--color-gold` | `#E2B04A` | Map pins, highlights, the sun's colour in the interface |
+| `--color-mist` | `#F6EFE2` | Card and panel surface |
+| `--color-straw` | `#EFE4D0` | Page background, marquee band |
+| `--color-lake` | `#5B93AD` | Secondary accent, tinted headers |
+| `--color-araucaria` | `#24443A` | Deep surface, footer, display headings |
+| `--color-bark` | `#2F2A24` | Body text |
+| `--color-frost` | `#9FB8C8` | Cold/altitude accent |
 | `--color-wine` | `#7B2D3F` | Rare emphasis, high-altitude wine motif |
 
 #### Scenario: Component requests a brand colour

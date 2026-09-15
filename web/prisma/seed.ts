@@ -5,13 +5,13 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 /**
- * Seeds the eight points of interest of Serranopolis.
+ * Seeds the nine points of interest of Serranopolis - the community at the Salto do
+ * Rio Caveiras reservoir.
  *
- * World coordinates describe a bowl roughly 120 units across: the mountains and the
- * lookout sit at negative Z, the river runs across the middle, and the square is at
- * the origin. Camera positions are authored rather than derived, because each place
- * wants a different framing - the lookout reads best from low and behind, the square
- * from high and square-on.
+ * World coordinates describe the map: the lake with its island sits in the middle
+ * distance (negative Z), the community on the near shore, the dam and the falls at the
+ * lake's east end. Camera positions are authored rather than derived, because each
+ * place wants a different framing.
  *
  * Copy is Brazilian Portuguese; identifiers and comments are English.
  */
@@ -40,28 +40,14 @@ const PLACES: readonly PlaceSeed[] = [
   {
     slug: "praca-do-pinhao",
     name: "Praça do Pinhão",
-    tagline: "O coração de Serranópolis",
+    tagline: "O coração da comunidade, de frente para o lago",
     description:
-      "Tudo em Serranópolis começa aqui. O coreto branco no meio da praça, as araucárias em volta, e o cheiro de pinhão assando na panela de ferro que não apaga nem no calor. É onde a Festa do Pinhão toma conta do bairro inteiro toda virada de outono.",
-    world: [0, 0, 0],
-    camera: [0, 26, 34],
+      "Tudo começa aqui: o coreto branco, o café com guarda-sóis, o píer que entra no lago e o cheiro de pinhão assando na panela de ferro. É onde a Festa do Pinhão toma conta da beira d'água toda virada de outono.",
+    world: [0, 0, -2],
+    camera: [0, 22, 34],
     experiences: [
-      {
-        slug: "pinhao-na-panela",
-        name: "Pinhão na panela de ferro",
-        description:
-          "O pinhão cozido no ponto, servido quente no cone de papel. Simples assim, e é o que todo mundo lembra depois.",
-        kind: "FOOD",
-        durationMinutes: 20,
-      },
-      {
-        slug: "festa-do-pinhao",
-        name: "Festa do Pinhão",
-        description:
-          "Três dias de música, fogo de chão e gente na rua. O bairro inteiro vira praça.",
-        kind: "EVENT",
-        durationMinutes: null,
-      },
+      { slug: "pinhao-na-panela", name: "Pinhão na panela de ferro", description: "O pinhão cozido no ponto, servido quente no cone de papel, olhando o lago.", kind: "FOOD", durationMinutes: 20 },
+      { slug: "festa-do-pinhao", name: "Festa do Pinhão", description: "Três dias de música, fogo de chão e gente na beira do lago.", kind: "EVENT", durationMinutes: null },
     ],
   },
   {
@@ -69,63 +55,37 @@ const PLACES: readonly PlaceSeed[] = [
     name: "Galpão do Fogo de Chão",
     tagline: "A costela que leva seis horas",
     description:
-      "Um galpão aberto dos quatro lados, com a costela espetada em vara de ferro inclinada sobre a brasa. Seis horas de fogo baixo e nada mais — sem pressa, sem atalho. A fumaça sai pelo telhado e se vê de longe.",
-    world: [-28, 0, 14],
-    camera: [-40, 18, 36],
+      "Um galpão aberto dos quatro lados na margem oeste, com a costela espetada em vara de ferro inclinada sobre a brasa. Seis horas de fogo baixo e nada mais. A fumaça sai pelo telhado e se vê do outro lado do lago.",
+    world: [-52, 0, -2],
+    camera: [-64, 16, 22],
     experiences: [
-      {
-        slug: "costela-fogo-de-chao",
-        name: "Costela de fogo de chão",
-        description:
-          "Seis horas na brasa, sal grosso e mais nada. Serve na tábua, corta na hora.",
-        kind: "FOOD",
-        durationMinutes: 90,
-      },
-      {
-        slug: "roda-de-galpao",
-        name: "Roda de galpão",
-        description: "Violão, causo e chimarrão em volta do fogo até a brasa baixar.",
-        kind: "EVENT",
-        durationMinutes: 120,
-      },
+      { slug: "costela-fogo-de-chao", name: "Costela de fogo de chão", description: "Seis horas na brasa, sal grosso e mais nada. Serve na tábua, corta na hora.", kind: "FOOD", durationMinutes: 90 },
+      { slug: "roda-de-galpao", name: "Roda de galpão", description: "Violão, causo e chimarrão em volta do fogo até a brasa baixar.", kind: "EVENT", durationMinutes: 120 },
     ],
   },
   {
     slug: "mirante-da-neblina",
     name: "Mirante da Neblina",
-    tagline: "Onde o vale vira mar",
+    tagline: "O lago inteiro aos seus pés",
     description:
-      "Uma plataforma de pedra na beira do cânion. Nas manhãs frias o vale enche de nuvem até onde a vista alcança, e você fica em cima. Chegue antes do sol nascer — depois das nove, o mar de nuvem já foi embora.",
-    world: [2, 14, -46],
-    camera: [10, 24, -22],
+      "Uma plataforma de pedra no alto do morro a oeste. Nas manhãs frias a neblina cobre o lago até a ilha, e você fica em cima dela. Chegue antes do sol nascer — depois das nove, o mar de nuvem já foi embora.",
+    world: [-80, 0, -28],
+    camera: [-92, 26, -4],
     experiences: [
-      {
-        slug: "mar-de-nuvens",
-        name: "Mar de nuvens ao amanhecer",
-        description:
-          "Saída às cinco da manhã. Café quente na garrafa e o vale sumindo debaixo da nuvem.",
-        kind: "TOUR",
-        durationMinutes: 150,
-      },
+      { slug: "mar-de-nuvens", name: "Mar de nuvens ao amanhecer", description: "Saída às cinco da manhã. Café quente na garrafa e o lago sumindo debaixo da nuvem.", kind: "TOUR", durationMinutes: 150 },
     ],
   },
   {
     slug: "bosque-das-araucarias",
     name: "Bosque das Araucárias",
-    tagline: "Mata de duzentos anos",
+    tagline: "A ilha no meio do lago",
     description:
-      "Trilha de terra entre araucárias que já estavam aqui muito antes do bairro. Tronco limpo até lá em cima, copa achatada feito guarda-chuva, e a luz entrando de lado no fim da tarde.",
-    world: [-38, 2, -34],
-    camera: [-52, 20, -12],
+      "A ilha é um bosque de araucárias que já estavam ali muito antes da represa. Chega-se de barco, a partir do píer da praça; na margem sul há duas cabanas em palafita e um píer próprio, e a trilha dá a volta na ilha em meia hora.",
+    world: [4, 0, -50],
+    camera: [6, 24, -18],
     experiences: [
-      {
-        slug: "trilha-das-araucarias",
-        name: "Trilha das araucárias",
-        description:
-          "Dois quilômetros de terra batida, sombra o caminho todo, guia que sabe a idade de cada árvore.",
-        kind: "TRAIL",
-        durationMinutes: 90,
-      },
+      { slug: "travessia-de-barco", name: "Travessia de barco", description: "Dez minutos de lancha do píer da praça até a ilha, com o sol batendo na água.", kind: "TOUR", durationMinutes: 30 },
+      { slug: "trilha-da-ilha", name: "Trilha da ilha", description: "A volta completa por baixo das araucárias, com guia que sabe a idade de cada uma.", kind: "TRAIL", durationMinutes: 45 },
     ],
   },
   {
@@ -133,24 +93,12 @@ const PLACES: readonly PlaceSeed[] = [
     name: "Vinícola de Altitude",
     tagline: "Uva que amadurece no frio",
     description:
-      "Mil e duzentos metros acima do mar, onde a uva amadurece devagar e a geada faz parte do plano. As parreiras descem a encosta em degraus até a cantina de pedra.",
-    world: [30, 6, -30],
-    camera: [46, 22, -8],
+      "Na encosta leste, mil e duzentos metros acima do mar, a uva amadurece devagar e a geada faz parte do plano. As parreiras descem o morro em fileiras até a cantina de pedra.",
+    world: [86, 0, 22],
+    camera: [100, 20, 46],
     experiences: [
-      {
-        slug: "degustacao-na-cantina",
-        name: "Degustação na cantina",
-        description: "Cinco rótulos de altitude, queijo da serra e o vale pela janela.",
-        kind: "FOOD",
-        durationMinutes: 60,
-      },
-      {
-        slug: "caminhada-entre-parreiras",
-        name: "Caminhada entre as parreiras",
-        description: "Do alto da encosta até a cantina, pelo meio das videiras.",
-        kind: "TRAIL",
-        durationMinutes: 45,
-      },
+      { slug: "degustacao-na-cantina", name: "Degustação na cantina", description: "Cinco rótulos de altitude, queijo da serra e o lago pela janela.", kind: "FOOD", durationMinutes: 60 },
+      { slug: "caminhada-entre-parreiras", name: "Caminhada entre as parreiras", description: "Do alto da encosta até a cantina, pelo meio das videiras.", kind: "TRAIL", durationMinutes: 45 },
     ],
   },
   {
@@ -158,17 +106,11 @@ const PLACES: readonly PlaceSeed[] = [
     name: "CTG Porteira do Tropeiro",
     tagline: "A tradição que não virou museu",
     description:
-      "Galpão comprido de cal branca, varanda funda e a porteira de madeira com a lanterna de ferro pendurada. Aqui o tropeirismo não está atrás de vidro: tem baile, tem prenda, tem chimarrão rodando.",
-    world: [-20, 0, -18],
-    camera: [-34, 18, 2],
+      "Galpão comprido de cal branca, varanda funda e a porteira de madeira com a lanterna de ferro pendurada, aberta para a rua. Aqui o tropeirismo não está atrás de vidro: tem baile, tem prenda, tem chimarrão rodando.",
+    world: [-40, 0, 36],
+    camera: [-54, 18, 58],
     experiences: [
-      {
-        slug: "baile-de-galpao",
-        name: "Baile de galpão",
-        description: "Gaita, chula e o chão de tábua tremendo até tarde.",
-        kind: "EVENT",
-        durationMinutes: 240,
-      },
+      { slug: "baile-de-galpao", name: "Baile de galpão", description: "Gaita, chula e o chão de tábua tremendo até tarde.", kind: "EVENT", durationMinutes: 240 },
     ],
   },
   {
@@ -176,69 +118,37 @@ const PLACES: readonly PlaceSeed[] = [
     name: "Estação Velha",
     tagline: "O trem parou, a feira ficou",
     description:
-      "A estação não recebe trem desde os anos setenta, mas a plataforma nunca esvaziou. Virou feira: queijo, mel de melato de bracatinga, cuca, e os trilhos sumindo na neblina no fim do pátio.",
-    world: [26, 0, 46],
-    camera: [40, 18, 68],
+      "Na entrada da comunidade, a estação não recebe trem desde os anos setenta, mas a plataforma nunca esvaziou. Virou feira: queijo, mel de melato, cuca, e os trilhos sumindo na neblina.",
+    world: [88, 0, 76],
+    camera: [100, 18, 100],
     experiences: [
-      {
-        slug: "feira-da-plataforma",
-        name: "Feira da plataforma",
-        description:
-          "Sábado de manhã, debaixo da cobertura de zinco. Queijo curado, cuca de banana e melato.",
-        kind: "FOOD",
-        durationMinutes: 60,
-      },
+      { slug: "feira-da-plataforma", name: "Feira da plataforma", description: "Sábado de manhã, debaixo da cobertura de zinco. Queijo curado, cuca de banana e melato.", kind: "FOOD", durationMinutes: 60 },
     ],
   },
   {
     slug: "pousada-da-geada",
     name: "Pousada da Geada",
-    tagline: "Lareira acesa de maio a setembro",
+    tagline: "Piscina, lareira e o lago na janela",
     description:
-      "Casa de pedra e madeira no meio do campo, com a lareira acesa metade do ano. De manhã a geada deixa o campo branco até o sol subir — e é por isso que as pessoas vêm.",
-    world: [14, 1, 30],
-    camera: [26, 16, 50],
+      "A casa laranja de dois andares na beira do lago, com a piscina no gramado, painéis solares no telhado e a lareira acesa metade do ano. De manhã a geada deixa o gramado branco até o sol subir — e é por isso que as pessoas vêm.",
+    world: [34, 0, -4],
+    camera: [48, 18, 22],
     experiences: [
-      {
-        slug: "noite-de-lareira",
-        name: "Noite de lareira",
-        description: "Quarto com vista pro campo, café colonial na chegada e lenha à vontade.",
-        kind: "STAY",
-        durationMinutes: null,
-      },
+      { slug: "noite-de-lareira", name: "Noite de lareira", description: "Quarto com sacada para o lago, café colonial na chegada e lenha à vontade.", kind: "STAY", durationMinutes: null },
     ],
   },
   {
     slug: "salto-caveiras",
     name: "Salto do Rio Caveiras",
-    tagline: "A cachoeira e a usina centenária",
+    tagline: "A barragem, a queda e a usina centenária",
     description:
-      "O Rio Caveiras despenca em dois degraus de basalto ao lado da usina de tijolo que iluminou Lages nos anos 1940. Do mirante de madeira na outra margem dá para ouvir a água de longe; embaixo das araucárias, as mesas de piquenique enchem no fim de semana.",
-    world: [48, 2, -66],
-    camera: [16, 24, -28],
+      "No fim do lago, o Rio Caveiras passa pela barragem de pedra e despenca ao lado da usina de tijolo que iluminou Lages nos anos 1940. Do deck de madeira na outra margem dá para ouvir a água de longe; embaixo das araucárias, as mesas de piquenique enchem no fim de semana.",
+    world: [78, 0, -41],
+    camera: [60, 30, -8],
     experiences: [
-      {
-        slug: "mirante-do-salto",
-        name: "Mirante do Salto",
-        description:
-          "A passarela sobre o rio e o deck de frente para a queda. Vá de manhã, quando o sol bate na água.",
-        kind: "TOUR",
-        durationMinutes: 40,
-      },
-      {
-        slug: "trilha-da-usina",
-        name: "Trilha da usina",
-        description: "Da represa ao conduto forçado e à casa de máquinas, com guia que conhece cada válvula.",
-        kind: "TRAIL",
-        durationMinutes: 60,
-      },
-      {
-        slug: "piquenique-a-beira-do-rio",
-        name: "Piquenique à beira do rio",
-        description: "Cesta com queijo, salame e pão de casa, mesa reservada debaixo das araucárias.",
-        kind: "FOOD",
-        durationMinutes: 90,
-      },
+      { slug: "mirante-do-salto", name: "Deck do Salto", description: "A passarela sobre o rio e o deck de frente para a queda. Vá de manhã, quando o sol bate na água.", kind: "TOUR", durationMinutes: 40 },
+      { slug: "trilha-da-usina", name: "Trilha da usina", description: "Da barragem ao conduto forçado e à casa de máquinas, com guia que conhece cada válvula.", kind: "TRAIL", durationMinutes: 60 },
+      { slug: "piquenique-a-beira-do-rio", name: "Piquenique à beira do rio", description: "Cesta com queijo, salame e pão de casa, mesa reservada debaixo das araucárias.", kind: "FOOD", durationMinutes: 90 },
     ],
   },
 ];
@@ -247,6 +157,12 @@ async function main(): Promise<void> {
   for (const [index, place] of PLACES.entries()) {
     const [worldX, worldY, worldZ] = place.world;
     const [cameraX, cameraY, cameraZ] = place.camera;
+    const experiences = place.experiences.map((experience, experienceIndex) => ({
+      ...experience,
+      image: `/images/experiences/${experience.slug}.webp`,
+      position: experienceIndex,
+      published: true,
+    }));
 
     // Upsert so the seed is safe to re-run; experiences are replaced wholesale
     // because they have no identity worth preserving across seeds.
@@ -264,15 +180,7 @@ async function main(): Promise<void> {
         cameraZ,
         position: index,
         published: true,
-        experiences: {
-          deleteMany: {},
-          create: place.experiences.map((experience, experienceIndex) => ({
-            ...experience,
-            image: `/images/experiences/${experience.slug}.webp`,
-            position: experienceIndex,
-            published: true,
-          })),
-        },
+        experiences: { deleteMany: {}, create: experiences },
       },
       create: {
         slug: place.slug,
@@ -289,14 +197,7 @@ async function main(): Promise<void> {
         cameraZ,
         position: index,
         published: true,
-        experiences: {
-          create: place.experiences.map((experience, experienceIndex) => ({
-            ...experience,
-            image: `/images/experiences/${experience.slug}.webp`,
-            position: experienceIndex,
-            published: true,
-          })),
-        },
+        experiences: { create: experiences },
       },
     });
   }

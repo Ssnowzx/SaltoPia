@@ -2,8 +2,9 @@
 
 import { useFrame } from "@react-three/fiber";
 import { createContext, useContext, useMemo } from "react";
-import type { MeshStandardMaterial, Texture } from "three";
+import type { MeshStandardMaterial, ShaderMaterial, Texture } from "three";
 
+import { createLakeMaterial } from "@/lib/world/lake-material";
 import { createAtlasTexture, createGrassTexture } from "@/lib/world/textures";
 import { WORLD_CLOCK, createWorldMaterial } from "@/lib/world/world-material";
 
@@ -19,7 +20,8 @@ export interface WorldMaterials {
   readonly grass: Texture;
   readonly flat: MeshStandardMaterial;
   readonly smooth: MeshStandardMaterial;
-  readonly water: MeshStandardMaterial;
+  /** The lake and the river: reflection, glitter and ripples. */
+  readonly lake: ShaderMaterial;
 }
 
 const WorldMaterialsContext = createContext<WorldMaterials | null>(null);
@@ -27,19 +29,12 @@ const WorldMaterialsContext = createContext<WorldMaterials | null>(null);
 export function WorldMaterialsProvider({ children }: { readonly children: React.ReactNode }): React.ReactElement {
   const materials = useMemo<WorldMaterials>(() => {
     const atlas = createAtlasTexture();
-
-    const water = createWorldMaterial(atlas, { flatShading: false });
-    water.transparent = true;
-    water.opacity = 0.94;
-    water.roughness = 0.32;
-    water.metalness = 0.05;
-
     return {
       atlas,
       grass: createGrassTexture(64),
       flat: createWorldMaterial(atlas, { flatShading: true }),
       smooth: createWorldMaterial(atlas, { flatShading: false }),
-      water,
+      lake: createLakeMaterial(atlas, WORLD_CLOCK),
     };
   }, []);
 

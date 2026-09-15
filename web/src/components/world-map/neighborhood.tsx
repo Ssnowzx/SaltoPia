@@ -5,9 +5,10 @@ import type { InstancedMesh } from "three";
 import { Euler, Matrix4, MeshStandardMaterial, Quaternion, Vector3 } from "three";
 
 import { WORLD_COLORS } from "@/lib/world/constants";
-import { createMountainsGeometry } from "@/lib/world/mountains";
+import { createHillsGeometry } from "@/lib/world/hills";
 import {
   LANDMARKS,
+  LAWNS,
   MODEL_REGISTRY,
   MODEL_SHADING,
   type ModelKey,
@@ -16,6 +17,8 @@ import {
   groundHeightFor,
 } from "@/lib/world/neighborhood-layout";
 import {
+  createLakeSurfaceGeometry,
+  createLawnGeometry,
   createRailGeometry,
   createRiverGeometry,
   createRoadGeometry,
@@ -26,14 +29,13 @@ import { createTerrainGeometry } from "@/lib/world/terrain";
 import { useWorldMaterials } from "./world-materials-context";
 
 /**
- * Everything standing in the valley.
+ * Everything standing in the valley and floating on the lake.
  *
  * Scenery is grouped by model and drawn with one InstancedMesh per group, so a forest
  * of hundreds of trees costs a handful of draw calls rather than hundreds - required by
  * the world-map spec.
  */
 
-/** Builds the transform for one placement. */
 function matrixFor(placement: Placement): Matrix4 {
   return new Matrix4().compose(
     new Vector3(placement.x, groundHeightFor(placement), placement.z),
@@ -47,7 +49,6 @@ interface InstancedGroupProps {
   readonly placements: readonly Placement[];
 }
 
-/** One instanced batch: every copy of a single model, in a single draw call. */
 function InstancedGroup({ model, placements }: InstancedGroupProps): React.ReactElement | null {
   const meshRef = useRef<InstancedMesh>(null);
   const materials = useWorldMaterials();
@@ -64,11 +65,9 @@ function InstancedGroup({ model, placements }: InstancedGroupProps): React.React
   useLayoutEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
-
     placements.forEach((placement, index) => {
       mesh.setMatrixAt(index, matrixFor(placement));
     });
-
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
   }, [placements]);
@@ -94,23 +93,19 @@ export function Neighborhood(): React.ReactElement {
     () => new MeshStandardMaterial({ map: materials.grass, vertexColors: true, flatShading: true, roughness: 1, metalness: 0 }),
     [materials.grass],
   );
-  const groundMaterial = useMemo(
-    () => new MeshStandardMaterial({ color: WORLD_COLORS.straw, roughness: 1, metalness: 0 }),
-    [],
-  );
+  const groundMaterial = useMemo(() => new MeshStandardMaterial({ color: WORLD_COLORS.straw, roughness: 1, metalness: 0 }), []);
 
-  const mountainsGeometry = useMemo(() => createMountainsGeometry(), []);
+  const hillsGeometry = useMemo(() => createHillsGeometry(), []);
   const roadGeometry = useMemo(() => createRoadGeometry(), []);
+  const lawnGeometry = useMemo(() => createLawnGeometry(LAWNS), []);
   const railGeometry = useMemo(() => createRailGeometry(), []);
+  const lakeGeometry = useMemo(() => createLakeSurfaceGeometry(), []);
   const riverGeometry = useMemo(() => createRiverGeometry(), []);
   const foamGeometry = useMemo(() => createWaterfallFoamGeometry(), []);
 
-  // Landmarks and scatter are placed the same way; grouping them together means a model
-  // used by both still shares one batch.
   const groups = useMemo(() => {
     const all: readonly Placement[] = [...LANDMARKS, ...createScatter()];
     const byModel = new Map<ModelKey, Placement[]>();
-
     for (const placement of all) {
       const existing = byModel.get(placement.model);
       if (existing) {
@@ -119,7 +114,6 @@ export function Neighborhood(): React.ReactElement {
         byModel.set(placement.model, [placement]);
       }
     }
-
     return [...byModel.entries()];
   }, []);
 
@@ -132,10 +126,12 @@ export function Neighborhood(): React.ReactElement {
       </mesh>
 
       <mesh geometry={terrainGeometry} material={terrainMaterial} receiveShadow />
-      <mesh geometry={mountainsGeometry} material={materials.flat} castShadow receiveShadow />
+      <mesh geometry={hillsGeometry} material={materials.flat} receiveShadow />
+      <mesh geometry={lawnGeometry} material={materials.flat} receiveShadow />
       <mesh geometry={roadGeometry} material={materials.flat} receiveShadow />
       <mesh geometry={railGeometry} material={materials.flat} receiveShadow />
-      <mesh geometry={riverGeometry} material={materials.water} />
+      <mesh geometry={lakeGeometry} material={materials.lake} />
+      <mesh geometry={riverGeometry} material={materials.lake} />
       <mesh geometry={foamGeometry} material={materials.smooth} />
 
       {groups.map(([model, placements]) => (

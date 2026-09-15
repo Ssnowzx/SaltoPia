@@ -51,18 +51,18 @@ export function PinOverlay({ places, nodes, onSelect }: PinOverlayProps): React.
           >
             <path
               d="M27 2C13.2 2 3 12.4 3 26.2 3 44.4 27 72 27 72s24-27.6 24-45.8C51 12.4 40.8 2 27 2z"
-              fill="var(--color-ember)"
+              fill="var(--color-gold)"
               stroke="var(--color-mist)"
               strokeWidth="2.5"
             />
             <circle cx="27" cy="26" r="14" fill="var(--color-mist)" />
-            <g transform="translate(15 14) scale(1)" fill="var(--color-ember)">
+            <g transform="translate(15 14) scale(1)" fill="var(--color-teal-deep)">
               <path d={PIN_ICONS[place.slug] ?? DEFAULT_PIN_ICON} />
             </g>
           </svg>
           {/* The label appears on hover and focus, as in the reference - nine labels
               at once would collide where the landmarks sit close together. */}
-          <span className="rounded-pill bg-mist px-2.5 py-1 font-sans text-[11px] font-bold tracking-[0.06em] whitespace-nowrap text-bark uppercase opacity-0 shadow-sm ring-2 ring-transparent transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-visible:ring-ember">
+          <span className="rounded-pill bg-mist px-2.5 py-1 font-sans text-[11px] font-bold tracking-[0.06em] whitespace-nowrap text-bark uppercase opacity-0 shadow-sm ring-2 ring-transparent transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-visible:ring-teal">
             {place.name}
           </span>
         </button>

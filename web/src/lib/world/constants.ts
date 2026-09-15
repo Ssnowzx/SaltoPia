@@ -4,28 +4,33 @@
  * Nothing in the scene may use a literal for a duration, a colour, a camera bound or a
  * terrain dimension - see CLAUDE.md, "sem numero magico". When a value appears here it
  * can be tuned in one place and reasoned about without reading the renderer.
+ *
+ * The world is the community at the Salto do Rio Caveiras reservoir, seen at sunset from
+ * the south: the lake with its island in the middle distance, the houses on the near
+ * shore, low forested hills dissolving into haze behind.
  */
 
 /** Scene colours. Brand tokens live in globals.css; these are the world's own palette. */
 export const WORLD_COLORS = {
   /** Highland grass in full light. */
-  grass: "#8fb862",
+  grass: "#86ad5a",
   /** Grass in shade, and the darker patches between fields. */
-  grassDeep: "#66914a",
+  grassDeep: "#5f8a45",
+  /** Mown lawns around the houses. */
+  lawn: "#9dc36a",
   /** Dry highland straw on exposed ground. */
-  straw: "#d8bf86",
+  straw: "#cfb884",
+  /** Sand on the lake shore. */
+  sand: "#d6c59b",
   /** Bare basalt. */
-  rock: "#8d8f88",
+  rock: "#7d807b",
   /** Basalt catching direct sun. */
-  rockLight: "#aeb0a7",
-  /** Basalt in shadow, and mountain flanks. */
+  rockLight: "#a3a59e",
+  /** Basalt in shadow. */
   rockDark: "#5e615d",
-  /** Frost on the peaks. */
-  frost: "#f4f7f8",
-  /** Cold highland water. */
-  water: "#6fb3c4",
-  /** Shallows along the banks. */
-  waterEdge: "#a9d6de",
+  /** Forest on the far hills - olive, going tan on the tops, like the plateau in the photo. */
+  forest: "#6c8a48",
+  hilltop: "#9a9b5e",
   /** Araucaria foliage. */
   canopy: "#2f6b4d",
   /** Araucaria foliage in shade. */
@@ -36,6 +41,8 @@ export const WORLD_COLORS = {
   foliage: "#5d9a4e",
   /** Broadleaf trees turning in the cold. */
   foliageWarm: "#9fae4a",
+  /** Palm fronds. */
+  palm: "#5f9a4e",
   /** Araucaria bark. */
   bark: "#4a3a2c",
   /** Whitewashed walls. */
@@ -48,49 +55,60 @@ export const WORLD_COLORS = {
   tile: "#a85031",
   /** Roof tile in shade, and dark ironwork. */
   tileDark: "#7e3a24",
-  /** Ember terracotta, the brand accent. */
-  ember: "#c4522e",
+  /** Terracotta-orange render, the lakeside houses. */
+  terracotta: "#c9773f",
+  /** Dark slate roofs, the lakeside houses. */
+  slateDark: "#3b4a52",
   /** Live embers. */
+  ember: "#c4522e",
   emberGlow: "#ff8a3d",
-  /** Earth roads. */
+  /** Earth tracks. */
   road: "#a7845c",
+  /** The stone-sett streets Lages is known for. */
+  street: "#8f8c85",
+  /** Kerbs and pavements. */
+  kerb: "#b8b3a8",
   /** Stone paving in the square. */
   paving: "#c9bfae",
   /** Dressed stone - walls, platforms, the well. */
   stone: "#9a948a",
-  /** Stone in shade. */
   stoneDark: "#77716a",
   /** Ironwork. */
   metal: "#5c5f63",
-  /** Rails. */
   rail: "#8a8e93",
-  /** Track ballast. */
   ballast: "#8b8378",
-  /** Cloud in sun. */
-  cloud: "#fff5e6",
-  /** Cloud underside. */
-  cloudShade: "#f6dcc0",
+  /** Clouds: lit tops and shaded undersides. */
+  cloud: "#f4dcc0",
+  cloudShade: "#c9ad9a",
   /** Lit lantern glass. */
   lantern: "#f2c14e",
   /** Vine rows. */
   vine: "#4e8a48",
-  /** Vineyard posts. */
   vinePost: "#6b4b32",
-  /** The pickup that drives the circuit. */
-  carBody: "#c4522e",
+  /** The pickup that drives the streets. */
+  carBody: "#b8432f",
   carCab: "#f4ead8",
   wheel: "#2e241c",
+  /** Parked cars. */
+  sedanWhite: "#f1efe9",
+  sedanDark: "#3a3f45",
+  sedanSilver: "#b9bcc0",
   /** The train. */
   trainBody: "#324453",
-  trainRoof: "#c4522e",
+  trainRoof: "#a85031",
   trainWagon: "#6b4b32",
-  /** Chimney smoke. */
+  /** The boat. */
+  boatHull: "#f3efe6",
+  boatTrim: "#1f6068",
+  /** Chimney smoke and spray. */
   smoke: "#f3ede4",
   /** The sun disc. */
-  sun: "#ffe9b0",
+  sun: "#ffe7b8",
   /** White water on the falls and at the plunge pool. */
   foam: "#eaf5f7",
-  /** Roof and wall variety, so no two landmarks share a palette. */
+  /** Pool water. */
+  pool: "#7fc4d6",
+  /** Roof and wall variety. */
   slate: "#4a5560",
   paleYellow: "#f1dc9c",
   mint: "#cfe0d2",
@@ -100,32 +118,123 @@ export const WORLD_COLORS = {
   coretoGreen: "#4f8f86",
 } as const;
 
-/** Sky gradient stops - late golden hour over the campos. See design.md D6. */
+/** Sky gradient stops - sunset over the reservoir: blue overhead, gold at the sun. */
 export const SKY_COLORS = {
-  high: "#e66a33",
-  mid: "#f0a340",
-  low: "#f4cf7a",
-  haze: "#f6e5bc",
+  high: "#6f9dc2",
+  mid: "#dcbfa0",
+  low: "#f2c56d",
+  haze: "#f0d5a5",
 } as const;
 
-/** The river's width along its course. Half-widths, in world units. */
+/** The lake's shading. */
+export const LAKE_COLORS = {
+  deep: "#1f8f9c",
+  shallow: "#4ec3c6",
+  /** What the surface reflects at a grazing angle - the pale sky near the horizon. */
+  reflection: "#cfe6df",
+  /** The sun's glitter path. */
+  glitter: "#ffe6a0",
+} as const;
+
+/** Where the sun sits, as a direction from the origin: upper right, just above the hills. */
+export const SUN_DIRECTION = { x: 0.62, y: 0.22, z: -1 } as const;
+
+/** Terrain extent. */
+export const TERRAIN = {
+  size: 300,
+  segments: 170,
+} as const;
+
+/** The reservoir. */
+export const LAKE = {
+  /** Water surface height. */
+  level: 0.6,
+  /** Lake bed height. */
+  floor: -3.4,
+  /** Centre and radii of the basin, before the shoreline noise. */
+  centre: { x: 8, z: -52 },
+  radiusX: 62,
+  radiusZ: 34,
+  /** The channel that carries the lake to the dam on the east side. */
+  channel: { x: 67, z: -41, halfWidth: 8, halfDepth: 6 },
+  /** The island in the middle. */
+  island: { x: 4, z: -50, radiusX: 15, radiusZ: 10, height: 2.6 },
+} as const;
+
+/** The river below the dam. */
 export const RIVER = {
-  halfWidth: 4.2,
-  /** The sheet of the falls. */
-  fallsHalfWidth: 12,
-  /** The plunge pool below them. */
-  poolHalfWidth: 8,
-  /** The reservoir behind the weir on the plateau. */
-  reservoirHalfWidth: 9,
-  /** The lake the river opens into south of town. */
-  lakeHalfWidth: 17,
-  lake: { startZ: 60, fullZ: 84, taperZ: 108, endZ: 130 },
-  reservoir: { startZ: -80, fullZ: -94 },
+  level: -5,
+  floor: -7.5,
+  halfWidth: 4.5,
+  /** Where the water leaves the dam crest and where it reaches river level. */
+  fallsStartX: 75,
+  fallsEndX: 81,
+} as const;
+
+/** Where a road or rail deck sits when it crosses water. */
+export const BRIDGE_DECK_HEIGHT = 1.5;
+
+/** Streets and tracks. */
+export const ROAD = {
+  streetWidth: 5.2,
+  /** Kerb and pavement strip either side of a street. */
+  kerbExtra: 1.6,
+  drivewayWidth: 3.6,
+  trailWidth: 3.0,
+  pathWidth: 2.4,
+  /** Lift above the terrain so the ribbon never z-fights with it. */
+  lift: 0.16,
+} as const;
+
+/** Atmospheric depth. The far hills dissolve into this. */
+export const FOG = {
+  near: 210,
+  far: 640,
+} as const;
+
+/** The railway. */
+export const RAIL = {
+  bedWidth: 2.9,
+  gauge: 1.15,
+  railWidth: 0.22,
+  lift: 0.14,
+  sleeperSpacing: 1.7,
+} as const;
+
+/** Clouds drifting over the valley - thin sunset streaks, not cumulus. */
+export const CLOUDS = {
+  count: 9,
+  minHeight: 72,
+  maxHeight: 112,
+  spread: 300,
+  driftSpeed: 1.1,
+} as const;
+
+/** The haze lying on the far shore. */
+export const MIST = {
+  count: 8,
+  height: 9,
+  nearZ: -92,
+  farZ: -112,
+} as const;
+
+/** Vehicles. */
+export const VEHICLES = {
+  carSpeed: 6.5,
+  trainSpeed: 8.5,
+  trainCarSpacing: 3.9,
+  boatSpeed: 4.2,
+} as const;
+
+/** Chimney smoke. */
+export const SMOKE = {
+  puffsPerSource: 7,
+  lifeSeconds: 4.8,
+  riseSpeed: 1.5,
 } as const;
 
 /** Map pins. */
 export const PIN = {
-  /** How far above the ground the pin's anchor floats. */
   anchorHeight: 9,
 } as const;
 
@@ -135,132 +244,28 @@ export const QUALITY = {
   ambientOcclusion: true,
 } as const;
 
-/** Terrain extent. The neighbourhood sits in a bowl this wide. */
-export const TERRAIN = {
-  /** Side length in world units. */
-  size: 300,
-  /** Vertices per side. Higher reads smoother but costs geometry. */
-  segments: 160,
-} as const;
-
-/** Water surface height in the valley. The river trench is carved deeper than this. */
-export const WATER_LEVEL = -2.2;
-
-/**
- * The scarp the river comes over. North of the lip the whole valley floor steps up
- * onto a plateau; the river descends the step as the waterfall.
- */
-export const WATERFALL = {
-  /** Where the plateau begins (top of the upper step). */
-  lipZ: -77,
-  /** Where the valley floor resumes (foot of the lower step). */
-  footZ: -66,
-  /** Total height of the two steps. */
-  drop: 12,
-} as const;
-
-/** Where a road or rail deck sits when it crosses the river. */
-export const BRIDGE_DECK_HEIGHT = 0.7;
-
-/** Roads. */
-export const ROAD = {
-  width: 4.4,
-  drivewayWidth: 3.6,
-  trailWidth: 3.0,
-  pathWidth: 2.4,
-  /** Lift above the terrain so the ribbon never z-fights with it. */
-  lift: 0.16,
-} as const;
-
-/** Atmospheric depth. The far edge of the terrain dissolves into this. */
-export const FOG = {
-  near: 260,
-  far: 760,
-} as const;
-
-/** The railway through the old station. */
-export const RAIL = {
-  bedWidth: 2.9,
-  /** Distance between the two rails. */
-  gauge: 1.15,
-  railWidth: 0.22,
-  lift: 0.14,
-  sleeperSpacing: 1.7,
-} as const;
-
-/** Clouds drifting over the valley. */
-export const CLOUDS = {
-  count: 14,
-  minHeight: 62,
-  maxHeight: 100,
-  /** Horizontal extent they wander across. */
-  spread: 270,
-  /** World units per second. */
-  driftSpeed: 1.5,
-  /** Coral clouds against the sunset, like the reference - shaded underneath. */
-  colorTop: "#f2a077",
-  colorBottom: "#d9633c",
-} as const;
-
-/** The bank of mist the Mirante da Neblina looks out over. */
-export const MIST = {
-  count: 8,
-  height: 25,
-  nearZ: -74,
-  farZ: -96,
-} as const;
-
-/** Vehicles. */
-export const VEHICLES = {
-  /** World units per second. */
-  carSpeed: 6.5,
-  trainSpeed: 8.5,
-  /** Distance between the centres of consecutive train cars. */
-  trainCarSpacing: 3.9,
-} as const;
-
-/** Chimney smoke. */
-export const SMOKE = {
-  puffsPerSource: 7,
-  /** Seconds a puff lives before it recycles. */
-  lifeSeconds: 4.8,
-  /** World units per second. */
-  riseSpeed: 1.5,
-} as const;
-
 /** Camera framing and the bounds that keep the neighbourhood in frame. */
 export const CAMERA = {
   fov: 48,
   near: 0.5,
   far: 1400,
-  /** Where the camera sits before the visitor takes control - far enough that every
-   * landmark, the lake in front and the serra behind share the frame. */
-  initialPosition: [0, 54, 156] as const,
-  /** What it looks at. */
-  target: [0, 2, -20] as const,
-  /** Orbit distance limits. */
-  minDistance: 32,
+  /** From the south, high enough to see over the community to the lake and island. */
+  initialPosition: [0, 46, 152] as const,
+  target: [0, 8, -30] as const,
+  minDistance: 30,
   maxDistance: 230,
-  /** Polar angle limits, in radians. No top-down view: the town is composed for a
-   * low, cinematic angle, and from above the clouds sit between camera and ground. */
+  /** No top-down view: the town is composed for a low, cinematic angle. */
   minPolarAngle: 0.62,
   maxPolarAngle: 1.32,
-  /**
-   * Azimuth limits, in radians. The world is built to be seen from the south, like
-   * the reference - a full orbit would show the back of the serra and the edge of the
-   * terrain, so the camera is held to an arc.
-   */
-  minAzimuthAngle: -0.72,
-  maxAzimuthAngle: 0.72,
+  /** The world is built to be seen from the south, so the orbit is held to an arc. */
+  minAzimuthAngle: -0.6,
+  maxAzimuthAngle: 0.6,
 } as const;
 
-/** Idle drift - a slow sway within the azimuth arc, so the world never reads as a still. */
+/** Idle drift - a slow sway within the azimuth arc. */
 export const DRIFT = {
-  /** Seconds of no input before drift resumes. See the world-map spec. */
   resumeAfterSeconds: 3,
-  /** Radians per second of the sway's phase. */
   speed: 0.09,
-  /** How far the sway carries from where the visitor left the camera, in radians. */
   amplitude: 0.14,
 } as const;
 
@@ -272,10 +277,6 @@ export const FLIGHT = {
 
 /** Renderer limits. */
 export const RENDERER = {
-  /**
-   * A denser display multiplies fragment cost without visible benefit at this art
-   * direction, so the drawing buffer is capped. Required by the world-map spec.
-   */
   maxPixelRatio: 2,
 } as const;
 

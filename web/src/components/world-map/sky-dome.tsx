@@ -1,22 +1,25 @@
 "use client";
 
+import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
-import type { Mesh } from "three";
-import { BackSide, Color, ShaderMaterial, Vector3 } from "three";
+import type { IUniform, Mesh } from "three";
+import { AdditiveBlending, BackSide, Color, ShaderMaterial, Vector3 } from "three";
 
-import { SKY_COLORS, WORLD_COLORS } from "@/lib/world/constants";
+import { SKY_COLORS, SUN_DIRECTION, WORLD_COLORS } from "@/lib/world/constants";
+
+/** The rays' own clock - a module-level uniform, so advancing it mutates no React value. */
+const RAYS_TIME: IUniform<number> = { value: 0 };
 
 /**
- * The sky - late golden hour over the campos, per design.md D6 - and the sun.
+ * The sky and the sun.
  *
- * A gradient on an inverted sphere rather than a flat background colour: the horizon
- * band is what sells the altitude, and a solid colour behind low-poly terrain reads as
- * a missing texture. The sun sits low behind the serra so the peaks cut across it.
+ * A gradient on an inverted sphere: orange overhead, gold where the sun sits low over
+ * the hills. The sun is a disc with a soft glow and a slow fan of rays - the rays are
+ * what make the frame read as late afternoon rather than as a lamp.
  */
 
-const VERTEX_SHADER = /* glsl */ `
+const SKY_VERTEX = /* glsl */ `
   varying vec3 vWorldPosition;
-
   void main() {
     vec4 worldPosition = modelMatrix * vec4(position, 1.0);
     vWorldPosition = worldPosition.xyz;
@@ -24,78 +27,123 @@ const VERTEX_SHADER = /* glsl */ `
   }
 `;
 
-const FRAGMENT_SHADER = /* glsl */ `
+const SKY_FRAGMENT = /* glsl */ `
   uniform vec3 uHigh;
   uniform vec3 uMid;
   uniform vec3 uLow;
   uniform vec3 uHaze;
+  uniform vec3 uSunDirection;
   uniform float uRadius;
-
   varying vec3 vWorldPosition;
 
   void main() {
-    // Normalised height up the dome, 0 at the horizon and 1 overhead.
+    vec3 direction = normalize(vWorldPosition);
     float h = clamp(vWorldPosition.y / uRadius, -1.0, 1.0);
 
-    // Three stops from horizon to zenith, then a haze band pooled at the horizon
-    // itself - that band is the mist sitting in the valley.
-    vec3 color = mix(uLow, uMid, smoothstep(0.0, 0.14, h));
-    color = mix(color, uHigh, smoothstep(0.1, 0.55, h));
-    color = mix(uHaze, color, smoothstep(-0.06, 0.1, h));
+    // The camera sees only the band just above the horizon, so the gradient has to
+    // warm to orange within a few degrees or the sky reads as haze.
+    vec3 color = mix(uLow, uMid, smoothstep(0.0, 0.07, h));
+    color = mix(color, uHigh, smoothstep(0.06, 0.3, h));
+    color = mix(uHaze, color, smoothstep(-0.06, 0.025, h));
+
+    // The sky warms toward the sun.
+    float toward = max(dot(direction, normalize(uSunDirection)), 0.0);
+    color = mix(color, uLow, pow(toward, 6.0) * 0.55);
 
     gl_FragColor = vec4(color, 1.0);
   }
 `;
 
-/** Where the sun sits, as a direction from the origin. Low, and behind the peaks. */
-const SUN_DIRECTION = new Vector3(0.02, 0.26, -1).normalize();
+const RAYS_VERTEX = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv - 0.5;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const RAYS_FRAGMENT = /* glsl */ `
+  uniform vec3 uColor;
+  uniform float uTime;
+  varying vec2 vUv;
+
+  void main() {
+    float r = length(vUv) * 2.0;
+    float angle = atan(vUv.y, vUv.x);
+    float rays = pow(abs(sin(angle * 9.0 + uTime * 0.04)), 5.0) * 0.7 + pow(abs(sin(angle * 23.0 - uTime * 0.03)), 8.0) * 0.5;
+    float falloff = smoothstep(1.0, 0.1, r);
+    float core = smoothstep(0.35, 0.0, r) * 0.6;
+    gl_FragColor = vec4(uColor, (rays * falloff * 0.42 + core));
+  }
+`;
 
 interface SkyDomeProps {
   readonly radius?: number;
 }
 
 export function SkyDome({ radius = 420 }: SkyDomeProps): React.ReactElement {
-  const material = useMemo(
+  const sunDirection = useMemo(() => new Vector3(SUN_DIRECTION.x, SUN_DIRECTION.y, SUN_DIRECTION.z).normalize(), []);
+
+  const skyMaterial = useMemo(
     () =>
       new ShaderMaterial({
         side: BackSide,
         depthWrite: false,
-        vertexShader: VERTEX_SHADER,
-        fragmentShader: FRAGMENT_SHADER,
+        vertexShader: SKY_VERTEX,
+        fragmentShader: SKY_FRAGMENT,
         uniforms: {
           uHigh: { value: new Color(SKY_COLORS.high) },
           uMid: { value: new Color(SKY_COLORS.mid) },
           uLow: { value: new Color(SKY_COLORS.low) },
           uHaze: { value: new Color(SKY_COLORS.haze) },
+          uSunDirection: { value: sunDirection },
           uRadius: { value: radius },
         },
       }),
-    [radius],
+    [radius, sunDirection],
   );
 
-  const sunPosition = useMemo(() => SUN_DIRECTION.clone().multiplyScalar(radius * 0.92), [radius]);
-  const sunRef = useRef<Mesh>(null);
-  const glowRef = useRef<Mesh>(null);
+  const raysMaterial = useMemo(
+    () =>
+      new ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        blending: AdditiveBlending,
+        vertexShader: RAYS_VERTEX,
+        fragmentShader: RAYS_FRAGMENT,
+        uniforms: {
+          uColor: { value: new Color(WORLD_COLORS.sun) },
+          uTime: RAYS_TIME,
+        },
+      }),
+    [],
+  );
 
-  // A circle faces +Z; lookAt turns that toward the valley.
+  const sunPosition = useMemo(() => sunDirection.clone().multiplyScalar(radius * 0.9), [radius, sunDirection]);
+  const sunRef = useRef<Mesh>(null);
+  const raysRef = useRef<Mesh>(null);
+
   useLayoutEffect(() => {
     sunRef.current?.lookAt(0, 0, 0);
-    glowRef.current?.lookAt(0, 0, 0);
+    raysRef.current?.lookAt(0, 0, 0);
   }, []);
+
+  useFrame((_, delta) => {
+    RAYS_TIME.value += delta;
+  });
 
   return (
     <group>
-      <mesh material={material} renderOrder={-2}>
-        <sphereGeometry args={[radius, 32, 16]} />
+      <mesh material={skyMaterial} renderOrder={-3}>
+        <sphereGeometry args={[radius, 40, 20]} />
       </mesh>
 
-      <mesh ref={glowRef} position={sunPosition} renderOrder={-1}>
-        <circleGeometry args={[radius * 0.24, 40]} />
-        <meshBasicMaterial color={WORLD_COLORS.sun} transparent opacity={0.28} depthWrite={false} fog={false} />
+      <mesh ref={raysRef} position={sunPosition} material={raysMaterial} renderOrder={-2}>
+        <planeGeometry args={[radius * 0.95, radius * 0.95]} />
       </mesh>
 
       <mesh ref={sunRef} position={sunPosition} renderOrder={-1}>
-        <circleGeometry args={[radius * 0.1, 40]} />
+        <circleGeometry args={[radius * 0.075, 40]} />
         <meshBasicMaterial color={WORLD_COLORS.sun} depthWrite={false} fog={false} toneMapped={false} />
       </mesh>
     </group>

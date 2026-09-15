@@ -148,7 +148,7 @@ plainly — the transition is decoration and never gates arrival.
 Both are self-hosted through `next/font/google`, which removes the third-party request and
 generates a metric-adjusted fallback, holding layout shift near zero.
 
-### D6 — Palette derived from the region, mapped onto the reference's roles
+### D6 — Palette derived from the region, mapped onto the reference's roles (superseded in part by D12)
 
 The reference's palette works because of its *structure*, not its hues: one saturated warm
 accent doing all the pointing, a near-white warm surface for content, a soft cool secondary
@@ -240,6 +240,30 @@ driveway per landmark, each ending in a round yard in front of the place it serv
 *Why:* a road that goes somewhere and stops there is legible; a road that merely
 connects two other roads is noise. The pickup drives the loop; nothing else needs a
 vehicle on it.
+
+### D12 — The world is the community at the Salto do Rio Caveiras reservoir
+
+Recomposed on 2026-09-15 from two references the user supplied: a drone photograph of
+the reservoir at sunset (the lake with a wooded island in the middle, houses with lawns
+and pools on the near shore, low forested hills going blue at the horizon) and a low-poly
+rendering of the same scene (turquoise water with boats, cabins on stilts, a row of
+A-frame chalets on the far shore, a big sun with rays).
+
+- The lake sits in the middle distance with the island kept in the centre; the community
+  is in the foreground; the dam, the falls and the powerhouse are at the lake's east end.
+- The street network is real: a main road enters from the south-east, loops the
+  community's block with two cross streets, and each landmark has one driveway ending
+  in a yard or car park. No road passes through a building.
+- Landmarks are spread around the shore and the hills rather than clustered at a square.
+- Water is its own shader: Fresnel toward the sunset, a glitter path toward the sun, and
+  two scrolling ripple layers - because the previous flat-coloured water was the weakest
+  element in the frame.
+- The interface palette moved from orange to teal and gold. The orange read as a copy
+  of the reference site; teal and gold come from the water and the light in the photo.
+
+*Why:* the user's brief moved from "like the reference" to "Lages, as it is" - the
+reservoir is the real place, and a community by a lake with an island is a composition
+the reference site does not have.
 
 ## Risks / Trade-offs
 

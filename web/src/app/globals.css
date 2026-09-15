@@ -7,24 +7,28 @@
  * drawn from. Components reference tokens; literal brand hex values belong only here.
  */
 @theme {
-  /* Palette */
-  --color-ember: #c4522e;
-  --color-ember-deep: #a8431f;
-  --color-ember-dark: #83341a;
-  --color-mist: #fff9ec;
-  --color-straw: #f3e4c8;
-  --color-sage: #9cc4b2;
-  --color-araucaria: #1e4a3a;
-  --color-bark: #2e241c;
-  --color-frost: #7fa3b8;
-  --color-gold: #d9a441;
+  /*
+   * Palette - teal water, gold light, cream stone. Drawn from the reservoir at the
+   * Salto do Rio Caveiras at sunset; deliberately not the reference's orange, which
+   * read as a copy.
+   */
+  --color-teal: #1f6068;
+  --color-teal-deep: #174c53;
+  --color-teal-dark: #113a40;
+  --color-gold: #e2b04a;
+  --color-mist: #f6efe2;
+  --color-straw: #efe4d0;
+  --color-lake: #5b93ad;
+  --color-araucaria: #24443a;
+  --color-bark: #2f2a24;
+  --color-frost: #9fb8c8;
   --color-wine: #7b2d3f;
 
-  /* Sky — late golden hour over the campos */
-  --color-sky-high: #f2c879;
-  --color-sky-mid: #e89f5e;
-  --color-sky-low: #d97b4a;
-  --color-sky-haze: #f0e2cc;
+  /* Sky - sunset over the reservoir */
+  --color-sky-high: #e8742f;
+  --color-sky-mid: #f3a03c;
+  --color-sky-low: #f7d67c;
+  --color-sky-haze: #f2e0b2;
 
   /* Type */
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;

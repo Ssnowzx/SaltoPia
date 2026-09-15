@@ -68,7 +68,7 @@ function createCloudGeometry(seed: number, bottom: string, top: string): BufferG
 
 export function Clouds(): React.ReactElement {
   const cloudGeometries = useMemo(
-    () => [0, 1, 2].map((index) => createCloudGeometry(WORLD_SEED + index * 17, CLOUDS.colorBottom, CLOUDS.colorTop)),
+    () => [0, 1, 2].map((index) => createCloudGeometry(WORLD_SEED + index * 17, WORLD_COLORS.cloudShade, WORLD_COLORS.cloud)),
     [],
   );
   const mistGeometries = useMemo(
@@ -95,8 +95,9 @@ export function Clouds(): React.ReactElement {
     return Array.from({ length: CLOUDS.count }, (_, index) => ({
       x: (random() - 0.5) * CLOUDS.spread,
       y: CLOUDS.minHeight + random() * (CLOUDS.maxHeight - CLOUDS.minHeight),
-      z: -150 + random() * 230,
-      scale: 1.2 + random() * 1.8,
+      z: -170 + random() * 220,
+      // Stretched into streaks: sunset clouds lie flat along the horizon.
+      scale: 1.4 + random() * 2.0,
       speed: CLOUDS.driftSpeed * (0.6 + random() * 0.8),
       variant: index % 3,
     }));
@@ -136,7 +137,7 @@ export function Clouds(): React.ReactElement {
           geometry={cloudGeometries[cloud.variant]}
           material={material}
           position={[cloud.x, cloud.y, cloud.z]}
-          scale={cloud.scale}
+          scale={[cloud.scale * 1.6, cloud.scale * 0.55, cloud.scale]}
         />
       ))}
 

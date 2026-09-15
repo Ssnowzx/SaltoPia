@@ -68,24 +68,26 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
           <color attach="background" args={[SKY_COLORS.haze]} />
           <fog attach="fog" args={[SKY_COLORS.haze, FOG.near, FOG.far]} />
 
-          {/* Low warm sun from the side, cool bounce from the sky. */}
+          {/* The key light sits front-right so faces read; a warm rim from the sun's
+              side catches roofs and the far shore; the sky fills from above. */}
           <directionalLight
-            position={[-70, 96, 58]}
-            intensity={2.2}
-            color="#ffd9a0"
+            position={[70, 90, 40]}
+            intensity={2.0}
+            color="#ffe0b0"
             castShadow
             shadow-mapSize={[2048, 2048]}
-            shadow-camera-left={-140}
-            shadow-camera-right={140}
-            shadow-camera-top={140}
-            shadow-camera-bottom={-140}
-            shadow-camera-far={460}
+            shadow-camera-left={-150}
+            shadow-camera-right={150}
+            shadow-camera-top={150}
+            shadow-camera-bottom={-150}
+            shadow-camera-far={480}
             shadow-bias={-0.0005}
             shadow-normalBias={0.06}
-            shadow-intensity={0.75}
+            shadow-intensity={0.7}
           />
-          <hemisphereLight args={[SKY_COLORS.high, WORLD_COLORS.grass, 1.3]} position={[0, 60, 0]} />
-          <ambientLight intensity={0.7} color={SKY_COLORS.haze} />
+          <directionalLight position={[90, 50, -120]} intensity={1.1} color="#ffc98a" />
+          <hemisphereLight args={[SKY_COLORS.mid, WORLD_COLORS.grass, 1.2]} position={[0, 60, 0]} />
+          <ambientLight intensity={0.55} color={SKY_COLORS.haze} />
 
           <Suspense fallback={null}>
             <WorldMaterialsProvider>
