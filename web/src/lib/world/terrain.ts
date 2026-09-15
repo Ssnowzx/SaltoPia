@@ -174,7 +174,7 @@ function naturalHeightAt(x: number, z: number): number {
   const eastRise = smoothstep(0, 90, x - eastShoreXAt(z)) * 20;
   const farRise = smoothstep(0, 70, farShoreZAt(x) - z + 0) * 0;
   const beyondFar = smoothstep(0, 60, farShoreZAt(x) - z) * 0;
-  const northRise = smoothstep(-110, -190, z) * 26;
+  const northRise = smoothstep(-122, -175, z) * 15;
 
   const hill =
     MIRANTE_HILL.height *
@@ -234,13 +234,15 @@ function surfaceColorAt(x: number, z: number, height: number): Color {
   const patch = fractalNoise2D(x * 0.04, z * 0.04, WORLD_SEED + 31, 3);
   const base = grassDeep.clone().lerp(grass, patch);
 
-  // The far hills go golden, as they do in the photograph at this hour.
-  base.lerp(hillGold, smoothstep(-105, -150, z) * 0.9);
-  base.lerp(straw, smoothstep(16, 30, height) * 0.4);
+  // The far ground goes golden only well beyond the chalets. Starting the blend at
+  // z = -105 - in front of the far shore at z = -120 - turned the land right behind
+  // them into desert, which is what it looked like.
+  base.lerp(hillGold, smoothstep(-200, -280, z) * 0.7);
+  base.lerp(straw, smoothstep(22, 38, height) * 0.25);
 
   // Sand along the shore, lake bed below the water.
   const shore = Math.abs(lakeDistance(x, z));
-  base.lerp(sand, (1 - smoothstep(0.5, 6, shore)) * 0.9);
+  base.lerp(sand, (1 - smoothstep(0.5, 3.5, shore)) * 0.85);
   base.lerp(lakeBed, smoothstep(LAKE.level + 0.2, LAKE.floor, height));
 
   return base;

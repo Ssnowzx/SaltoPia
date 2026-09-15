@@ -162,10 +162,10 @@ export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
 };
 
 const HOUSE_BASE: Omit<BuildingSpec, "wallColor" | "roofColor"> = {
-  width: 4.6,
-  depth: 3.8,
-  height: 2.9,
-  roofHeight: 1.6,
+  width: 6.2,
+  depth: 5.0,
+  height: 3.4,
+  roofHeight: 2.1,
   chimney: true,
   windows: true,
 };
@@ -175,15 +175,15 @@ const HOUSE_BASE: Omit<BuildingSpec, "wallColor" | "roofColor"> = {
  * swapping a procedural builder for a loaded `.glb` is a change here and nowhere else.
  */
 export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = {
-  araucaria: () => createAraucariaGeometry("mature", 15, 3),
-  araucariaB: () => createAraucariaGeometry("mature", 13, 11),
-  araucariaYoung: () => createAraucariaGeometry("young", 7, 5),
-  conifer: () => createConiferGeometry(9),
-  broadleaf: () => createBroadleafGeometry(6, 2),
-  broadleafWarm: () => createBroadleafGeometry(5.5, 9),
-  bush: () => createBushGeometry(1.1),
+  araucaria: () => createAraucariaGeometry("mature", 9, 3),
+  araucariaB: () => createAraucariaGeometry("mature", 7.6, 11),
+  araucariaYoung: () => createAraucariaGeometry("young", 4.6, 5),
+  conifer: () => createConiferGeometry(6.4),
+  broadleaf: () => createBroadleafGeometry(4.4, 2),
+  broadleafWarm: () => createBroadleafGeometry(4.0, 9),
+  bush: () => createBushGeometry(0.9),
   rock: () => createRockGeometry(1.7),
-  palm: () => createPalmGeometry(7, 4),
+  palm: () => createPalmGeometry(5.4, 4),
   houseWhitewash: () =>
     createBuildingGeometry({ ...HOUSE_BASE, wallColor: WORLD_COLORS.whitewash, roofColor: WORLD_COLORS.tile, wallSurface: "plaster", roofSurface: "tiles" }),
   houseYellow: () =>
@@ -193,7 +193,7 @@ export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = 
   houseMint: () =>
     createBuildingGeometry({ ...HOUSE_BASE, wallColor: WORLD_COLORS.mint, roofColor: WORLD_COLORS.slateDark, wallSurface: "plaster", roofSurface: "slate" }),
   cabana: () =>
-    createBuildingGeometry({ width: 3.6, depth: 3.2, height: 2.4, roofHeight: 1.3, wallColor: WORLD_COLORS.timberDark, roofColor: WORLD_COLORS.shingle, wallSurface: "planks", roofSurface: "shingle", windows: true }),
+    createBuildingGeometry({ width: 4.8, depth: 4.2, height: 2.9, roofHeight: 1.7, wallColor: WORLD_COLORS.timberDark, roofColor: WORLD_COLORS.shingle, wallSurface: "planks", roofSurface: "shingle", windows: true }),
   lakeHouse: () => createLakeHouseGeometry(),
   shopBrick: () => createShopGeometry(0),
   shopYellow: () => createShopGeometry(1),
@@ -254,6 +254,11 @@ function afloat(model: ModelKey, x: number, z: number, rotationY = 0, scale = 1)
   return { model, x, z, rotationY, scale, yOffset: 0, afloat: true };
 }
 
+/** Boats read small from the map's distance, so they are built oversized on purpose. */
+function afloatBig(model: ModelKey, x: number, z: number, rotationY = 0, scale = 1): Placement {
+  return afloat(model, x, z, rotationY, scale * 1.6);
+}
+
 /**
  * The houses of the community, along the east shore the way the reference photograph
  * has them: the big lakefront places near the water, the rest stepping back up the
@@ -283,10 +288,10 @@ const HOUSES: readonly Placement[] = [
 ];
 
 /** The chalets along the far shore, packed tight at the waterline. */
-const FAR_SHORE_CHALETS: readonly Placement[] = Array.from({ length: 18 }, (_, index) => {
+const FAR_SHORE_CHALETS: readonly Placement[] = Array.from({ length: 22 }, (_, index) => {
   const models: readonly ModelKey[] = ["aFrameShingle", "aFrameSlate", "aFrameTile"];
-  const x = -76 + index * 9;
-  return placed(models[index % 3], x, farShoreZAt(x) + 5.5, 0.04 * (index % 3) - 0.04, 1.1);
+  const x = -92 + index * 9.5;
+  return placed(models[index % 3], x, farShoreZAt(x) + 7, 0.05 * (index % 3) - 0.05, 1.9);
 });
 
 /** The stilt cabins and piers along the peninsula's south shore. */
@@ -392,20 +397,20 @@ export const LANDMARKS: readonly Placement[] = [
   placed("parasolTeal", 24, 74),
 
   // Boats: moored at the piers and pulled up on the shore.
-  afloat("yachtMoored", -84, -22, 0.2),
-  afloat("yachtMoored", -120, -20, 2.9),
-  afloat("yachtMoored", 26, -6, 1.8, 0.95),
-  afloat("yachtMoored", -30, -70, 0.6),
-  afloat("sailboatMoored", -10, -20, 1.2),
-  afloat("sailboatMoored", -46, -6, 2.4),
-  afloat("sailboatMoored", -20, -54, 0.7),
-  afloat("sailboatMoored", -70, -60, 2.1),
-  afloat("sailboatMoored", 6, -86, 1.5),
-  afloat("kayak", -6, 12, 1.1),
-  afloat("kayak", -24, 24, 0.4),
-  afloat("kayak", -52, 16, 2.2),
-  afloat("kayak", -14, -40, 0.9),
-  afloat("kayak", -96, -8, 1.8),
+  afloatBig("yachtMoored", -84, -22, 0.2),
+  afloatBig("yachtMoored", -120, -20, 2.9),
+  afloatBig("yachtMoored", 26, -6, 1.8, 0.95),
+  afloatBig("yachtMoored", -30, -70, 0.6),
+  afloatBig("sailboatMoored", -10, -20, 1.2),
+  afloatBig("sailboatMoored", -46, -6, 2.4),
+  afloatBig("sailboatMoored", -20, -54, 0.7),
+  afloatBig("sailboatMoored", -70, -60, 2.1),
+  afloatBig("sailboatMoored", 6, -86, 1.5),
+  afloatBig("kayak", -6, 12, 1.1),
+  afloatBig("kayak", -24, 24, 0.4),
+  afloatBig("kayak", -52, 16, 2.2),
+  afloatBig("kayak", -14, -40, 0.9),
+  afloatBig("kayak", -96, -8, 1.8),
 
   // Boulders below the falls.
   placed("rock", 124, -102, 0.4, 2.0),
@@ -450,7 +455,7 @@ const CLEARINGS: readonly Clearing[] = [
   { x: 124, z: 100, radius: 8 },
   { x: 74, z: 69, radius: 16 },
   ...HOUSES.map((house) => ({ x: house.x, z: house.z, radius: house.model === "lakeHouse" ? 10 : 6.5 })),
-  ...FAR_SHORE_CHALETS.map((chalet) => ({ x: chalet.x, z: chalet.z, radius: 5 })),
+  ...FAR_SHORE_CHALETS.map((chalet) => ({ x: chalet.x, z: chalet.z, radius: 7 })),
   ...PENINSULA_CABINS.map((cabin) => ({ x: cabin.x, z: cabin.z, radius: 5 })),
 ];
 
@@ -550,14 +555,14 @@ export function createScatter(): readonly Placement[] {
   scatter("araucariaB", 16, [0.9, 1.25], onPeninsula, peninsulaGround, 0);
 
   // The community's slope.
-  scatter("broadleafWarm", 120, [0.8, 1.4], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 2);
-  scatter("broadleaf", 100, [0.8, 1.4], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 2);
-  scatter("araucaria", 28, [0.8, 1.2], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 3);
-  scatter("araucariaYoung", 24, [0.7, 1.3], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 3);
-  scatter("bush", 130, [0.7, 1.5], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 1);
+  scatter("broadleafWarm", 70, [0.8, 1.3], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 2);
+  scatter("broadleaf", 55, [0.8, 1.3], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 2);
+  scatter("araucaria", 16, [0.8, 1.15], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 3);
+  scatter("araucariaYoung", 14, [0.7, 1.2], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 3);
+  scatter("bush", 80, [0.7, 1.3], inCommunity, (x, z) => onLand(x, z) && inland(x, z), 1);
 
   // The conifer forest closing the right of the frame.
-  scatter("conifer", 170, [0.8, 1.5], onRightEdge, onLand, 2);
+  scatter("conifer", 110, [0.8, 1.35], onRightEdge, onLand, 2);
   scatter("conifer", 60, [0.8, 1.4], onFarShore, onLand, 2);
 
   // Woods behind the far shore.

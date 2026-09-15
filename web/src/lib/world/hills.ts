@@ -25,28 +25,28 @@ interface HillSpec {
 }
 
 const HILLS: readonly HillSpec[] = [
-  // The near band. Its front edge has to clear the far shore at z = -120, or the hills
-  // stand in front of the chalets instead of behind them.
-  { x: -170, z: -212, radius: 76, height: 11, depth: 0.25 },
-  { x: -70, z: -220, radius: 82, height: 13, depth: 0.3 },
-  { x: 30, z: -218, radius: 78, height: 12, depth: 0.25 },
-  { x: 128, z: -212, radius: 74, height: 11, depth: 0.25 },
-  { x: 220, z: -204, radius: 68, height: 10, depth: 0.3 },
+  // The near band. A dome's radius is its reach, so at radius 78 and z-scale 0.8 the
+  // centre has to sit past z = -185 to keep its front edge behind the far shore.
+  { x: -180, z: -188, radius: 80, height: 13, depth: 0.2 },
+  { x: -76, z: -196, radius: 86, height: 15, depth: 0.25 },
+  { x: 28, z: -192, radius: 82, height: 14, depth: 0.2 },
+  { x: 132, z: -188, radius: 78, height: 13, depth: 0.2 },
+  { x: 226, z: -182, radius: 72, height: 11, depth: 0.25 },
   // The middle band.
-  { x: -230, z: -270, radius: 90, height: 15, depth: 0.6 },
-  { x: -120, z: -282, radius: 96, height: 17, depth: 0.65 },
-  { x: -10, z: -288, radius: 98, height: 18, depth: 0.65 },
-  { x: 100, z: -282, radius: 92, height: 16, depth: 0.6 },
-  { x: 208, z: -272, radius: 84, height: 14, depth: 0.6 },
-  // The far band, almost dissolved.
-  { x: -170, z: -348, radius: 108, height: 20, depth: 0.95 },
-  { x: -20, z: -358, radius: 116, height: 22, depth: 1 },
-  { x: 132, z: -350, radius: 106, height: 19, depth: 0.95 },
+  { x: -236, z: -250, radius: 94, height: 18, depth: 0.5 },
+  { x: -126, z: -262, radius: 100, height: 20, depth: 0.55 },
+  { x: -12, z: -268, radius: 102, height: 21, depth: 0.55 },
+  { x: 104, z: -262, radius: 96, height: 19, depth: 0.5 },
+  { x: 214, z: -252, radius: 88, height: 17, depth: 0.5 },
+  // The far band, almost dissolved into the haze.
+  { x: -176, z: -330, radius: 112, height: 24, depth: 0.9 },
+  { x: -22, z: -342, radius: 120, height: 26, depth: 0.95 },
+  { x: 136, z: -332, radius: 110, height: 23, depth: 0.9 },
   // Shoulders, closing the frame on both sides well outside the bay.
-  { x: -268, z: -140, radius: 72, height: 13, depth: 0.55 },
-  { x: -284, z: -30, radius: 66, height: 11, depth: 0.55 },
-  { x: 272, z: -120, radius: 70, height: 12, depth: 0.55 },
-  { x: 288, z: 10, radius: 64, height: 10, depth: 0.55 },
+  { x: -272, z: -132, radius: 76, height: 15, depth: 0.45 },
+  { x: -290, z: -20, radius: 70, height: 13, depth: 0.45 },
+  { x: 278, z: -112, radius: 74, height: 14, depth: 0.45 },
+  { x: 294, z: 20, radius: 68, height: 12, depth: 0.45 },
 ];
 
 function createHillGeometry(hill: HillSpec, seed: number): BufferGeometry {
@@ -68,10 +68,12 @@ function createHillGeometry(hill: HillSpec, seed: number): BufferGeometry {
 
     positions.setXYZ(index, x * hill.radius * scale, Math.max(y, -0.05) * hill.height * scale, z * hill.radius * 0.8 * scale);
 
+    // Green almost all the way up, gold only at the crown. Blending from 5% of the
+    // height made every dome a tan mound, and a row of tan mounds reads as desert.
     const t = Math.max(0, y);
-    const color = foot.clone().lerp(gold, smoothstep(0.05, 0.6, t));
+    const color = foot.clone().lerp(gold, smoothstep(0.55, 0.98, t));
     // Distance drains the colour toward the haze, which is what gives the band depth.
-    color.lerp(haze, hill.depth * 0.75);
+    color.lerp(haze, hill.depth * 0.55);
 
     colors[index * 3] = color.r;
     colors[index * 3 + 1] = color.g;

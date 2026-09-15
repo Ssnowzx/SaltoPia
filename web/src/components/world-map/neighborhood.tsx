@@ -4,7 +4,7 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import type { InstancedMesh } from "three";
 import { Euler, Matrix4, MeshStandardMaterial, Quaternion, Vector3 } from "three";
 
-import { WORLD_COLORS } from "@/lib/world/constants";
+import { SKY_COLORS } from "@/lib/world/constants";
 import { createHillsGeometry } from "@/lib/world/hills";
 import {
   LANDMARKS,
@@ -93,7 +93,12 @@ export function Neighborhood(): React.ReactElement {
     () => new MeshStandardMaterial({ map: materials.grass, vertexColors: true, flatShading: true, roughness: 1, metalness: 0 }),
     [materials.grass],
   );
-  const groundMaterial = useMemo(() => new MeshStandardMaterial({ color: WORLD_COLORS.straw, roughness: 1, metalness: 0 }), []);
+  // The plane beyond the terrain's edge takes the haze colour, not a ground colour:
+  // in straw it read as a slab of desert across the top of the frame.
+  const groundMaterial = useMemo(
+    () => new MeshStandardMaterial({ color: SKY_COLORS.haze, roughness: 1, metalness: 0, fog: true }),
+    [],
+  );
 
   const hillsGeometry = useMemo(() => createHillsGeometry(), []);
   const roadGeometry = useMemo(() => createRoadGeometry(), []);
@@ -122,7 +127,7 @@ export function Neighborhood(): React.ReactElement {
       {/* Distant ground under the terrain's edge, so the horizon is land dissolving into
           haze rather than a hard line with nothing beyond it. */}
       <mesh position={[0, -14, 0]} rotation={[-Math.PI / 2, 0, 0]} material={groundMaterial}>
-        <planeGeometry args={[2400, 2400]} />
+        <planeGeometry args={[3000, 3000]} />
       </mesh>
 
       <mesh geometry={terrainGeometry} material={terrainMaterial} receiveShadow />

@@ -29,10 +29,10 @@ export const WORLD_COLORS = {
   /** Basalt in shadow. */
   rockDark: "#5e615d",
   /** Forest on the far hills - olive, going tan on the tops, like the plateau in the photo. */
-  forest: "#8a9a4e",
-  hilltop: "#c4a765",
+  forest: "#5f7f40",
+  hilltop: "#a89a58",
   /** What distance drains the far hills toward. */
-  hillHaze: "#e0b878",
+  hillHaze: "#c9a878",
   /** Araucaria foliage. */
   canopy: "#2f6b4d",
   /** Araucaria foliage in shade. */
@@ -188,8 +188,8 @@ export const ROAD = {
 
 /** Atmospheric depth. The far hills dissolve into this. */
 export const FOG = {
-  near: 420,
-  far: 1150,
+  near: 280,
+  far: 720,
 } as const;
 
 /** The railway. */
