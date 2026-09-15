@@ -120,20 +120,6 @@ body {
 }
 
 /*
- * The entry screen is on from the first paint; what lifts is the sky behind it, once the
- * world has a frame to show. Fading the whole screen in, as this once did, meant opening
- * the site on nothing at all.
- */
-.intro-sky {
-  opacity: 1;
-  transition: opacity 1200ms var(--ease-ui);
-}
-
-.intro[data-ready="true"] .intro-sky {
-  opacity: 0;
-}
-
-/*
  * Type over the world. A drop shadow in the page's own cream, spread in four directions,
  * is enough to lift dark text off a busy picture without putting a panel over the map.
  */

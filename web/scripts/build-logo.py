@@ -85,6 +85,10 @@ def build_card(crop):
         plate = plate.filter(ImageFilter.MaxFilter(7))
     plate = plate.filter(ImageFilter.GaussianBlur(26))
     plate = ImageChops.lighter(plate, emblem.filter(ImageFilter.MaxFilter(5)))
+    # The halo is only there to lift the emblem off the map, so it is kept faint: a
+    # gamma pulls the midtones down and leaves what is already opaque alone.
+    plate = plate.point(lambda value: int(255 * (value / 255) ** 2.6))
+    plate = ImageChops.lighter(plate, emblem.filter(ImageFilter.MaxFilter(3)))
 
     alpha = plate.resize(card.size, Image.LANCZOS).filter(ImageFilter.GaussianBlur(5))
     out = card.convert("RGBA")

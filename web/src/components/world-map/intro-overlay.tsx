@@ -5,10 +5,9 @@ import Image from "next/image";
 /**
  * The title state the hub opens on: wordmark, tagline and a single way in.
  *
- * It is on screen from the first paint, so the site never opens on an empty page. What
- * changes when the world is ready is only what lies behind it: an opaque sky while the
- * scene is being built, fading to the translucent cream the world reads through. The
- * wordmark does not move, so the map appearing is the only thing that happens.
+ * It is on screen from the first paint, so the site never opens on an empty page, and
+ * nothing about it changes when the world arrives: the map simply appears through the
+ * veil. Only the way in waits, because there is nothing to explore until then.
  */
 
 interface IntroOverlayProps {
@@ -20,12 +19,8 @@ interface IntroOverlayProps {
 export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.ReactElement {
   return (
     <div data-ready={ready} className="intro absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center">
-      {/* The sky, covering the canvas until the world is drawn. */}
-      <div
-        aria-hidden="true"
-        className="intro-sky absolute inset-0 bg-[linear-gradient(to_bottom,var(--color-sky-high)_0%,var(--color-sky-mid)_38%,var(--color-sky-low)_62%,var(--color-sky-haze)_100%)]"
-      />
-      {/* The veil the world reads through, once there is a world. */}
+      {/* The veil the world reads through. There is nothing behind it but the world -
+          an opaque sky was tried while the scene built and read as a coloured slab. */}
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(246,229,188,0.46)_0%,rgba(246,229,188,0.6)_55%,rgba(246,229,188,0.72)_100%)]"

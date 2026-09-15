@@ -419,11 +419,12 @@ seeing a first set made in the map's own low-poly style.
 
 ### D25 — The title state waits for the world
 
-The entry screen - wordmark, tagline, the way in - is on from the first paint. What
-waits for the world is only what lies behind it: an opaque sky gradient that fades out
-once the scene has been drawn (two frames, counted by `SceneReady`), leaving the
-translucent cream the world reads through. A separate curtain over the whole screen was
-tried first and was worse: it hid the wordmark, so the site opened on a blank sky.
+The entry screen - wordmark, tagline, the way in - is on from the first paint, over the
+translucent cream the world reads through and nothing else. Only the way in waits for the
+scene to be drawn (two frames, counted by `SceneReady`), because there is nothing to
+explore until then. Two heavier versions were tried and both read as a slab in front of
+the site: a curtain over the whole screen, which hid the wordmark too, and then an opaque
+sky behind the wordmark that lifted when the world arrived.
 
 Coming back to the hub skips the title state, but only from inside the site: the session
 flag alone made every reload skip it, so the site appeared to jump straight into the map
@@ -436,7 +437,8 @@ is printed on a paper card and neither keeping it nor cutting it off works every
 Over the map the cut-out emblem's own drop shadow reads as a dirty edge; over the
 header's cream pill the card reads as a paler box inside it. So the entry screen takes
 the card, shaped to the emblem and dissolving to transparent - grow the silhouette a
-little, blur it a lot - and the header and footer take the emblem alone.
+little, blur it a lot, then pull the midtones down so only a faint glow is left - and the
+header and footer take the emblem alone.
 
 Both start from the same silhouette: connectivity finds the sheet (a colour key cannot
 tell the paper from the cream inside the banner), then a saturation test takes the torn
