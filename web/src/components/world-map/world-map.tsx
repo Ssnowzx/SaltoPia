@@ -154,11 +154,15 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
 
   const cardOpen = focus !== null && !isFlying;
 
+  // Read in the card's effect, not here: a ref's value is not something a render may
+  // look at, and the node it points to is written by the projector every frame.
+  const getPinNode = useCallback((slug: string) => pinNodes.current.get(slug) ?? null, []);
+
   return (
     <div className="relative h-full w-full">
-      {/* The wrapper takes the blur when a modal dialog opens; the place card is not
-          modal - the point of the flight is to see the place sharp behind it. */}
-      <div className="h-full w-full touch-none transition-[filter] duration-300 ease-out">
+      {/* A hair of blur while the card is open: enough to sit the card forward without
+          losing the place the camera just flew to, which is the point of the flight. */}
+      <div className={`h-full w-full touch-none transition-[filter] duration-300 ease-out ${cardOpen ? "blur-[3px]" : ""}`}>
         <Canvas
           // Capped so a dense display cannot multiply fragment cost - world-map spec.
           dpr={[1, RENDERER.maxPixelRatio]}
@@ -207,7 +211,7 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
 
       {exploring ? <PinOverlay places={places} nodes={pinNodes} onSelect={setFocus} /> : null}
       {exploring ? <SiteHeader places={places} /> : null}
-      {cardOpen && focus ? <PlaceCard place={focus} onClose={handleClose} /> : null}
+      {cardOpen && focus ? <PlaceCard place={focus} onClose={handleClose} getReturnFocus={getPinNode} /> : null}
       {exploring ? null : <IntroOverlay onExplore={handleExplore} ready={sceneReady} />}
     </div>
   );

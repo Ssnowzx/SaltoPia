@@ -1,9 +1,11 @@
 schema: spec-driven
 
 context: |
-  PROJECT: "Serranopolis" - an immersive 3D web experience that lets visitors
-  explore a fictional new neighborhood of Lages, Santa Catarina, Brazil
-  (Serra Catarinense highlands). Academic project for a 5th-semester presentation.
+  PROJECT: "Saltopia" - an immersive 3D web experience that lets visitors explore an
+  imagined community at the Salto do Rio Caveiras reservoir outside Lages, Santa
+  Catarina, Brazil (Serra Catarinense highlands). Fifteen places, each with its own
+  page. Academic project for a 5th-semester presentation.
+  The change that built it keeps its original name, add-serranopolis-experience.
 
   REFERENCE: The interaction model is modeled on visitmeatopia.com (Awwwards
   Honorable Mention, Aug 2026). Same architecture and choreography, entirely

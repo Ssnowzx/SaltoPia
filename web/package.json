@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3001",
     "lint": "eslint",
     "db:up": "docker compose -f ../docker-compose.yml up -d",
     "db:down": "docker compose -f ../docker-compose.yml down",
@@ -14,7 +14,11 @@
     "db:generate": "prisma generate",
     "typecheck": "tsc --noEmit",
     "db:seed": "tsx prisma/seed.ts",
-    "check:layout": "tsx scripts/check-layout.ts"
+    "check:layout": "tsx scripts/check-layout.ts",
+    "check:assets": "tsx scripts/check-assets.ts",
+    "check": "npm run check:layout && npm run check:assets && npx tsc --noEmit && npx eslint src scripts prisma --ext .ts,.tsx",
+    "build:logo": "python3 scripts/build-logo.py",
+    "build:crests": "tsx scripts/build-crests.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

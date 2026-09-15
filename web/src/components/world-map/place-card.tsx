@@ -23,9 +23,17 @@ import type { Place } from "@/types";
 interface PlaceCardProps {
   readonly place: Place;
   readonly onClose: () => void;
+  /** Finds the pin the card was opened from, so the keyboard goes back where it was. */
+  readonly getReturnFocus?: (slug: string) => HTMLElement | null;
 }
 
-export function PlaceCard({ place, onClose }: PlaceCardProps): React.ReactElement {
+/** Everything inside the card that the keyboard can land on, in document order. */
+function focusableWithin(root: HTMLElement): HTMLElement[] {
+  return [...root.querySelectorAll<HTMLElement>("a[href], button:not([disabled])")];
+}
+
+export function PlaceCard({ place, onClose, getReturnFocus }: PlaceCardProps): React.ReactElement {
+  const cardRef = useRef<HTMLElement>(null);
   const visitRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
@@ -34,15 +42,45 @@ export function PlaceCard({ place, onClose }: PlaceCardProps): React.ReactElemen
     visitRef.current?.focus({ preventScroll: true });
 
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      // Tab cycles inside the card. Left loose it walked into the pins behind, which
+      // move every frame, so the keyboard ended up somewhere the visitor cannot see.
+      if (event.key !== "Tab" || !cardRef.current) return;
+      const stops = focusableWithin(cardRef.current);
+      if (stops.length === 0) return;
+      const edge = event.shiftKey ? stops[0] : stops[stops.length - 1];
+      if (document.activeElement !== edge) return;
+      event.preventDefault();
+      (event.shiftKey ? stops[stops.length - 1] : stops[0]).focus({ preventScroll: true });
     };
+
+    // Tab at the edge is not enough on its own: anything that moves focus - the pins
+    // behind, which the projector rewrites every frame - takes it out of the card and
+    // the visitor is left steering something they cannot see. Whatever the cause, focus
+    // that lands outside comes straight back.
+    const onFocusIn = (event: FocusEvent): void => {
+      const card = cardRef.current;
+      if (!card || card.contains(event.target as Node)) return;
+      (focusableWithin(card)[0] ?? card).focus({ preventScroll: true });
+    };
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+    document.addEventListener("focusin", onFocusIn);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("focusin", onFocusIn);
+      getReturnFocus?.(place.slug)?.focus({ preventScroll: true });
+    };
+  }, [onClose, getReturnFocus, place.slug]);
 
   return (
     <aside
+      ref={cardRef}
       role="dialog"
+      aria-modal="true"
       aria-labelledby="place-card-title"
       className="place-card pointer-events-auto absolute inset-x-3 bottom-3 max-h-[62svh] overflow-y-auto rounded-card bg-mist shadow-[0_24px_60px_rgba(46,36,28,0.28)] sm:inset-x-auto sm:top-[92px] sm:right-6 sm:bottom-4 sm:my-auto sm:h-fit sm:max-h-[calc(100svh-108px)] sm:w-[min(360px,calc(100vw-48px))]"
     >

@@ -1,6 +1,6 @@
 ## Purpose
 
-Defines the single source of visual truth for Serranópolis — colour, typography, radius and
+Defines the single source of visual truth for Saltopia — colour, typography, radius and
 motion tokens drawn from the Serra Catarinense landscape — so that every surface of the
 experience reads as one place, and so that the accessibility contract for motion is stated
 once rather than re-decided per component.

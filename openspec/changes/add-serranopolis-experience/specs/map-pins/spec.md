@@ -57,6 +57,30 @@ Pins SHALL be hidden while a camera flight is in progress and restored when it s
 - **THEN** all pins are hidden for its duration
 - **AND** they return once the camera settles
 
+### Requirement: A place running an offer is marked
+
+A place MAY carry a short offer. A place that carries one SHALL be marked on its pin in a
+way that is legible at map distance and distinct from every other pin, and the same offer
+SHALL appear on that place's card and on its page, so that what drew the visitor across
+the map is still there when they arrive.
+
+Marking MUST stay the exception: the mark sits over the pin without changing the pin's own
+shape, and any motion in it MUST be suppressed under `prefers-reduced-motion`.
+
+#### Scenario: Place with an offer
+- **WHEN** a place carries an offer
+- **THEN** its pin carries the offer's text and reads as marked from across the map
+- **AND** the same text appears on the place's card and on its page
+
+#### Scenario: Place without an offer
+- **WHEN** a place carries no offer
+- **THEN** its pin is drawn exactly as it would be with the feature absent
+
+#### Scenario: Reduced motion
+- **WHEN** `prefers-reduced-motion: reduce` is set
+- **THEN** the mark is still visible and still legible
+- **AND** nothing about it animates
+
 ### Requirement: Pins are reachable without a pointer
 
 Every pin SHALL be operable by keyboard. Pins MUST expose an accessible name matching the

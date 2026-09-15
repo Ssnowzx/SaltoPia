@@ -259,6 +259,11 @@ async function main(): Promise<void> {
         name: place.name,
         tagline: place.tagline,
         description: place.description,
+        // Set on update as well as on create: without these, a row made before a path
+        // changed keeps the old one for ever, and three crests were still pointing at
+        // .webp files that stopped being written when the crests became SVG.
+        crestImage: `/images/crests/${place.slug}.svg`,
+        heroImage: `/images/heroes/${place.slug}.webp`,
         worldX,
         worldY,
         worldZ,

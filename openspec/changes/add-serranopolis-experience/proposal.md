@@ -6,7 +6,7 @@ landscape. `visitmeatopia.com` proved a different model works — a navigable 3D
 site's hub, with content pages hanging off it — and earned an Awwwards Honorable Mention for
 it in August 2026.
 
-This change builds **Serranópolis**, a fictional new neighbourhood of Lages, Santa Catarina,
+This change builds **Saltopia**, a fictional community at the Salto do Rio Caveiras reservoir outside Lages, Santa Catarina,
 using that same interaction model with an entirely original theme, palette, art and copy.
 It is the deliverable for a 5th-semester academic presentation, so it must run convincingly
 on a laptop in a classroom, not only on a workstation.

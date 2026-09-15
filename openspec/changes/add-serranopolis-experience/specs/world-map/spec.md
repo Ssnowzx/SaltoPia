@@ -25,13 +25,35 @@ happens through the world, not through scroll position.
 ### Requirement: Entry sequence
 
 The hub SHALL open on a title state showing the wordmark, the tagline and a single
-"EXPLORAR SERRANÓPOLIS" action, over the world already rendering behind it. Choosing that
-action clears the title state and hands control of the world to the visitor.
+"EXPLORAR SALTOPIA" action, over the world. Choosing that action clears the title state and
+hands control of the world to the visitor.
+
+The title state SHALL be present from the first paint, and the explore action SHALL be
+unavailable until the world has been drawn, so that the visitor can never enter a world
+that is not there. If the world has still not been drawn after a bounded wait, the action
+SHALL become available anyway rather than leave the visitor with no way forward.
+
+Returning to the hub from within the site SHALL NOT replay the title state. A reload, a
+typed address or a fresh visit SHALL play it.
 
 #### Scenario: Visitor arrives at the hub
-- **WHEN** `/` finishes loading
-- **THEN** the wordmark, tagline and the explore action are visible over the rendered world
+- **WHEN** `/` is first painted
+- **THEN** the wordmark, tagline and the explore action are visible
+- **AND** the explore action is unavailable until the world has been drawn
 - **AND** the pins and the full navigation bar are not yet shown
+
+#### Scenario: World cannot be drawn
+- **WHEN** the world has not been drawn after the bounded wait
+- **THEN** the explore action becomes available regardless
+- **AND** the visitor is never left on a screen with no way forward
+
+#### Scenario: Visitor returns from a place page
+- **WHEN** the visitor navigates back to `/` from a page of this site
+- **THEN** the hub opens with the world under the visitor's control and no title state
+
+#### Scenario: Visitor reloads the hub
+- **WHEN** the visitor reloads `/`
+- **THEN** the title state plays again
 
 #### Scenario: Visitor starts exploring
 - **WHEN** the visitor activates the explore action
@@ -93,15 +115,14 @@ CC0 kit, SHALL be generated procedurally.
 
 ### Requirement: Loading experience
 
-The hub SHALL show determinate loading progress while 3D assets download, and MUST NOT
-present the explore action until the neighbourhood can be rendered.
+The hub MUST NOT present the explore action until the neighbourhood can be rendered.
 
-The total compressed 3D payload MUST NOT exceed 8 MB.
+The total compressed 3D payload MUST NOT exceed 8 MB. Nothing in the world is downloaded:
+every object is generated at runtime, so the budget is spent on code rather than on models.
 
-#### Scenario: Assets still downloading
-- **WHEN** the visitor opens `/` and assets are incomplete
-- **THEN** a progress indicator reflecting real load progress is shown
-- **AND** the explore action is not yet available
+#### Scenario: World still being built
+- **WHEN** the visitor opens `/` and the scene has not been drawn
+- **THEN** the title state is shown and the explore action is not yet available
 
 #### Scenario: Payload budget exceeded
 - **WHEN** a build produces a compressed 3D payload above 8 MB
@@ -122,6 +143,25 @@ fragment cost without visible benefit.
 #### Scenario: High-density display
 - **WHEN** the hub renders on a display reporting a device pixel ratio above 2
 - **THEN** the drawing buffer is sized using a pixel ratio of 2
+
+### Requirement: One composition at any viewport shape
+
+The hub SHALL hold its composition whatever the shape of the viewport: the whole
+neighbourhood stays in frame on a phone held upright as it does on a wide screen, with no
+horizontal overflow at any width.
+
+On a touch screen one finger SHALL orbit the world and two SHALL zoom it, and the gesture
+MUST NOT be handed to the page as a scroll.
+
+#### Scenario: Hub on a tall viewport
+- **WHEN** `/` is opened at a viewport taller than it is wide
+- **THEN** the neighbourhood is framed whole rather than cropped to a strip
+- **AND** no point of interest is pushed off the sides
+
+#### Scenario: Visitor drags on a touch screen
+- **WHEN** the visitor drags one finger across the world
+- **THEN** the camera orbits
+- **AND** the page does not scroll or bounce
 
 ### Requirement: Fallback when the world cannot render
 
