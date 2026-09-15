@@ -69,10 +69,10 @@ export const WORLD_COLORS = {
   /** The stone-sett streets Lages is known for. */
   barnRed: "#a8442f",
   barnOchre: "#b87a36",
-  street: "#75726b",
+  street: "#838079",
   roadLine: "#e6dcc4",
   /** Kerbs and pavements. */
-  kerb: "#b8b3a8",
+  kerb: "#c2bcaf",
   /** Stone paving in the square. */
   paving: "#c9bfae",
   /** Dressed stone - walls, platforms, the well. */
@@ -192,8 +192,11 @@ export const ROAD = {
   /** The broken centre line: dash pitch and width. */
   centreLineSpacing: 13,
   centreLineWidth: 0.26,
-  /** Lift above the terrain so the ribbon never z-fights with it. */
-  lift: 0.16,
+  /**
+   * Lift above the terrain. It clears the noise the paved height averages away, so the
+   * kerb never sinks into a bump the ribbon no longer follows.
+   */
+  lift: 0.34,
 } as const;
 
 /** Atmospheric depth. The far hills dissolve into this. */

@@ -45,10 +45,12 @@ export const SITES: readonly Site[] = [
   { slug: "salto-caveiras", x: 118, z: -96, rotationY: 0, pad: 10, clearing: 12 },
   // The far attraction: out on the plateau at the very end of the map.
   { slug: "porto-de-ovnis", x: 22, z: -288, rotationY: 0, pad: 38, clearing: 40 },
-  // The farms, out on the open plateau well clear of the community.
-  { slug: "fazenda-do-cedro", x: 202, z: 28, rotationY: Math.PI * 0.92, pad: 30, clearing: 34 },
-  { slug: "fazenda-santa-barbara", x: 214, z: -96, rotationY: Math.PI * 1.1, pad: 30, clearing: 34 },
-  { slug: "fazenda-dos-pinheiros", x: 176, z: -176, rotationY: Math.PI * 0.86, pad: 30, clearing: 34 },
+  // The farms, up on the ridge at the back of the map. They sit between the hill domes,
+  // not inside them: a dome is a mesh on the terrain, and anything within its reach ends
+  // up buried in it whatever the ground does.
+  { slug: "fazenda-do-cedro", x: -166, z: -190, rotationY: Math.PI * 0.94, pad: 24, clearing: 30 },
+  { slug: "fazenda-santa-barbara", x: 10, z: -196, rotationY: Math.PI * 1.04, pad: 24, clearing: 30 },
+  { slug: "fazenda-dos-pinheiros", x: 196, z: -186, rotationY: Math.PI * 0.88, pad: 24, clearing: 30 },
 ];
 
 const BY_SLUG: ReadonlyMap<string, Site> = new Map(SITES.map((site) => [site.slug, site]));

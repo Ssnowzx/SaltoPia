@@ -507,7 +507,7 @@ export const LANDMARKS: readonly Placement[] = [
   placed("sedanDark", 67, 43, -0.3),
   placed("sedanSilver", 142, 105, 0.5),
   placed("sedanWhite", 145, 107, 0.5),
-  placed("sedanDark", 201, 42, 0.9),
+  placed("sedanDark", 186, -186, 0.9),
 
   // The vineyard on the slope above the winery.
   ...[126, 132].flatMap((x) => [-26, -22, -18, -14, -10].map((z) => placed("vineRow", x, z))),

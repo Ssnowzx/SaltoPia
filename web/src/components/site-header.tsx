@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import type { Place } from "@/types";
@@ -8,6 +9,9 @@ import type { Place } from "@/types";
  * The navigation bar every page carries, in the reference's form: a floating pill
  * with the destinations menu, the wordmark and the primary call to action.
  */
+
+/** The wordmark, at its natural aspect so the header can scale it by height alone. */
+const LOGO = { src: "/logo-saltopia.png", width: 900, height: 364 } as const;
 
 interface SiteHeaderProps {
   readonly places: readonly Place[];
@@ -43,9 +47,15 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
           </Link>
         </nav>
 
-        <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-center" aria-label="Saltopia - início">
-          <span className="block font-sans text-lg leading-none font-black tracking-[0.18em] text-araucaria">SALTOPIA</span>
-          <span className="mt-0.5 block font-sans text-[10px] leading-none font-bold tracking-[0.22em] text-teal uppercase">Salto Caveiras · Serra Catarinense</span>
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2" aria-label="Saltopia - início">
+          <Image
+            src={LOGO.src}
+            alt="Saltopia - Salto Caveiras, Serra Catarinense"
+            width={LOGO.width}
+            height={LOGO.height}
+            priority
+            className="h-11 w-auto sm:h-16"
+          />
         </Link>
 
         <Link

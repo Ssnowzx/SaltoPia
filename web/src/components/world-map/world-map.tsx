@@ -86,8 +86,11 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
             shadow-camera-bottom={-380}
             shadow-camera-near={1}
             shadow-camera-far={1400}
-            shadow-bias={-0.0005}
-            shadow-normalBias={0.06}
+            shadow-bias={-0.0004}
+            // One shadow texel covers about 0.19 world units at this frustum and map
+            // size. At 0.06 the roads sampled their own depth and striped themselves
+            // with acne right down the carriageway.
+            shadow-normalBias={0.9}
             shadow-intensity={0.7}
           />
           <directionalLight position={[90, 50, -120]} intensity={1.1} color="#ffc98a" />

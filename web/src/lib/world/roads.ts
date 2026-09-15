@@ -27,6 +27,32 @@ export function surfaceHeightAt(x: number, z: number): number {
   return isOnBridge(x, z) ? Math.max(ground, BRIDGE_DECK_HEIGHT) : ground;
 }
 
+/** Where a ribbon samples the ground around its centre, to average the fine noise out. */
+const SMOOTHING_TAPS: ReadonlyArray<readonly [number, number]> = [
+  [0, 0],
+  [2.1, 0],
+  [-2.1, 0],
+  [0, 2.1],
+  [0, -2.1],
+  [1.5, 1.5],
+  [-1.5, 1.5],
+  [1.5, -1.5],
+  [-1.5, -1.5],
+];
+
+/**
+ * Ground height with the fine detail averaged out, for anything paved.
+ *
+ * A ribbon draped on the raw height picks up the terrain's one-unit detail noise, and
+ * flat shading turns that into a quilted diamond pattern running the length of every
+ * street - it reads as a rendering fault, not as a road.
+ */
+export function pavedHeightAt(x: number, z: number): number {
+  let total = 0;
+  for (const [dx, dz] of SMOOTHING_TAPS) total += surfaceHeightAt(x + dx, z + dz);
+  return total / SMOOTHING_TAPS.length;
+}
+
 // ---------------------------------------------------------------------------------
 // The network
 // ---------------------------------------------------------------------------------
@@ -194,7 +220,7 @@ function appendRibbon(curve: CatmullRomCurve3, options: RibbonOptions, sink: Sin
 
   const widthAt = (x: number, z: number): number => (typeof options.width === "number" ? options.width : options.width(x, z));
   const surface = (x: number, z: number): number =>
-    options.heightAt ? options.heightAt(x, z) + options.lift : surfaceHeightAt(x, z) + options.lift;
+    options.heightAt ? options.heightAt(x, z) + options.lift : pavedHeightAt(x, z) + options.lift;
   const foamAt = options.foamAt ?? (() => 0);
 
   for (let index = 0; index < samples.length - 1; index += 1) {
@@ -241,7 +267,7 @@ function appendRibbon(curve: CatmullRomCurve3, options: RibbonOptions, sink: Sin
 
 function appendDisc(x: number, z: number, radius: number, lift: number, color: Color, surface: SurfaceKey, sink: Sink): void {
   const segments = 20;
-  const centreY = surfaceHeightAt(x, z) + lift;
+  const centreY = pavedHeightAt(x, z) + lift;
 
   for (let index = 0; index < segments; index += 1) {
     const a0 = (index / segments) * Math.PI * 2;
@@ -252,8 +278,8 @@ function appendDisc(x: number, z: number, radius: number, lift: number, color: C
     const z1 = z + Math.sin(a1) * radius;
 
     pushVertex(sink, x, centreY, z, color, surface, 0, 0);
-    pushVertex(sink, x1, surfaceHeightAt(x1, z1) + lift, z1, color, surface, 0, 0);
-    pushVertex(sink, x0, surfaceHeightAt(x0, z0) + lift, z0, color, surface, 0, 0);
+    pushVertex(sink, x1, pavedHeightAt(x1, z1) + lift, z1, color, surface, 0, 0);
+    pushVertex(sink, x0, pavedHeightAt(x0, z0) + lift, z0, color, surface, 0, 0);
   }
 }
 
@@ -274,13 +300,20 @@ function appendRectangle(lot: ParkingLot, lift: number, color: Color, surface: S
       const c = corner(u1, v1);
       const d = corner(u0, v1);
       for (const [px, pz] of [a, b, d, b, c, d]) {
-        pushVertex(sink, px, surfaceHeightAt(px, pz) + lift, pz, color, surface, 0, 0);
+        pushVertex(sink, px, pavedHeightAt(px, pz) + lift, pz, color, surface, 0, 0);
       }
     }
   }
 }
 
-function toGeometry(sink: Sink, unitsPerTile: number): BufferGeometry {
+/**
+ * Turns a sink into geometry.
+ *
+ * `upright` replaces the computed normals with a constant +Y. Roads lie on the ground,
+ * and per-face normals on a ribbon that follows even a gentle slope give every quad a
+ * slightly different shade - a corrugated banding down the length of every street.
+ */
+function toGeometry(sink: Sink, unitsPerTile: number, upright = false): BufferGeometry {
   const geometry = new BufferGeometry();
   const count = sink.positions.length / 3;
   const uvs = new Float32Array(count * 2);
@@ -294,7 +327,15 @@ function toGeometry(sink: Sink, unitsPerTile: number): BufferGeometry {
   geometry.setAttribute("depth", new Float32BufferAttribute(sink.depths, 1));
   geometry.setAttribute("foam", new Float32BufferAttribute(sink.foams, 1));
   geometry.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
-  geometry.computeVertexNormals();
+
+  if (upright) {
+    const normals = new Float32Array(count * 3);
+    for (let index = 0; index < count; index += 1) normals[index * 3 + 1] = 1;
+    geometry.setAttribute("normal", new Float32BufferAttribute(normals, 3));
+  } else {
+    geometry.computeVertexNormals();
+  }
+
   return geometry;
 }
 
@@ -305,7 +346,6 @@ const DECK = new Color(WORLD_COLORS.timber);
 const PAVING = new Color(WORLD_COLORS.paving);
 const LINE = new Color(WORLD_COLORS.roadLine);
 
-/** A street: a pavement strip underneath, the stone setts on top. */
 /**
  * A street: a pale shoulder, the carriageway, and a broken centre line.
  *
@@ -375,7 +415,10 @@ export function createRoadGeometry(): BufferGeometry {
     sink,
   );
 
-  return toGeometry(sink, 2.2);
+  // One tile for the whole network. The atlas lookup wraps with fract(), and the mip
+  // level the GPU picks from the derivative blows up at every wrap - a dark seam across
+  // the carriageway every couple of metres. Paved surfaces are flat colour anyway.
+  return toGeometry(sink, 4000, true);
 }
 
 /** Lawns around the houses, as discs of mown grass. */

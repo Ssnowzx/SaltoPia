@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 /**
  * The title state the hub opens on: wordmark, tagline and a single way in, over the
  * world already rendering behind it. See the world-map spec, "Entry sequence".
@@ -13,17 +15,20 @@ export function IntroOverlay({ onExplore }: IntroOverlayProps): React.ReactEleme
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(246,229,188,0.28)_0%,rgba(246,229,188,0.5)_60%,rgba(246,229,188,0.7)_100%)] px-6 text-center">
       <p className="font-script text-3xl text-teal sm:text-4xl">Bem-vindo a</p>
-      <h1 className="mt-2 font-sans text-6xl leading-none font-black tracking-[0.06em] text-araucaria drop-shadow-[0_4px_0_rgba(255,249,236,0.9)] sm:text-8xl">
-        SALTOPIA
+      <h1 className="mt-3 w-full max-w-[760px]">
+        <Image
+          src="/logo-saltopia.png"
+          alt="Saltopia - Salto Caveiras, Serra Catarinense"
+          width={900}
+          height={364}
+          priority
+          className="h-auto w-full drop-shadow-[0_10px_26px_rgba(46,36,28,0.28)]"
+        />
       </h1>
-      <p className="mt-3 font-sans text-sm font-bold tracking-[0.34em] text-teal-deep uppercase sm:text-base">
-        Salto Caveiras · Serra Catarinense
-      </p>
-      <p className="mt-4 max-w-xl font-sans text-base font-semibold text-bark sm:text-lg">
+      <p className="mt-5 max-w-xl font-sans text-base font-semibold text-bark sm:text-lg">
         A comunidade do Salto do Rio Caveiras, em Lages — araucárias, lago, fogo de chão e a
         usina que iluminou a cidade.
       </p>
-      <p className="mt-2 font-sans text-xs font-bold tracking-[0.3em] text-bark/60 uppercase">Est. 2028</p>
       <button
         type="button"
         onClick={onExplore}

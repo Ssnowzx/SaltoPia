@@ -133,7 +133,12 @@ export function Neighborhood(): React.ReactElement {
           shadow only invites the map's edge to show on them. */}
       <mesh geometry={hillsGeometry} material={materials.flat} />
       <mesh geometry={lawnGeometry} material={materials.flat} receiveShadow />
-      <mesh geometry={roadGeometry} material={materials.flat} receiveShadow />
+      {/*
+        Roads take the smooth material, not the flat one. `flatShading` recomputes the
+        normal per face in the shader and ignores the upright normals the road geometry
+        carries, which striped every carriageway with its own quads.
+      */}
+      <mesh geometry={roadGeometry} material={materials.smooth} receiveShadow />
       <mesh geometry={lakeGeometry} material={materials.lake} />
       <mesh geometry={riverGeometry} material={materials.lake} />
       <mesh geometry={foamGeometry} material={materials.smooth} />

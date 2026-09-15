@@ -325,9 +325,12 @@ function surfaceColorAt(x: number, z: number, height: number): Color {
   base.lerp(hillGold, smoothstep(-300, -430, z) * 0.45);
   base.lerp(straw, smoothstep(18, 36, height) * 0.38);
 
-  // Sand along the shore, lake bed below the water.
+  // Sand along the shore, lake bed below the water. The distance alone is not enough:
+  // where the bay meets the outlet channel both terms sit near zero across a wide band,
+  // and the beach spread up the hillside as a pale wedge. A beach is also low ground.
   const shore = Math.abs(lakeDistance(x, z));
-  base.lerp(sand, (1 - smoothstep(0.5, 2.6, shore)) * 0.8);
+  const aboveWater = height - LAKE.level;
+  base.lerp(sand, (1 - smoothstep(0.5, 2.4, shore)) * (1 - smoothstep(0.3, 2.2, aboveWater)) * 0.85);
   base.lerp(lakeBed, smoothstep(LAKE.level + 0.2, LAKE.floor, height));
 
   return base;
