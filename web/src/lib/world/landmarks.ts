@@ -68,10 +68,14 @@ function pipeBetween(x0: number, y0: number, z0: number, x1: number, y1: number,
   return leaningPost(radius, length, color, x0, y0, z0, angle, tilt, "metal");
 }
 
+/** How far the paving runs round a pool, and how deep its plinth goes for sloping ground. */
+const POOL_SURROUND = 1.4;
+const POOL_PLINTH = 0.5;
+
 /** A swimming pool with its paved surround and two loungers, centred on (x, z). */
 function pool(x: number, z: number, width = 5, depth = 3.2): BufferGeometry[] {
   return [
-    box(width + 1.4, 0.16, depth + 1.4, WORLD_COLORS.paving, x, 0.08, z, 0, "paving"),
+    box(width + POOL_SURROUND, 0.16 + POOL_PLINTH, depth + POOL_SURROUND, WORLD_COLORS.paving, x, 0.08 - POOL_PLINTH / 2, z, 0, "paving"),
     box(width, 0.3, depth, WORLD_COLORS.pool, x, 0.14, z, 0, "water"),
     box(0.6, 0.12, 1.6, WORLD_COLORS.whitewash, x - width / 2 - 1.1, 0.32, z - 0.6, 0, "planks"),
     box(0.6, 0.12, 1.6, WORLD_COLORS.whitewash, x - width / 2 - 1.1, 0.32, z + 1.2, 0, "planks"),
@@ -260,9 +264,17 @@ const LAKE_HOUSE_SPEC: BuildingSpec = {
   chimney: true,
 };
 
+/**
+ * The lake house's pool, in the house's own frame, and the half-size of its paved surround.
+ * In front: beside the house it reached twelve metres out, past the footprint the layout
+ * keeps off the roads, and two of the three lay across the lakefront street.
+ */
+export const LAKE_HOUSE_POOL = { x: 0, z: 5.6, width: 4.6, depth: 2.6, halfWidth: (4.6 + POOL_SURROUND) / 2, halfDepth: (2.6 + POOL_SURROUND) / 2 } as const;
+
 /** A big lakeside house, orange render and a dark roof, with its pool. */
 export function createLakeHouseGeometry(): BufferGeometry {
-  return merge([createBuildingGeometry(LAKE_HOUSE_SPEC), ...pool(8.6, 1.0), ...solarPanels(LAKE_HOUSE_SPEC, 3)]);
+  const { x, z, width, depth } = LAKE_HOUSE_POOL;
+  return merge([createBuildingGeometry(LAKE_HOUSE_SPEC), ...pool(x, z, width, depth), ...solarPanels(LAKE_HOUSE_SPEC, 3)]);
 }
 
 // ---------------------------------------------------------------------------------

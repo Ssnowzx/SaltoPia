@@ -1,6 +1,7 @@
 /**
  * Fails when a building overlaps another building or sits on a road, when a house stands
- * beside its twin, or when something that belongs on land stands in the water.
+ * beside its twin, when something that belongs on land stands in the water, or when
+ * something that belongs on the water - a boat, a pier, a stilt cabin - does not.
  *
  * The layout is assembled from a site table, an authored house list and a spacing pass,
  * and every time the road network or a landmark moves the result can drift. Run it after
@@ -8,7 +9,8 @@
  *
  * Landmarks may touch their own driveway; houses, shops and chalets may not touch any.
  */
-import { HOUSES, LANDMARKS, type ModelKey, type Placement, createScatter, footprintOf } from "../src/lib/world/neighborhood-layout";
+import { LAKE_HOUSE_POOL } from "../src/lib/world/landmarks";
+import { HOUSES, LANDMARKS, type ModelKey, type Placement, createScatter, footprintOf, groundHeightFor, roadClearance } from "../src/lib/world/neighborhood-layout";
 import { PARKING_LOTS, ROAD_POLYLINES } from "../src/lib/world/road-network";
 import { SAILBOAT_CURVE, YACHT_CURVE } from "../src/lib/world/roads";
 import { LAKE, RIVER } from "../src/lib/world/constants";
@@ -103,6 +105,38 @@ const inWater = (x: number, z: number): boolean =>
 for (const p of [...LANDMARKS, ...createScatter()]) {
   if (p.afloat || WATERBORNE.has(p.model)) continue;
   if (inWater(p.x, p.z)) { bad += 1; console.log(`IN THE WATER ${p.model}(${p.x.toFixed(1)},${p.z.toFixed(1)}) ground ${landHeightAt(p.x, p.z).toFixed(1)}`); }
+}
+
+// And the other way round: boats float on water, piers run from the bank out over it with
+// their deck above it, and stilt cabins keep their floor dry.
+/** Deck heights above each model's base, and the pier's length - props.ts. */
+const PIER = { deck: 0.9, length: 10 };
+const STILT_DECK = 1.7;
+for (const p of LANDMARKS.filter((m) => m.afloat)) {
+  if (landHeightAt(p.x, p.z) > LAKE.level - WET_MARGIN) { bad += 1; console.log(`AFLOAT ON LAND ${p.model}(${p.x},${p.z})`); }
+}
+for (const p of LANDMARKS.filter((m) => m.model === "pier")) {
+  const farX = p.x + Math.sin(p.rotationY) * PIER.length * p.scale;
+  const farZ = p.z + Math.cos(p.rotationY) * PIER.length * p.scale;
+  const deck = groundHeightFor(p) + PIER.deck * p.scale;
+  if (landHeightAt(p.x, p.z) < LAKE.level) { bad += 1; console.log(`PIER STARTS IN THE WATER at (${p.x},${p.z})`); }
+  if (!inWater(farX, farZ)) { bad += 1; console.log(`PIER ENDS ON LAND at (${farX.toFixed(1)},${farZ.toFixed(1)})`); }
+  if (deck < LAKE.level + WET_MARGIN) { bad += 1; console.log(`PIER DECK UNDER WATER at (${p.x},${p.z})`); }
+}
+for (const p of LANDMARKS.filter((m) => m.model === "stiltCabin")) {
+  if (groundHeightFor(p) + STILT_DECK * p.scale < LAKE.level + 1) { bad += 1; console.log(`STILT CABIN FLOODED at (${p.x},${p.z})`); }
+}
+
+// A lake house's pool reaches past the house; it must still be clear of every road.
+for (const p of LANDMARKS.filter((m) => m.model === "lakeHouse")) {
+  const { x, z, halfWidth, halfDepth } = LAKE_HOUSE_POOL;
+  const cos = Math.cos(p.rotationY);
+  const sin = Math.sin(p.rotationY);
+  for (const [cx, cz] of [[x - halfWidth, z - halfDepth], [x + halfWidth, z - halfDepth], [x - halfWidth, z + halfDepth], [x + halfWidth, z + halfDepth]]) {
+    const wx = p.x + (cx * cos + cz * sin) * p.scale;
+    const wz = p.z + (-cx * sin + cz * cos) * p.scale;
+    if (roadClearance(wx, wz) < 0) { bad += 1; console.log(`POOL ON A ROAD beside lakeHouse(${p.x.toFixed(0)},${p.z.toFixed(0)}) at (${wx.toFixed(1)},${wz.toFixed(1)})`); break; }
+  }
 }
 
 const expected = 0;

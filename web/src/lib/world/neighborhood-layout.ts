@@ -397,7 +397,7 @@ const NUDGES: ReadonlyArray<readonly [number, number]> = (() => {
 })();
 
 /** Clearance from the centre of the nearest road ribbon, negative when overlapping it. */
-function roadClearance(x: number, z: number): number {
+export function roadClearance(x: number, z: number): number {
   let clearance = Number.POSITIVE_INFINITY;
   for (const road of ROAD_POLYLINES) {
     clearance = Math.min(clearance, distanceToPolyline(x, z, road.points, road.closed) - road.width / 2);
@@ -502,9 +502,10 @@ const PENINSULA_CABINS: readonly Placement[] = [
   placed("stiltCabin", -104, -27.5),
   placed("stiltCabin", -80, -28.5, -0.1),
   placed("stiltCabin", -56, -31),
-  placed("pier", -140, -28, Math.PI),
-  placed("pier", -92, -27, Math.PI),
-  placed("pier", -66, -30, Math.PI),
+  // Each from the bank, where the ground meets the deck, out toward the open water.
+  placed("pier", -140, -32.6),
+  placed("pier", -92, -30.2),
+  placed("pier", -66, -30.8),
 ];
 
 /**
@@ -547,7 +548,8 @@ const AUTHORED_SHOPS: readonly Placement[] = [
 /** The landmarks, which never move: pads, pins and driveways all point at them. */
 const PINNED: readonly Placement[] = [
   ...SITE_LANDMARKS,
-  placed("pier", 38, 8, Math.PI * 0.5),
+  // Off the square's shore, out over the water - it once ran the other way, across the paving.
+  placed("pier", 30.3, 8, -Math.PI * 0.5),
   placed("chapel", 74, -42, Math.PI),
   ...PENINSULA_CABINS,
   ...FAR_SHORE_CHALETS,
@@ -686,7 +688,7 @@ export const LANDMARKS: readonly Placement[] = [
   afloatBig("sailboatMoored", 14, -84, 0.7),
   afloatBig("sailboatMoored", -136, -22, 2.1),
   afloatBig("sailboatMoored", 6, -86, 1.5),
-  afloat("kayak", 36, 4, 0.4),
+  afloat("kayak", 25, 4.5, 0.4),
   afloat("kayak", 30, -10, 2.2),
   afloat("kayak", 40, -14, 1.1),
   afloat("kayak", -136, -20, 0.3),
@@ -912,7 +914,19 @@ function buildScatter(): readonly Placement[] {
 }
 
 /** Ground height for a placement, so callers do not reach into the terrain module. */
+/**
+ * Where a pier's or a stilt cabin's base sits below the water: the pier's deck then stands
+ * half a metre over it and the cabin's a metre and a half. Taken from the ground under
+ * their first post, they sank where the lake bed falls away - a pier ran under the water
+ * and cabins stood in it to the windows.
+ */
+const STILT_BASE_BELOW_WATER = 0.4;
+
 export function groundHeightFor(placement: Placement): number {
   if (placement.afloat) return LAKE.level + placement.yOffset;
-  return landHeightAt(placement.x, placement.z) + placement.yOffset;
+  const stiltBase = LAKE.level - STILT_BASE_BELOW_WATER;
+  if (placement.model === "pier") return stiltBase + placement.yOffset;
+  const ground = landHeightAt(placement.x, placement.z);
+  if (placement.model === "stiltCabin") return Math.max(ground, stiltBase) + placement.yOffset;
+  return ground + placement.yOffset;
 }

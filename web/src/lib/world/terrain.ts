@@ -400,13 +400,22 @@ export function bridgeDeckAt(x: number, z: number): number {
   return deck;
 }
 
+/**
+ * How far above the lake a road is built, at the least. Graded to the natural ground, the
+ * lakefront street dipped under the water's level where the shore is low: the water
+ * lapped over its edge in a sawtooth, and a walker was stopped on it as if in the lake.
+ */
+const ROAD_FREEBOARD = 0.4;
+
 /** The level a road is built at over a point on its centreline. */
 function roadLevelAt(x: number, z: number, alongX: number, alongZ: number): number {
   const magnitude = Math.hypot(alongX, alongZ) || 1;
   const dx = (alongX / magnitude) * ROAD_SMOOTHING;
   const dz = (alongZ / magnitude) * ROAD_SMOOTHING;
   const smoothed = (paddedHeightAt(x - dx, z - dz) + paddedHeightAt(x, z) + paddedHeightAt(x + dx, z + dz)) / 3;
-  return Math.max(smoothed, bridgeDeckAt(x, z));
+  const level = Math.max(smoothed, bridgeDeckAt(x, z));
+  // Below the dam the road follows the river down its gorge, far under the lake's level.
+  return x > LAKE.dam.x - 2 ? level : Math.max(level, LAKE.level + ROAD_FREEBOARD);
 }
 
 interface Grade {
