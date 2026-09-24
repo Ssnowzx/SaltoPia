@@ -488,6 +488,53 @@ export const BUILDING = {
   windowPitch: 2.2,
 } as const;
 
+/** Walk mode - design.md of add-walking-character. */
+export const WALK = {
+  /** Metres per second, walking and running, and how fast the body turns, in rad/s. */
+  walkSpeed: 2.3,
+  runSpeed: 5.6,
+  turnRate: 10,
+  /** Speed eases toward its target at this many e-folds per second. */
+  acceleration: 9,
+  /** The character's own radius, for collisions. */
+  radius: 0.35,
+  /** The character's height, to which each model is scaled. */
+  height: 1.75,
+  /** Ground under the water's level plus this is water. */
+  wetMargin: 0.15,
+  /** How far inside the map's square the character must stay. */
+  edgeMargin: 4,
+  /** Tree trunks and buildings as obstacles: shares of a placement's scale and footprint. */
+  trunkRadius: 0.42,
+  buildingShare: 0.85,
+  /** Obstacles are bucketed on a grid of this size. */
+  obstacleCell: 16,
+  /** The path-finding grid's cell, and how far round a place its arrival area reaches. */
+  gridCell: 2,
+  arrivalMargin: 5,
+  arrivalMinimum: 8,
+  /** A route's waypoint counts as reached within this distance. */
+  waypointReach: 0.8,
+} as const;
+
+/** Where a new walker is put down: by the square, facing the water. */
+export const WALK_SPAWN = { x: 57, z: 26, heading: -2.2 } as const;
+
+/** The camera that follows the walker - design.md D5 of add-walking-character. */
+export const WALK_CAMERA = {
+  lookHeight: 1.45,
+  startDistance: 8,
+  startLift: 3.2,
+  creatorDistance: 4.2,
+  creatorLift: 0.2,
+  creatorMinDistance: 2.4,
+  minDistance: 3.5,
+  maxDistance: 24,
+  minPolarAngle: 0.35,
+  maxPolarAngle: 1.42,
+  groundClearance: 0.6,
+} as const;
+
 /** Map pins. */
 export const PIN = {
   anchorHeight: 9,

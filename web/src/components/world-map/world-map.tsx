@@ -1,11 +1,15 @@
 "use client";
 
-import { PerformanceMonitor } from "@react-three/drei";
+import { KeyboardControls, PerformanceMonitor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { type DirectionalLight, Object3D, PCFShadowMap } from "three";
 
 import { SiteHeader } from "@/components/site-header";
+import { useWalkMode } from "@/components/walk-mode/use-walk-mode";
+import { WALK_KEYS } from "@/components/walk-mode/walk-input";
+import { WalkLayer } from "@/components/walk-mode/walk-layer";
+import { WalkScene } from "@/components/walk-mode/walk-scene";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { installAerialPerspective } from "@/lib/world/atmosphere";
 import { CAMERA, FOG, QUALITY_TIERS, SHADOW, SKY_COLORS, SUN_LIGHT } from "@/lib/world/constants";
@@ -124,6 +128,9 @@ function subscribeToNothing(): () => void {
 /** Where the key light points: the middle of the community. */
 const SUN_TARGET = SUN_LIGHT.target;
 
+/** drei's KeyboardControls wants a mutable map. */
+const KEY_MAP = WALK_KEYS.map((entry) => ({ name: entry.name, keys: [...entry.keys] }));
+
 /**
  * The frame rates the performance monitor holds between: it steps quality down only on a
  * sustained drop under the lower bound. At its default of 50 the development build, which
@@ -135,6 +142,33 @@ function performanceBounds(): [number, number] {
 
 const QUALITY_FLOOR_FPS = 30;
 const QUALITY_CEILING_FPS = 60;
+
+/** A pointer that moved further than this between down and up was a drag, not a click. */
+const CLICK_SLOP = 6;
+
+/**
+ * Click or tap on the ground to walk there - walk-mode spec. Marches the pointer's ray
+ * against the ground through the picker the walk scene registers; a drag is left to the
+ * camera.
+ */
+function useGroundClick(active: boolean, pick: { readonly current: ((x: number, y: number) => { x: number; z: number } | null) | null }, walkTo: (point: { x: number; z: number }) => void) {
+  const down = useRef<{ x: number; y: number } | null>(null);
+  const onPointerDown = useCallback((event: React.PointerEvent) => {
+    down.current = { x: event.clientX, y: event.clientY };
+  }, []);
+  const onPointerUp = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const start = down.current;
+      down.current = null;
+      if (!active || !start || event.button !== 0 || Math.hypot(event.clientX - start.x, event.clientY - start.y) > CLICK_SLOP) return;
+      const rect = event.currentTarget.getBoundingClientRect();
+      const point = pick.current?.(((event.clientX - rect.left) / rect.width) * 2 - 1, -(((event.clientY - rect.top) / rect.height) * 2 - 1));
+      if (point) walkTo(point);
+    },
+    [active, pick, walkTo],
+  );
+  return { onPointerDown, onPointerUp };
+}
 
 export function WorldMap({ places }: WorldMapProps): React.ReactElement {
   const reducedMotion = usePrefersReducedMotion();
@@ -157,6 +191,9 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
   // the server's.
   const exploredBefore = useSyncExternalStore(subscribeToNothing, readExplored, () => false);
   const exploring = entered || exploredBefore;
+  const walk = useWalkMode(exploredBefore);
+  const onFoot = walk.mode !== "air";
+  const groundClick = useGroundClick(walk.mode === "walk", walk.picker, walk.walkTo);
   const [focus, setFocus] = useState<Place | null>(null);
   const [isFlying, setIsFlying] = useState(false);
   const pinNodes: PinNodes = useRef(new Map());
@@ -187,59 +224,80 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
           losing the place the camera just flew to, which is the point of the flight. */}
       <div
         className={`h-full w-full touch-none transition-[filter] duration-300 ease-out ${cardOpen ? "blur-[3px]" : ""}`}
+        onPointerDown={groundClick.onPointerDown}
+        onPointerUp={groundClick.onPointerUp}
       >
-        <Canvas
-          // Capped so a dense display cannot multiply fragment cost - world-map spec.
-          dpr={[1, quality.maxPixelRatio]}
-          shadows={{ type: PCFShadowMap }}
-          camera={{
-            fov: CAMERA.fov,
-            near: CAMERA.near,
-            far: CAMERA.far,
-            position: [...CAMERA.initialPosition],
-          }}
-          gl={{ antialias: true }}
-        >
-          <color attach="background" args={[SKY_COLORS.haze]} />
-          <fog attach="fog" args={[SKY_COLORS.haze, FOG.near, FOG.far]} />
+        <KeyboardControls map={KEY_MAP}>
+          <Canvas
+            // Capped so a dense display cannot multiply fragment cost - world-map spec.
+            dpr={[1, quality.maxPixelRatio]}
+            shadows={{ type: PCFShadowMap }}
+            camera={{
+              fov: CAMERA.fov,
+              near: CAMERA.near,
+              far: CAMERA.far,
+              position: [...CAMERA.initialPosition],
+            }}
+            gl={{ antialias: true }}
+          >
+            <color attach="background" args={[SKY_COLORS.haze]} />
+            <fog attach="fog" args={[SKY_COLORS.haze, FOG.near, FOG.far]} />
 
-          {/* The warm key is the sun; the fill is the sky itself, baked into the
-              environment by SkyDome - no hemisphere or ambient stand-ins. */}
-          <SunLight />
+            {/* The warm key is the sun; the fill is the sky itself, baked into the
+                environment by SkyDome - no hemisphere or ambient stand-ins. */}
+            <SunLight />
 
-          <Suspense fallback={null}>
-            <WorldMaterialsProvider reducedMotion={reducedMotion}>
-              <SkyDome reducedMotion={reducedMotion} />
-              <Neighborhood />
-              <LakeReflection scale={quality.reflection} />
-              <Vehicles />
-              <Smoke reducedMotion={reducedMotion} />
-            </WorldMaterialsProvider>
-            {/* Keyed on the tier: a new composer for each. Taking the AO pass out of a
-              running composer left its multisampled buffer resolving into a depth texture
-              of another format - every frame failed to blit and the canvas froze on its
-              last image while the pins went on moving over it. */}
-            <PostEffects key={tier} ambientOcclusion={quality.ambientOcclusion} />
-            <SceneReady onReady={handleSceneReady} />
-          </Suspense>
+            <Suspense fallback={null}>
+              <WorldMaterialsProvider reducedMotion={reducedMotion}>
+                <SkyDome reducedMotion={reducedMotion} />
+                <Neighborhood />
+                <LakeReflection scale={quality.reflection} />
+                <Vehicles />
+                <Smoke reducedMotion={reducedMotion} />
+              </WorldMaterialsProvider>
+              {/* Keyed on the tier: a new composer for each. Taking the AO pass out of a
+                running composer left its multisampled buffer resolving into a depth texture
+                of another format - every frame failed to blit and the canvas froze on its
+                last image while the pins went on moving over it. */}
+              <PostEffects key={tier} ambientOcclusion={quality.ambientOcclusion} />
+              <SceneReady onReady={handleSceneReady} />
+            </Suspense>
 
-          {/* Steps quality down after a sustained drop in frame rate, never back up, so the
-              image does not oscillate - design.md D10 of elevate-world-realism. */}
-          <PerformanceMonitor bounds={performanceBounds} onDecline={decline} />
-          <ViewportFraming />
-          <PinProjector places={places} nodes={pinNodes} hidden={!exploring || isFlying} />
+            {/* Steps quality down after a sustained drop in frame rate, never back up, so the
+                image does not oscillate - design.md D10 of elevate-world-realism. */}
+            <PerformanceMonitor bounds={performanceBounds} onDecline={decline} />
+            <ViewportFraming />
+            <PinProjector places={places} nodes={pinNodes} hidden={!exploring || isFlying || walk.mode === "create"} />
 
-          <CameraRig
-            focus={focus}
-            reducedMotion={reducedMotion}
-            onFlightStart={handleFlightStart}
-            onFlightEnd={handleFlightEnd}
-          />
-        </Canvas>
+            {/* One controller at a time: the aerial rig in the air, the walker's camera on
+                foot - walk-mode spec. */}
+            {onFoot ? (
+              <WalkScene
+                config={walk.config}
+                creating={walk.mode === "create"}
+                walker={walk.walker}
+                stick={walk.stick}
+                route={walk.route}
+                greeting={walk.greeting}
+                picker={walk.picker}
+                onArea={walk.arrive}
+              />
+            ) : (
+              <CameraRig
+                focus={focus}
+                reducedMotion={reducedMotion}
+                onFlightStart={handleFlightStart}
+                onFlightEnd={handleFlightEnd}
+              />
+            )}
+          </Canvas>
+        </KeyboardControls>
       </div>
 
-      {exploring ? <PinOverlay places={places} nodes={pinNodes} onSelect={setFocus} /> : null}
+      {/* On foot a pin walks the character there instead of flying the camera. */}
+      {exploring && walk.mode !== "create" ? <PinOverlay places={places} nodes={pinNodes} onSelect={walk.mode === "walk" ? walk.walkToPlace : setFocus} /> : null}
       {exploring ? <SiteHeader places={places} /> : null}
+      {exploring ? <WalkLayer walk={walk} places={places} cardOpen={cardOpen} onVisit={setFocus} /> : null}
       {cardOpen && focus ? <PlaceCard place={focus} onClose={handleClose} getReturnFocus={getPinNode} /> : null}
       {exploring ? null : <IntroOverlay onExplore={handleExplore} ready={sceneReady} />}
     </div>
