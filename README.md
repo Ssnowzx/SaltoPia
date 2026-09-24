@@ -107,9 +107,14 @@ colour, skin tone and a name. The character is put down by the square.
 | Stick (touch screens) | Walk; push to the rim to run |
 
 The passport counts the places visited and is kept in the browser. Opening a place's page
-on foot and coming back resumes the walk where it was. The character models are the only
-downloaded 3D files, fetched only when walk mode opens - see
+on foot and coming back resumes the walk where it was - see
 `openspec/changes/add-walking-character/`.
+
+The community's people are the same six characters: fifteen townsfolk who stroll round the
+square, along the pavements and down the fairground, or stand talking and gesturing, and
+who stop and wave when the visitor comes near - see `openspec/changes/add-living-townsfolk/`.
+The people are the only downloaded 3D files, fetched after the world has been drawn; if
+they cannot be fetched, the hub goes on without them.
 
 ## Data
 

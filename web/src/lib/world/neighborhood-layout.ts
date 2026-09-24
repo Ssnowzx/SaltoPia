@@ -34,11 +34,11 @@ import { groveDensityAt } from "./groves";
 import { createRandom } from "./noise";
 import { landHeightAt, outsideDistance } from "./outer-land";
 import { DWELLINGS, DWELLING_KEYS, type DwellingKey, assignDwellingDesigns } from "./dwellings";
-import { SHIRT_COLORS, createParasolGeometry, createPersonGeometry, createSeatedPersonGeometry } from "./people";
 import {
   createAFrameGeometry,
   createKayakGeometry,
   createPalmGeometry,
+  createParasolGeometry,
   createPierGeometry,
   createSailboatGeometry,
   createSedanGeometry,
@@ -87,11 +87,6 @@ export type ModelKey =
   | "sailboatMoored"
   | "yachtMoored"
   | "kayak"
-  | "personA"
-  | "personB"
-  | "personC"
-  | "personD"
-  | "personSeated"
   | "parasolRed"
   | "parasolTeal"
   | "fence"
@@ -154,11 +149,6 @@ export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
   sailboatMoored: "flat",
   yachtMoored: "flat",
   kayak: "smooth",
-  personA: "smooth",
-  personB: "smooth",
-  personC: "smooth",
-  personD: "smooth",
-  personSeated: "smooth",
   parasolRed: "flat",
   parasolTeal: "flat",
   fence: "flat",
@@ -239,11 +229,6 @@ export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = 
   sailboatMoored: () => createSailboatGeometry(WORLD_COLORS.whitewash),
   yachtMoored: () => createYachtGeometry(),
   kayak: () => createKayakGeometry(WORLD_COLORS.lantern),
-  personA: () => createPersonGeometry(SHIRT_COLORS[0]),
-  personB: () => createPersonGeometry(SHIRT_COLORS[1]),
-  personC: () => createPersonGeometry(SHIRT_COLORS[2]),
-  personD: () => createPersonGeometry(SHIRT_COLORS[5]),
-  personSeated: () => createSeatedPersonGeometry(SHIRT_COLORS[3]),
   parasolRed: () => createParasolGeometry(WORLD_COLORS.ember),
   parasolTeal: () => createParasolGeometry(WORLD_COLORS.coretoGreen),
   fence: () => createFenceGeometry(8),
@@ -591,7 +576,7 @@ export const HOUSES: readonly Placement[] = SPACED_BUILDINGS.filter(
 );
 
 /**
- * Moves something that belongs by the water - a person, a parasol, a palm - inland until
+ * Moves something that belongs by the water - a parasol, a palm, a lamp - inland until
  * it stands on dry ground, or drops it. Positions authored against an older shoreline
  * had drifted into the lake: palms stood in the water up to their crowns.
  */
@@ -650,23 +635,6 @@ export const LANDMARKS: readonly Placement[] = [
   placed("fence", 136, 60, 0.4),
   placed("stoneWall", 140, 20, 0.2),
   placed("stoneWall", 96, -46, 0.3),
-
-  // People, where people actually are.
-  ...([
-    [30, 56, 0.3], [36, 58, 2.6], [26, 54, 1.4], [40, 62, 3.0],
-    [58, 12, 0.5], [50, 10, 2.4], [56, 2, 1.1], [62, 6, 2.9],
-    [66, 76, 0.2], [74, 74, 2.8], [82, 72, 1.0], [70, 78, 2.2],
-    [124, 94, 0.2], [128, 92, 2.8],
-    [136, -100, 0.9], [132, -104, 2.2],
-    [104, 72, 1.0], [100, 70, 2.4],
-    [92, 36, 0.7], [88, 34, 2.9],
-  ] as ReadonlyArray<readonly [number, number, number]>).flatMap(([x, z, rotation], index) => {
-    const models: readonly ModelKey[] = ["personA", "personB", "personC", "personD"];
-    return ashore(placed(models[index % 4], x, z, rotation)) ?? [];
-  }),
-  placed("personSeated", 34, 52, 2.6),
-  placed("personSeated", 52, 4, 1.2),
-  placed("personSeated", 134, -102, 0.4),
 
   // Parasols by the water.
   ...[

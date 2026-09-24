@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExt
 import { type DirectionalLight, Object3D, PCFShadowMap } from "three";
 
 import { SiteHeader } from "@/components/site-header";
+import { Townsfolk } from "@/components/walk-mode/townsfolk";
 import { useWalkMode } from "@/components/walk-mode/use-walk-mode";
 import { WALK_KEYS } from "@/components/walk-mode/walk-input";
 import { WalkLayer } from "@/components/walk-mode/walk-layer";
@@ -176,7 +177,13 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
   const quality = QUALITY_TIERS[tier];
   const [entered, setEntered] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
-  const handleSceneReady = useCallback(() => setSceneReady(true), []);
+  // Only the first drawn frame, never the backstop below: the townsfolk's models must not
+  // be what the first frame waits on - townsfolk spec.
+  const [worldDrawn, setWorldDrawn] = useState(false);
+  const handleSceneReady = useCallback(() => {
+    setSceneReady(true);
+    setWorldDrawn(true);
+  }, []);
 
   // A backstop: if the first frame never arrives - a device that cannot build the scene,
   // a context that fails - the way in opens anyway rather than leaving the visitor on a
@@ -262,6 +269,7 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
               <PostEffects key={tier} ambientOcclusion={quality.ambientOcclusion} />
               <SceneReady onReady={handleSceneReady} />
             </Suspense>
+            {worldDrawn ? <Townsfolk reducedMotion={reducedMotion} /> : null}
 
             {/* Steps quality down after a sustained drop in frame rate, never back up, so the
                 image does not oscillate - design.md D10 of elevate-world-realism. */}

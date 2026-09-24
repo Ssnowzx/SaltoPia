@@ -18,7 +18,8 @@ export function walkWorld(): WalkWorld {
   return world;
 }
 
-function isWalkable(x: number, z: number): boolean {
+/** Dry, on the map, and clear of every obstacle by a walker's radius. */
+export function isWalkable(x: number, z: number): boolean {
   const current = walkWorld();
   if (current.isGroundBlocked(x, z)) return false;
   return current.obstaclesNear(x, z).every((circle) => Math.hypot(x - circle.x, z - circle.z) > circle.radius + WALK.radius);

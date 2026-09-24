@@ -517,6 +517,27 @@ export const WALK = {
   waypointReach: 0.8,
 } as const;
 
+/** The townsfolk's behaviour - design.md D2 of add-living-townsfolk. */
+export const TOWNSFOLK = {
+  /** Spacing of points on a pavement route, in metres. */
+  routeStep: 3,
+  /** How far in front of a shop its window-shopper stands. */
+  windowDistance: 4.6,
+  turnRate: 5,
+  /** A gesture every so many seconds, between these, and how long one lasts. */
+  gestureEvery: [9, 16] as const,
+  gestureSeconds: 2.4,
+  /** Seconds stood at the end of an out-and-back route. */
+  pauseAtEnds: [2, 5] as const,
+  /** Within this a townsperson stops for the visitor; beyond the second it goes on. */
+  noticeWithin: 2.2,
+  releaseBeyond: 3.5,
+  /** At most one wave per visitor per this many seconds. */
+  greetEvery: 20,
+  /** A townsperson's radius, for the visitor's collisions. */
+  radius: 0.35,
+} as const;
+
 /** Where a new walker is put down: by the square, facing the water. */
 export const WALK_SPAWN = { x: 57, z: 26, heading: -2.2 } as const;
 

@@ -1,7 +1,8 @@
 # Model credits
 
-Everything in the world is generated in code. The only downloaded 3D models are the six
-people of walk mode, fetched only when a visitor opens it.
+Everything in the world is generated in code. The only downloaded 3D models are six people -
+the visitor's character in walk mode and the townsfolk - fetched after the world has been
+drawn.
 
 | File | Source | Author | Licence |
 | --- | --- | --- | --- |

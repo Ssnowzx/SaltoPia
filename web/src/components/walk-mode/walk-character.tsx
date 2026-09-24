@@ -3,11 +3,13 @@
 import { Html, useAnimations, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { type AnimationAction, Box3, type Color, type Group, LoopOnce, type Material, Mesh, MeshStandardMaterial, type Object3D, Vector3 } from "three";
+import { type AnimationAction, Box3, type Group, LoopOnce, Mesh, type Object3D, Vector3 } from "three";
 
-import { CHARACTERS, type CharacterConfig, OUTFIT_COLORS, SKIN_TONES, displayName } from "@/lib/walk/characters";
+import { CHARACTERS, type CharacterConfig, displayName } from "@/lib/walk/characters";
 import type { Walker } from "@/lib/walk/movement";
 import { WALK } from "@/lib/world/constants";
+
+import { applyColours } from "./recolour";
 
 /**
  * The visitor's character: a CC0 person loaded when walk mode opens, recoloured to the
@@ -29,20 +31,6 @@ const NAME_TAG_LIFT = 0.3;
 /** How long a crossfade between clips takes, in seconds. */
 const CROSSFADE = 0.25;
 
-/** Each material's own colour, kept so "Original" can put it back. */
-const ORIGINAL_COLORS = new WeakMap<Material, Color>();
-
-function recolour(material: Material, hex: string | null): void {
-  if (!(material instanceof MeshStandardMaterial)) return;
-  if (!ORIGINAL_COLORS.has(material)) ORIGINAL_COLORS.set(material, material.color.clone());
-  const original = ORIGINAL_COLORS.get(material);
-  if (hex === null) {
-    if (original) material.color.copy(original);
-  } else {
-    material.color.set(hex);
-  }
-}
-
 function clipFor(speed: number): "Idle" | "Walk" | "Run" {
   if (speed < 0.25) return "Idle";
   return speed < (WALK.walkSpeed + WALK.runSpeed) / 2 ? "Walk" : "Run";
@@ -55,6 +43,12 @@ interface AnimationState {
   waveUntil: number;
 }
 
+/** The scale that makes a character's model its height, from the model's own bounds. */
+export function characterScale(scene: Object3D): number {
+  const height = new Box3().setFromObject(scene).getSize(new Vector3()).y;
+  return height > 0 ? WALK.height / height : 1;
+}
+
 function prepareScene(scene: Object3D): void {
   scene.traverse((node) => {
     if (!(node instanceof Mesh)) return;
@@ -63,16 +57,6 @@ function prepareScene(scene: Object3D): void {
     // A skinned mesh's bounds are its bind pose; walking out of them made it vanish.
     node.frustumCulled = false;
   });
-}
-
-function applyColours(materials: Record<string, Material>, config: CharacterConfig): void {
-  const model = CHARACTERS[config.model];
-  for (const name of model.outfitMaterials) {
-    const material = materials[name];
-    if (material) recolour(material, OUTFIT_COLORS[config.outfit].hex);
-  }
-  const skin = materials[model.skinMaterial];
-  if (skin) recolour(skin, SKIN_TONES[config.skin].hex);
 }
 
 function playWave(state: AnimationState): void {
@@ -107,13 +91,10 @@ export function WalkCharacter({ config, walker, greeting }: WalkCharacterProps):
   const { actions } = useAnimations(gltf.animations, rig);
   const animation = useRef<AnimationState>({ actions, playing: null, waveUntil: 0 });
 
-  const scale = useMemo(() => {
-    const height = new Box3().setFromObject(gltf.scene).getSize(new Vector3()).y;
-    return height > 0 ? WALK.height / height : 1;
-  }, [gltf.scene]);
+  const scale = useMemo(() => characterScale(gltf.scene), [gltf.scene]);
 
   useLayoutEffect(() => prepareScene(gltf.scene), [gltf.scene]);
-  useLayoutEffect(() => applyColours(gltf.materials, config), [gltf.materials, config]);
+  useLayoutEffect(() => applyColours(gltf.materials, config.model, config.outfit, config.skin), [gltf.materials, config]);
 
   useEffect(() => {
     animation.current.actions = actions;

@@ -264,3 +264,12 @@ export function createKayakGeometry(color: string): BufferGeometry {
   paddle.translate(0, 0.42, 0);
   return merge([paint(body, color, "plain"), paint(paddle, WORLD_COLORS.timber, "planks")]);
 }
+
+/** A parasol over a table, the kind that stands along a lakeside promenade. */
+export function createParasolGeometry(canopy: string): BufferGeometry {
+  return merge([
+    post(0.04, 0.05, 2.2, 5, WORLD_COLORS.metal, 0, 0, 0, "metal"),
+    post(1.3, 0.05, 0.18, 8, canopy, 0, 2.15, 0, "plain"),
+    post(0.5, 0.3, 0.12, 8, WORLD_COLORS.stoneDark, 0, 0, 0, "stone"),
+  ]);
+}

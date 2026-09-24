@@ -3,9 +3,11 @@
 import { useKeyboardControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { type Camera, type Group, Raycaster, Vector2, Vector3 } from "three";
 
 import type { CharacterConfig } from "@/lib/walk/characters";
+import { setVisitor, withCrowd } from "@/lib/walk/crowd";
 import { type Walker, directionFromCamera, stepWalker } from "@/lib/walk/movement";
 import { routeBetween, walkWorld, warmWalkGrid } from "@/lib/walk/navigator";
 import { siteFootprints } from "@/lib/walk/obstacles";
@@ -102,9 +104,11 @@ export function WalkScene({ config, creating, walker, stick, route, greeting, pi
   const waypoints = useRef<Point[] | null>(null);
   const currentArea = useRef<string | null>(null);
   const areas = useMemo(() => arrivalAreas(siteFootprints()), []);
-  const world = useMemo(() => walkWorld(), []);
+  // The townsfolk stand in the walker's way; the route grid is built without them.
+  const world = useMemo(() => withCrowd(walkWorld()), []);
 
   useEffect(() => warmWalkGrid(), []);
+  useEffect(() => () => setVisitor(null), []);
 
   useEffect(() => {
     if (route) waypoints.current = routeBetween(walker.current, route.target);
@@ -124,6 +128,7 @@ export function WalkScene({ config, creating, walker, stick, route, greeting, pi
     store(walker, stepWalker(walker.current, { directionX: wanted.x, directionZ: wanted.z, run }, Math.min(delta, 0.05), world));
 
     const { x, z, heading } = walker.current;
+    setVisitor(walker.current);
     body.current?.position.set(x, world.heightAt(x, z), z);
     body.current?.rotation.set(0, heading, 0);
 
@@ -137,9 +142,13 @@ export function WalkScene({ config, creating, walker, stick, route, greeting, pi
   return (
     <>
       <group ref={body}>
-        <Suspense fallback={null}>
-          <WalkCharacter config={config} walker={walker} greeting={greeting} />
-        </Suspense>
+        {/* A model that fails to download leaves the walk without a body, not the hub
+            without a world. */}
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <WalkCharacter config={config} walker={walker} greeting={greeting} />
+          </Suspense>
+        </ErrorBoundary>
       </group>
       <WalkCamera walker={walker} creating={creating} />
     </>
