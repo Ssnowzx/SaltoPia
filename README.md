@@ -40,7 +40,7 @@ the port. See `CLAUDE.md` for that and two other traps.
 | `npm run db:seed` | Rewrite every place and experience from `prisma/seed.ts` |
 | `npm test` | Unit tests of the pure world and walk logic (Node's test runner through tsx) |
 | `npm run check` | Layout, assets, types and lint in one go |
-| `npm run check:layout` | Fails on overlapping buildings, buildings on roads, boats that collide, a house beside its twin, anything of the land standing in the water |
+| `npm run check:layout` | Fails on overlapping buildings, buildings on roads, boats that collide, a house beside its twin, anything of the land in the water or of the water on land, piers and stilt cabins under water, pools across a road |
 | `npm run check:assets` | Fails when a place or experience points at an image that is not on disk |
 | `npm run build:logo` | Rebuild both wordmark files from `logo.png` |
 | `npm run build:crests` | Rebuild the place crests from the pin glyphs |

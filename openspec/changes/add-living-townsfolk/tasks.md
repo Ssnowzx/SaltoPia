@@ -19,5 +19,5 @@
 
 ## 4. Close
 
-- [ ] 4.1 Verify in headed Chrome, unpinned quality: townsfolk walk and wave, no GL error, canvas alive
-- [ ] 4.2 Run `npm run check`, `npm test` and `npm run build`; verify all pass
+- [x] 4.1 Verify in headed Chrome, unpinned quality: townsfolk walk and wave, no GL error, canvas alive
+- [x] 4.2 Run `npm run check`, `npm test` and `npm run build`; verify all pass

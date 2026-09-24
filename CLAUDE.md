@@ -168,7 +168,18 @@ Estas existem porque a apresentação roda numa máquina que ninguém testou.
   DOM; 60 reconciliações por segundo é bug, não detalhe.
 - **Modelo 3D vem de fonte CC0** (Kenney, Quaternius, Poly Pizza) e a origem de cada arquivo
   fica registrada em `web/public/models/CREDITS.md`. CC0 não exige atribuição; trabalho
-  acadêmico exige conseguir mostrar de onde veio tudo.
+  acadêmico exige conseguir mostrar de onde veio tudo. Hoje os únicos modelos baixados são
+  as seis pessoas (personagem do modo a pé e moradores), pedidas só depois do primeiro
+  quadro do mundo.
+- **Pé pisa no que está desenhado.** A altura de quem anda vem de um height field
+  rasterizado da geometria desenhada (`web/src/lib/walk/height-field.ts`), nunca de uma
+  regra calculada à parte. Superfície nova onde se pisa entra nesse campo. Duas vezes uma
+  regra foi usada e duas vezes os pés afundaram (praça, depois calçada).
+- **Download de modelo pode falhar.** Todo `useGLTF` fica dentro de um `ErrorBoundary`
+  (`react-error-boundary`): sem isso, um modelo que não chega derruba o hub inteiro.
+- **Nunca tire um passe de um EffectComposer em execução.** O composer é recriado por
+  nível de qualidade (`key={tier}`). Tirar o AO de um composer vivo congelou o canvas, e os
+  pins, que são HTML, continuaram se mexendo por cima — parecia "pins se afastando".
 
 ---
 
@@ -179,6 +190,9 @@ Estas existem porque a apresentação roda numa máquina que ninguém testou.
 - Um teste por comportamento. Testes isolados, sem depender de ordem.
 - Mocke só API externa. Não mocke o Prisma inteiro — use um banco de teste.
 - Componente 3D não se testa por screenshot; testa-se a **função pura** que ele usa.
+- `npm test` (dentro de `web/`) roda os testes de `web/tests/` com o test runner do Node via
+  tsx. Qualidade automática se testa no Chrome real, com janela e sem `?quality=` fixo:
+  captura headless que fixa o nível nunca vê a troca de nível.
 
 ---
 
@@ -187,7 +201,8 @@ Estas existem porque a apresentação roda numa máquina que ninguém testou.
 - Conventional Commits, mensagem em **inglês**, no imperativo.
 - 1 commit = 1 razão lógica.
 - Branch em kebab-case a partir de `main`: `feature/world-map-camera`.
-- Antes de commitar: `npm run lint` e `npx tsc --noEmit` limpos, sem `console.log`.
+- Antes de commitar: `npm test`, `npm run lint` e `npx tsc --noEmit` limpos, sem `console.log`.
+- Remoto: `origin` = `https://github.com/Ssnowzx/SaltoPia` (privado), branch `main`.
 - O commit referencia a change do OpenSpec quando existir:
   `feat: add camera flight (add-serranopolis-experience)`.
 
@@ -204,6 +219,8 @@ cd web
 npm run dev          # desenvolvimento local
 npm run build        # build de produção (gera os tipos de rota)
 npm run lint
+npm test             # testes da lógica pura (web/tests/)
+npm run check        # layout, assets, tipos e lint de uma vez
 npx tsc --noEmit     # depois do build
 
 cd ..
@@ -220,6 +237,7 @@ openspec status --change <nome>  # o que falta na change
 .
 ├── CLAUDE.md                  ← este arquivo
 ├── docs/
+│   ├── architecture.md        ← mapa do código e as regras que custaram mais caro
 │   └── image-prompts.md       ← briefs de imagem para o Grok
 ├── openspec/
 │   ├── config.yaml            ← contexto do projeto, lido pelos workflows
@@ -228,9 +246,12 @@ openspec status --change <nome>  # o que falta na change
 └── web/                       ← a aplicação Next.js
     ├── prisma/                ← schema e migrations
     ├── public/models/         ← modelos 3D CC0 + CREDITS.md
+    ├── tests/                 ← testes unitários (npm test)
     └── src/
         ├── app/               ← rotas
-        ├── components/
+        ├── components/        ← world-map/ (hub 3D), walk-mode/ (modo a pé e moradores)
         ├── lib/               ← camada de dados, helpers
+        │   ├── world/         ← o mundo gerado em código
+        │   └── walk/          ← modo a pé e moradores, lógica pura
         └── types/             ← tipos compartilhados
 ```

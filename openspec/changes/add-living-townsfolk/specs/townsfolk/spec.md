@@ -22,7 +22,13 @@ fairground's midway - with a walking animation matched to their pace, pausing wh
 way ends before turning back. The others SHALL stand, idle, and from time to time gesture.
 
 Every route and every standing place MUST lie on ground a walker is allowed on: never in the
-water, inside a building or across a prop.
+water, inside a building or across a prop. A townsperson SHALL stand on the surface it is
+over - the square's paving, a pavement, a road - as the visitor's character does, never
+sunk into it.
+
+#### Scenario: Townsperson on a pavement
+- **WHEN** a townsperson strolls along a pavement
+- **THEN** its feet are on the pavement's surface, not in it
 
 #### Scenario: Watching the square
 - **WHEN** the visitor watches the square for half a minute

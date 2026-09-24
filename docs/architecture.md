@@ -2,13 +2,16 @@
 
 This is the document for the parts that are not obvious from the file names: what depends
 on what, and the handful of rules that, when broken, produce the defects that took longest
-to find. The decisions themselves, with their reasoning, are in
-`openspec/changes/add-serranopolis-experience/design.md` (D1–D27); this is the map of the
-code.
+to find. The decisions themselves, with their reasoning, are in the design of each change
+under `openspec/changes/`: `add-serranopolis-experience` (D1–D27, the site),
+`elevate-world-realism` (sky, water, roads, houses, quality tiers), `add-walking-character`
+(walk mode) and `add-living-townsfolk` (the townsfolk, and the feet on what is drawn); this
+is the map of the code.
 
 ## Two halves
 
-**The hub** is `/`. A single WebGL canvas, no scroll, no downloaded models. **The pages**
+**The hub** is `/`. A single WebGL canvas, no scroll, and a world with nothing downloaded
+for it - only its people are models, fetched once it has been drawn. **The pages**
 are everything else: ordinary documents that scroll, with no WebGL at all. They share a
 navigation bar, a footer and a colour palette, and nothing else. Keeping them apart is
 what lets the pages stay fast and the hub stay a scene.
@@ -19,22 +22,32 @@ Everything in `src/lib/world/` is a pure module: data in, geometry out, no React
 dependency order matters, because two of the modules below cannot import each other.
 
 ```
-constants.ts     numbers: palette, camera, fog, sizes
+constants.ts     numbers: palette, camera, sky, water, roads, walk mode, quality tiers
 sites.ts         where every named place is  ─────────────┐   (imports nothing)
 road-network.ts  where every road is  ───────────────┐    │   (imports nothing)
 curves.ts        the one curve builder both use      │    │
         ↓                                            │    │
 terrain.ts       the single source of ground height ←┴────┘
+outer-land.ts    the land past the map's edge, and landHeightAt everywhere
         ↓
-roads.ts         ribbons laid on the graded ground
-builders.ts      primitives: box, post, cone, building, tree
-landmarks.ts     farms.ts  attractions.ts  ufo-port.ts  props.ts  people.ts
+roads.ts  road-junctions.ts  road-surfaces.ts   streets, kerbs, pavements, clean junctions
+builders.ts  building.ts  dwellings.ts          primitives, houses, ten regional designs
+landmarks.ts  farms.ts  attractions.ts  ufo-port.ts  props.ts  groves.ts
         ↓
 neighborhood-layout.ts   what is placed where, and the spacing pass
+
+sky.ts  atmosphere.ts  planar-reflection.ts     the sky, aerial perspective, the lake's mirror
+world-material.ts  terrain-material.ts  road-material.ts  lake-material.ts   the shaders
 ```
 
-`terrain.ts` owns `terrainHeightAt(x, z)`. Every building, road, tree and pin samples it.
-Nothing else may decide how high the ground is — that is why nothing floats or sinks.
+`terrain.ts` owns `terrainHeightAt(x, z)`, and `outer-land.ts` continues it past the map's
+edge as `landHeightAt(x, z)`, which every building, road, tree and pin samples. Nothing else
+may decide how high the ground is — that is why nothing floats or sinks.
+
+`src/lib/walk/` is walk mode and the townsfolk, pure as well: the walk world (blocked
+ground, obstacle circles, the height field of everything stood on), movement, A* routes,
+arrival areas, and the townsfolk's routes and behaviour. It reads the world; the world
+never reads it.
 
 `sites.ts` and `road-network.ts` import nothing on purpose. The terrain reads them to
 grade the ground; the geometry reads them to draw. If either imported the terrain the
@@ -82,14 +95,46 @@ starting in front of the far shore, a shadow frustum smaller than the terrain, a
 meant for one shoreline applied across the whole map. Check extents against the thing they
 must clear.
 
+## Rules from the realism pass and walk mode
+
+**Never take a pass out of a running effect composer.** Removing the ambient-occlusion pass
+when the quality tier stepped down left the composer blitting into a depth texture of
+another format; every frame failed and the canvas froze on its last image, while the pins,
+which are HTML, went on moving over it — it looked like the pins drifting away. The
+composer is keyed on the tier, so each tier gets a new one.
+
+**Clamp the sky before it lights anything.** The analytic sun runs to thousands; bloomed or
+baked into the environment map as it is, it washes the town orange. The drawn sky and the
+baked one are clamped separately.
+
+**The lake draws the scene twice.** Its mirror is a second render of everything reflected;
+what sits on the unreflected layer (the far woods) is left out of it. Anything added near
+the water costs double.
+
+**The feet stand on what is drawn.** A walker's height comes from a height field rasterised
+from the drawn geometry — the road surface and the open places' floors — never from a rule.
+Twice a rule was written instead (the carriageway's height on any street, then nothing for
+the square's paving) and twice the feet sank. A new raised surface belongs in that field.
+
+**Nothing returned by a hook is written to.** React's compiler lint rejects it, and it is
+right to: the three.js objects a frame loop moves are held in refs, reached through `get()`,
+or changed by module functions.
+
+**A download can fail.** Every model load sits inside an error boundary; a model that does
+not arrive leaves its people out, not the hub without a world.
+
 ## The checks
 
-`npm run check` runs all of them. Two are specific to this project and both have caught
-real defects:
+`npm run check` runs all of them, and `npm test` the unit tests of the pure logic — noise,
+the lake's mirror, groves, junctions, house designs, the walk world and the townsfolk. Two
+of the checks are specific to this project and both have caught real defects:
 
 - **`check:layout`** — no building overlaps another, none stands on a road, no car park
-  crosses a street, and the two boat routes neither cross each other nor run aground.
-  Landmarks are excused from the road test: a driveway ending at the door is the point.
+  crosses a street, and the two boat routes neither cross each other nor run aground. No
+  house stands beside its twin; nothing of the land stands in the water, and nothing of the
+  water on land: piers run from the bank out over the water, stilt cabins keep their floor
+  dry, and no lake house's pool lies across a road. Landmarks are excused from the road
+  test: a driveway ending at the door is the point.
 - **`check:assets`** — every image path in the database exists on disk. It found three
   crests still pointing at `.webp` files that stopped being written when the crests became
   SVG, and the cause: the seed's update branch was not setting the paths, so rows created
@@ -112,6 +157,24 @@ when the camera settles. The card traps Tab and hands focus back to its pin on E
 Left alone for three seconds the camera does two things: it resumes its slow sway, and, if
 it is back in its widest band, it eases the aim back onto the composed wide shot. Both are
 in `camera-rig.tsx`, because all of it contends for one camera.
+
+Three quality tiers (`quality-tier.ts`) set the pixel ratio, the resolution of the lake's
+reflection (none on the lowest) and whether ambient occlusion runs. drei's `PerformanceMonitor` steps down one tier after a
+sustained drop under 30 fps and never back up, so the image does not oscillate;
+`?quality=high|medium|low` pins one, and the tier in use is on the root as `data-quality`.
+Test the unpinned path in a real, headed Chrome: every headless capture that pinned a tier
+missed the freeze described above.
+
+**Walk mode** swaps the camera's owner: in the air `CameraRig`, on foot `WalkScene` and its
+follow camera — never both. A pin then walks the character to its place instead of flying
+the camera. The walker is a pure step (`lib/walk/movement.ts`) over the walk world, and the
+frame loop writes its position straight into the scene, as the projector does for pins.
+
+**The townsfolk** mount once the scene has drawn its first frame and the walk world has been
+built in an idle moment. Each is a `SkeletonUtils` clone of one of the six people with its
+own materials and mixer; their positions go into a small shared list the walker collides
+with. Off-screen they are culled in every pass; far away they cast no shadow and animate
+every fourth frame.
 
 `viewport-framing.tsx` widens the vertical field of view by however much the viewport
 falls short of 16:9, which holds the horizontal field — the axis the town is laid out
@@ -139,7 +202,10 @@ client router would need an experimental flag, and the demo cannot afford one. T
 
 ## Assets
 
-Nothing is fetched at runtime and nothing is vendored.
+The only files fetched for the 3D scene are the six people in `public/models/characters/`
+— CC0 models by Quaternius, cut to six clips and meshopt-compressed to about 0.5 MB each.
+`public/models/CREDITS.md` records where each came from and how it was processed. Nothing
+else is vendored.
 
 - **Wordmark** — `scripts/build-logo.py` cuts two files from `logo.png`: one with the paper
   card shaped to the emblem and faded out, for use over the map, and one cut out, for the
@@ -157,12 +223,14 @@ Nothing is fetched at runtime and nothing is vendored.
 
 1. Add it to `SITES` in `sites.ts` with its pad and clearing radii.
 2. Give it a model in `MODEL_REGISTRY` and a row in `SITE_LANDMARKS`.
-3. Add a driveway in `road-network.ts` so it can be reached.
+3. Add a driveway in `road-network.ts` so it can be reached. If it is open ground — a
+   square, an apron — add its model to `OPEN_GROUND` in `lib/walk/obstacles.ts`, so walk
+   mode walks through it instead of round it.
 4. Add a pin glyph to `pin-icons.ts`.
 5. Add the place and its experiences to `prisma/seed.ts`, then `npm run db:seed`.
 6. Add a brief to `docs/image-prompts.md`, put the images in `public/images/` — hero,
    experiences, and six in `public/images/places/<slug>/` — then `npm run images:sharpen`.
-7. Run `npm run check`.
+7. Run `npm run check` and `npm test`.
 
 Steps 1–3 are separate files on purpose, and step 7 is what catches it when one is
 forgotten.

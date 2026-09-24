@@ -131,6 +131,12 @@ mesh, which is 137k triangles.
   8 m minimum a visitor could stand in the square without having arrived there.
 - React's compiler lint forbids writing to values that come from hooks or props; the
   three.js objects the frame loop mutates are reached through refs or module functions.
+- Changed since by `add-living-townsfolk`: the six models are fetched once the world has
+  been drawn, for the townsfolk, rather than only when walk mode opens; the character is
+  wrapped in an error boundary, so a failed download leaves the walk without a body instead
+  of the hub without a world; its recolouring moved to `recolour.ts`, shared with the
+  townsfolk; and the feet stand on the drawn surfaces (D4). The procedural crowd named
+  under D1's alternatives is gone.
 
 ## Risks / Trade-offs
 

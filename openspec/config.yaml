@@ -42,10 +42,17 @@ context: |
   no server-specific paths, no assumed reverse proxy, no hardcoded domains -
   moving to the VPS must be an .env change, not a code change.
 
-  3D ASSETS: CC0 low-poly kits (Kenney City Kit, Quaternius, Poly Pizza),
-  composed at runtime from a typed layout data file rather than one giant
-  pre-baked GLB. Araucaria trees - the signature tree of the Serra - are
-  generated procedurally in three.js because no CC0 kit ships them.
+  3D ASSETS: the world is generated in code at runtime from typed layout data -
+  terrain, roads, buildings, trees, boats, sky and every texture - so nothing is
+  downloaded for it. Araucaria trees - the signature tree of the Serra - are
+  generated procedurally in three.js. The only downloaded models are six CC0
+  people by Quaternius (from Poly Pizza), used for the visitor's walking
+  character and the townsfolk and fetched after the world has been drawn;
+  web/public/models/CREDITS.md records their source.
+
+  WALK MODE: the visitor creates a character and walks the community; townsfolk
+  stroll and stand about it. A walker's feet stand on the drawn geometry, read
+  into a height field - never on a height worked out by rule.
 
   CONVENTIONS:
   - All identifiers, filenames, comments and commit messages in English.
