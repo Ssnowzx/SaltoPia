@@ -1,14 +1,13 @@
 import type { BufferGeometry } from "three";
 
+import { type BuildingSpec, createBuildingGeometry } from "./building";
 import {
-  type BuildingSpec,
   arch,
   awning,
   blob,
   box,
   cone,
   createBenchGeometry,
-  createBuildingGeometry,
   createCafeTableGeometry,
   createFenceGeometry,
   createLamppostGeometry,

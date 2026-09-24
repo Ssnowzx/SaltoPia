@@ -2,6 +2,7 @@ import { BufferAttribute, BufferGeometry, Color, PlaneGeometry } from "three";
 
 import { LAKE, TERRAIN, WORLD_COLORS, WORLD_SEED } from "./constants";
 import { flattenCurve } from "./curves";
+import { groveDensityAt } from "./groves";
 import { fractalNoise2D } from "./noise";
 import { BRIDGES, ROAD_POLYLINES, YARDS } from "./road-network";
 import { CHALET_SITES, SITES } from "./sites";
@@ -215,8 +216,8 @@ function ridgeHeightAt(x: number, z: number): number {
   return highest;
 }
 
-/** The hill the lookout stands on, west of the peninsula. */
-const MIRANTE_HILL = { x: -132, z: -96, height: 20, radius: 40 } as const;
+/** The hill the lookout stands on, at the north-west end of the far shore. */
+const MIRANTE_HILL = { x: -196, z: -156, height: 18, radius: 38 } as const;
 
 interface FlatPad {
   readonly x: number;
@@ -245,7 +246,7 @@ const FLAT_PADS: readonly FlatPad[] = [
   { x: 22, z: 124, radius: 7, falloff: 5 },
   // Car parks. Without their own ground the cars stood on a slope, and a flat-bottomed
   // car on a slope floats at one end.
-  { x: 26, z: 100, radius: 12, falloff: 7 },
+  { x: 25.4, z: 100, radius: 12, falloff: 7 },
   { x: 144, z: 106, radius: 9, falloff: 6 },
   // The chalets on the ridge, each on its own shelf so it does not tip down the slope.
   ...CHALET_SITES.map(([x, z]) => ({ x, z, radius: 6, falloff: 4 })),
@@ -458,34 +459,80 @@ export function terrainHeightAt(x: number, z: number): number {
   return height + (grade.level - height) * grade.weight;
 }
 
-/** The grass/straw/sand/rock blend at a point. */
-function surfaceColorAt(x: number, z: number, height: number): Color {
-  const grass = new Color(WORLD_COLORS.grass);
-  const grassDeep = new Color(WORLD_COLORS.grassDeep);
-  const straw = new Color(WORLD_COLORS.straw);
-  const hillGold = new Color(WORLD_COLORS.hilltop);
-  const lakeBed = new Color("#5f8f86");
+const GRASS = new Color(WORLD_COLORS.grass);
+const GRASS_DEEP = new Color(WORLD_COLORS.grassDeep);
+const PASTURE = new Color(WORLD_COLORS.pasture);
+const FOREST_FLOOR = new Color(WORLD_COLORS.forestFloor);
+const HILL_GOLD = new Color(WORLD_COLORS.hilltop);
+const STRAW = new Color(WORLD_COLORS.straw);
+const LAKE_BED = new Color(WORLD_COLORS.lakeBed);
 
-  const patch = fractalNoise2D(x * 0.04, z * 0.04, WORLD_SEED + 31, 3);
-  const base = grassDeep.clone().lerp(grass, patch);
+/**
+ * The ground's colour at a point: meadow and drier pasture in broad irregular fields, the
+ * darker floor of the woods under the grove field, gold on the high tops.
+ *
+ * One green everywhere read as a painted board. The fields are low-frequency on purpose -
+ * at the hub's distance a field a hundred metres across is what reads as land.
+ */
+export function surfaceColorAt(x: number, z: number, height: number): Color {
+  const lush = fractalNoise2D(x * 0.012, z * 0.012, WORLD_SEED + 31, 3);
+  const base = GRASS_DEEP.clone().lerp(GRASS, lush);
+
+  const dry = smoothstep(0.52, 0.78, fractalNoise2D(x * 0.0065 + 11, z * 0.0065, WORLD_SEED + 37, 3));
+  base.lerp(PASTURE, dry * 0.75);
+
+  base.lerp(FOREST_FLOOR, groveDensityAt(x, z) * 0.7);
 
   // The far ground goes golden only well beyond the chalets. Starting the blend at
   // z = -105 - in front of the far shore at z = -120 - turned the land right behind
   // them into desert, which is what it looked like.
-  base.lerp(hillGold, smoothstep(-300, -430, z) * 0.45);
+  base.lerp(HILL_GOLD, smoothstep(-300, -430, z) * 0.45);
   // Straw only on the hilltops. From 18 up, the whole plateau - which starts at 30 -
   // went the colour of a dry paddock.
-  base.lerp(straw, smoothstep(36, 54, height) * 0.22);
+  base.lerp(STRAW, smoothstep(36, 54, height) * 0.22);
 
-  // The lake bed below the water. The beach itself is drawn by the terrain material,
+  // The lake bed below the water. The bank itself is drawn by the terrain material,
   // per pixel - see terrain-material.ts.
-  base.lerp(lakeBed, smoothstep(LAKE.level + 0.2, LAKE.floor, height));
+  base.lerp(LAKE_BED, smoothstep(LAKE.level + 0.2, LAKE.floor, height));
 
   return base;
 }
 
-/** Builds the terrain mesh geometry with baked vertex colours. */
-export function createTerrainGeometry(): BufferGeometry {
+/** A dwelling's yard: the mown grass around it. */
+export interface Yard {
+  readonly x: number;
+  readonly z: number;
+  readonly radius: number;
+}
+
+const LAWN = new Color(WORLD_COLORS.lawn);
+
+/** Over how many metres a lawn fades into the field around it. */
+const YARD_FADE = 3.5;
+
+/**
+ * How much of a yard's mown lawn a point takes, in [0, 1].
+ *
+ * The edge wanders with noise and fades over a few metres. A disc of a different green
+ * under each house read as a sticker; a lawn's edge is where the mower stopped.
+ */
+export function yardWeightAt(x: number, z: number, yards: readonly Yard[]): number {
+  let weight = 0;
+  for (const yard of yards) {
+    const d = distance(x, z, yard.x, yard.z);
+    if (d > yard.radius * 1.5 + YARD_FADE) continue;
+    const wander = 0.75 + 0.5 * fractalNoise2D(x * 0.14, z * 0.14, WORLD_SEED + 41, 2);
+    weight = Math.max(weight, 1 - smoothstep(yard.radius * wander, yard.radius * wander + YARD_FADE, d));
+  }
+  return weight;
+}
+
+/**
+ * Builds the terrain mesh geometry with baked vertex colours.
+ *
+ * @param yards - The dwellings' yards, mown lighter than the field around them.
+ */
+export function createTerrainGeometry(yards: readonly Yard[] = []): BufferGeometry {
   const geometry = new PlaneGeometry(TERRAIN.size, TERRAIN.size, TERRAIN.segments, TERRAIN.segments);
   geometry.rotateX(-Math.PI / 2);
 
@@ -500,7 +547,7 @@ export function createTerrainGeometry(): BufferGeometry {
 
     positions.setY(index, height);
 
-    const color = surfaceColorAt(x, z, height);
+    const color = surfaceColorAt(x, z, height).lerp(LAWN, yardWeightAt(x, z, yards) * 0.8);
     colors[index * 3] = color.r;
     colors[index * 3 + 1] = color.g;
     colors[index * 3 + 2] = color.b;

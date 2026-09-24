@@ -6,9 +6,10 @@ import type { BufferGeometry, Mesh } from "three";
 import { CatmullRomCurve3, DoubleSide, MeshBasicMaterial, Vector3 } from "three";
 
 import { box, merge, post } from "@/lib/world/builders";
-import { LAKE, ROAD, UFO_PORT, VEHICLES, WORLD_COLORS } from "@/lib/world/constants";
+import { LAKE, UFO_PORT, VEHICLES, WORLD_COLORS } from "@/lib/world/constants";
 import { createSailboatGeometry, createSedanGeometry, createYachtGeometry, wheel } from "@/lib/world/props";
-import { CAR_CURVE, SAILBOAT_CURVE, YACHT_CURVE, surfaceHeightAt } from "@/lib/world/roads";
+import { CAR_CURVE, SAILBOAT_CURVE, YACHT_CURVE } from "@/lib/world/roads";
+import { carriagewayHeightAt } from "@/lib/world/road-surfaces";
 import { smoothstep, terrainHeightAt } from "@/lib/world/terrain";
 import { CAROUSEL, DROP_TOWER, FERRIS_WHEEL, SWING, createCarouselGeometry, createDropRingGeometry, createFerrisWheelGeometry, createSwingGeometry } from "@/lib/world/attractions";
 import { siteAt } from "@/lib/world/sites";
@@ -130,7 +131,7 @@ export function Vehicles(): React.ReactElement {
   const yachtLength = useMemo(() => YACHT_CURVE.getLength(), []);
   const sailboatLength = useMemo(() => SAILBOAT_CURVE.getLength(), []);
 
-  const onRoad = (x: number, z: number): number => surfaceHeightAt(x, z) + ROAD.lift;
+  const onRoad = (x: number, z: number): number => carriagewayHeightAt(x, z);
   const onWater = (): number => LAKE.level + VEHICLES.boatFreeboard * BOAT_SCALE;
 
   useFrame(({ clock }) => {
@@ -149,6 +150,9 @@ export function Vehicles(): React.ReactElement {
       // `placeOnCurve` faces along the curve; on the way back the vehicle drives the
       // other way down the same road.
       if (!outbound) mesh.rotateY(Math.PI);
+      // Keep to the right-hand lane, as traffic does in Brazil. A vehicle faces +Z, so
+      // its right is -X in its own frame - whichever way it is driving.
+      mesh.translateX(-VEHICLES.laneOffset);
     }
     // The roll is applied on top of the heading with rotateZ, never by writing the
     // Euler's z. `lookAt` can express a heading as (x = pi, y, z = pi), and overwriting

@@ -38,8 +38,9 @@ the port. See `CLAUDE.md` for that and two other traps.
 | `npm run dev` | Development server on 3001 |
 | `npm run build` / `npm start` | Production build and server |
 | `npm run db:seed` | Rewrite every place and experience from `prisma/seed.ts` |
+| `npm test` | Unit tests of the pure world and walk logic (Node's test runner through tsx) |
 | `npm run check` | Layout, assets, types and lint in one go |
-| `npm run check:layout` | Fails on overlapping buildings, buildings on roads, boats that collide |
+| `npm run check:layout` | Fails on overlapping buildings, buildings on roads, boats that collide, a house beside its twin, anything of the land standing in the water |
 | `npm run check:assets` | Fails when a place or experience points at an image that is not on disk |
 | `npm run build:logo` | Rebuild both wordmark files from `logo.png` |
 | `npm run build:crests` | Rebuild the place crests from the pin glyphs |
@@ -71,9 +72,13 @@ into `.next/types` during the build.
 ## How it fits together
 
 The **hub** (`/`) is a `@react-three/fiber` canvas. Nothing in the world is downloaded:
-the terrain, the roads, every building, tree and boat are generated at runtime from the
-numbers in `src/lib/world/`. The 3D payload is therefore zero bytes, which is the whole
-reason the world can be inspected, changed and reviewed like any other code.
+the terrain, the roads, every building, tree and boat, the sky and every texture are
+generated at runtime from the numbers in `src/lib/world/`. The world's 3D payload is
+therefore zero bytes, which is the whole reason it can be inspected, changed and reviewed
+like any other code. The sky is a physically based sunset that also lights the scene, the
+lake is a planar reflection, and three quality tiers step down on their own on a slow
+machine (`?quality=high|medium|low` pins one) - see
+`openspec/changes/elevate-world-realism/`.
 
 The **pins** are HTML above the canvas, not objects inside it. A projector writes each
 pin's screen position straight to its DOM node every frame, outside React's render cycle.

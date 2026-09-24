@@ -1,5 +1,6 @@
 /**
- * Fails when a building overlaps another building or sits on a road.
+ * Fails when a building overlaps another building or sits on a road, when a house stands
+ * beside its twin, or when something that belongs on land stands in the water.
  *
  * The layout is assembled from a site table, an authored house list and a spacing pass,
  * and every time the road network or a landmark moves the result can drift. Run it after
@@ -7,12 +8,22 @@
  *
  * Landmarks may touch their own driveway; houses, shops and chalets may not touch any.
  */
-import { LANDMARKS } from "../src/lib/world/neighborhood-layout";
+import { HOUSES, LANDMARKS, type ModelKey, type Placement, createScatter, footprintOf } from "../src/lib/world/neighborhood-layout";
 import { PARKING_LOTS, ROAD_POLYLINES } from "../src/lib/world/road-network";
 import { SAILBOAT_CURVE, YACHT_CURVE } from "../src/lib/world/roads";
-import { lakeDistance, peninsulaDistance } from "../src/lib/world/terrain";
-const R: Record<string, number> = { lakeHouse: 8.4, houseWhitewash: 3.6, houseYellow: 3.6, houseTimber: 3.6, houseMint: 3.6, cabana: 2.8, shopBrick: 4.2, shopYellow: 4.2, shopMint: 4.2, shopTimber: 4.2, aFrameShingle: 3.4, aFrameSlate: 3.4, aFrameTile: 3.4, stiltCabin: 4, pousada: 11, praca: 11, galpao: 9, ctg: 9, estacao: 11, vinicola: 8, chapel: 4, farmRed: 26, farmOchre: 26, farmTimber: 26 };
-const b = LANDMARKS.filter((p) => R[p.model] !== undefined);
+import { LAKE, RIVER } from "../src/lib/world/constants";
+import { landHeightAt } from "../src/lib/world/outer-land";
+import { lakeDistance, peninsulaDistance, riverDistance } from "../src/lib/world/terrain";
+// Every building, with the keep-out radius the layout itself spaces them by. Kept in step
+// with the layout by reading it, not by a second list of names that goes stale.
+const BUILT: ReadonlySet<ModelKey> = new Set<ModelKey>([
+  ...HOUSES.map((house) => house.model),
+  "shopBrick", "shopYellow", "shopMint", "shopTimber", "aFrameShingle", "aFrameSlate", "aFrameTile", "chaletGable", "stiltCabin",
+  "pousada", "praca", "galpao", "ctg", "estacao", "vinicola", "chapel", "farmRed", "farmOchre", "farmTimber",
+]);
+const radius = (p: Placement): number => footprintOf(p) / p.scale;
+const R: Record<string, number> = Object.fromEntries([...BUILT].map((model) => [model, radius(LANDMARKS.find((p) => p.model === model) ?? { model, x: 0, z: 0, rotationY: 0, scale: 1, yOffset: 0 })]));
+const b = LANDMARKS.filter((p) => BUILT.has(p.model));
 let bad = 0;
 for (let i = 0; i < b.length; i += 1) for (let j = i + 1; j < b.length; j += 1) {
   const need = (R[b[i].model] * b[i].scale + R[b[j].model] * b[j].scale) * 0.85;
@@ -63,6 +74,36 @@ for (const p of LANDMARKS.filter((m) => m.afloat)) {
   }
 }
 console.log(`boat loops: closest approach ${closest.toFixed(1)}`);
+
+// No house stands beside its twin: the nearest dwelling to every dwelling is of another
+// design - world-appearance spec, "Buildings read as built".
+for (const house of HOUSES) {
+  let nearest: Placement | null = null;
+  for (const other of HOUSES) {
+    if (other === house) continue;
+    if (!nearest || Math.hypot(other.x - house.x, other.z - house.z) < Math.hypot(nearest.x - house.x, nearest.z - house.z)) nearest = other;
+  }
+  if (nearest && nearest.model === house.model) { bad += 1; console.log(`TWIN ${house.model}(${house.x.toFixed(0)},${house.z.toFixed(0)}) beside the same at (${nearest.x.toFixed(0)},${nearest.z.toFixed(0)})`); }
+}
+
+// Nothing that belongs on land stands in the water - world-appearance spec, "Nothing
+// stands where it cannot". Piers and stilt cabins stand in it on purpose; boats float.
+const WATERBORNE = new Set<ModelKey>(["pier", "stiltCabin", "restaurant", "rock", "salto"]);
+/** How far above the water the ground must stand to count as dry. */
+const WET_MARGIN = 0.3;
+/** Below the dam the river runs in a gorge far under the lake's level; there it is the
+ * river's own channel that is wet, not everything under the lake's surface height. */
+const GORGE_REACH = 30;
+// The ground's height says whether a point is wet: the lake's half-spaces run on past the
+// map's edge, and the lookout's hill rises out of them. The river gorge below the dam is
+// left out - its boulders stand in the current on purpose.
+const inGorge = (x: number, z: number): boolean => x > LAKE.dam.x - 4 && riverDistance(x, z) < GORGE_REACH;
+const inWater = (x: number, z: number): boolean =>
+  inGorge(x, z) ? riverDistance(x, z) < RIVER.halfWidth + 0.5 : landHeightAt(x, z) < LAKE.level + WET_MARGIN;
+for (const p of [...LANDMARKS, ...createScatter()]) {
+  if (p.afloat || WATERBORNE.has(p.model)) continue;
+  if (inWater(p.x, p.z)) { bad += 1; console.log(`IN THE WATER ${p.model}(${p.x.toFixed(1)},${p.z.toFixed(1)}) ground ${landHeightAt(p.x, p.z).toFixed(1)}`); }
+}
 
 const expected = 0;
 console.log(bad <= expected ? "LAYOUT OK" : `LAYOUT PROBLEMS: ${bad}`);

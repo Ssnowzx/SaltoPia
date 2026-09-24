@@ -1,14 +1,12 @@
 import { BoxGeometry, type BufferGeometry } from "three";
 
+import { type BuildingSpec, chimneyTopFor, createBuildingGeometry, roofSurfaceHeight } from "./building";
 import {
-  type BuildingSpec,
   arch,
   blob,
   box,
-  chimneyTopFor,
   cone,
   createBenchGeometry,
-  createBuildingGeometry,
   createCafeTableGeometry,
   createFenceGeometry,
   createGableRoofGeometry,
@@ -83,13 +81,11 @@ function pool(x: number, z: number, width = 5, depth = 3.2): BufferGeometry[] {
 /** Solar panels laid on the +X slope of a gable roof. */
 function solarPanels(spec: BuildingSpec, count: number): BufferGeometry[] {
   const parts: BufferGeometry[] = [];
-  const wallTop = spec.height * (spec.stories ?? 1);
-  const halfSpan = spec.width * 0.56;
-  const slope = Math.atan(spec.roofHeight / halfSpan);
+  const slope = Math.atan2(spec.roofHeight, spec.width / 2);
   for (let index = 0; index < count; index += 1) {
     const z = -spec.depth * 0.4 + (index * spec.depth * 0.8) / Math.max(1, count - 1);
-    const x = halfSpan * 0.55;
-    const y = wallTop + spec.roofHeight * (1 - x / halfSpan) + 0.12;
+    const x = spec.width * 0.28;
+    const y = roofSurfaceHeight(spec, x) + 0.1;
     const panel = new BoxGeometry(1.5, 0.08, 1.1);
     panel.rotateZ(-slope);
     panel.translate(x, y, z);
@@ -140,7 +136,9 @@ export function createPracaGeometry(): BufferGeometry {
     parts.push(place(createLamppostGeometry(), Math.cos(angle) * 9.4, pavingTop, Math.sin(angle) * 9.4));
   }
 
-  for (let index = 0; index < 4; index += 1) {
+  // Hedges on the lake side only. The two on the east side stood across the shore street
+  // once it was widened to two lanes and a pavement - one lay over the zebra crossing.
+  for (const index of [1, 2]) {
     const angle = (index / 4) * Math.PI * 2 + Math.PI / 4;
     const radius = 11.6;
     const directionX = -Math.sin(angle);

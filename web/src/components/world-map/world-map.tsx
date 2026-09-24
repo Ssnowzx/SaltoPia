@@ -1,22 +1,25 @@
 "use client";
 
+import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { type DirectionalLight, Object3D, PCFShadowMap } from "three";
 
 import { SiteHeader } from "@/components/site-header";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { CAMERA, FOG, RENDERER, SKY_COLORS } from "@/lib/world/constants";
+import { installAerialPerspective } from "@/lib/world/atmosphere";
+import { CAMERA, FOG, QUALITY_TIERS, SHADOW, SKY_COLORS, SUN_LIGHT } from "@/lib/world/constants";
 import type { Place } from "@/types";
 
 import { CameraRig } from "./camera-rig";
-import { Clouds } from "./clouds";
 import { IntroOverlay } from "./intro-overlay";
+import { LakeReflection } from "./lake-reflection";
 import { Neighborhood } from "./neighborhood";
 import { PinOverlay, type PinNodes } from "./pin-overlay";
 import { PinProjector } from "./pin-projector";
 import { PlaceCard } from "./place-card";
 import { PostEffects } from "./post-effects";
+import { useQualityTier } from "./quality-tier";
 import { SceneReady } from "./scene-ready";
 import { ViewportFraming } from "./viewport-framing";
 import { SkyDome } from "./sky-dome";
@@ -56,9 +59,9 @@ function SunLight(): React.ReactElement {
       <primitive object={target} />
       <directionalLight
         ref={lightRef}
-        position={[96, 118, 44]}
-        intensity={2.5}
-        color="#ffd6a2"
+        position={[SUN_LIGHT.position.x, SUN_LIGHT.position.y, SUN_LIGHT.position.z]}
+        intensity={SUN_LIGHT.intensity}
+        color={SUN_LIGHT.color}
         castShadow
         // The frustum has to contain everything that receives shadow: past its edge a
         // fragment samples outside the depth map and comes back fully shadowed, which
@@ -75,10 +78,14 @@ function SunLight(): React.ReactElement {
         // roads' own depth without lifting the shadows off the trees' feet.
         shadow-normalBias={0.5}
         shadow-intensity={0.82}
+        shadow-radius={SHADOW.radius}
       />
     </>
   );
 }
+
+// Every material compiled from here on takes aerial perspective instead of flat fog.
+installAerialPerspective();
 
 /** How long the entry waits for the world before opening regardless. */
 const ENTRY_TIMEOUT_MS = 8000;
@@ -115,10 +122,24 @@ function subscribeToNothing(): () => void {
 }
 
 /** Where the key light points: the middle of the community. */
-const SUN_TARGET = { x: 50, y: 0, z: 10 } as const;
+const SUN_TARGET = SUN_LIGHT.target;
+
+/**
+ * The frame rates the performance monitor holds between: it steps quality down only on a
+ * sustained drop under the lower bound. At its default of 50 the development build, which
+ * runs well under the production one, dropped a fast machine to the lowest tier at once.
+ */
+function performanceBounds(): [number, number] {
+  return [QUALITY_FLOOR_FPS, QUALITY_CEILING_FPS];
+}
+
+const QUALITY_FLOOR_FPS = 30;
+const QUALITY_CEILING_FPS = 60;
 
 export function WorldMap({ places }: WorldMapProps): React.ReactElement {
   const reducedMotion = usePrefersReducedMotion();
+  const { tier, decline } = useQualityTier();
+  const quality = QUALITY_TIERS[tier];
   const [entered, setEntered] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const handleSceneReady = useCallback(() => setSceneReady(true), []);
@@ -159,13 +180,17 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
   const getPinNode = useCallback((slug: string) => pinNodes.current.get(slug) ?? null, []);
 
   return (
-    <div className="relative h-full w-full">
+    // The quality tier in use, readable from the page - for tests and for asking "which
+    // tier is the demo machine on?" without opening the console.
+    <div className="relative h-full w-full" data-quality={tier}>
       {/* A hair of blur while the card is open: enough to sit the card forward without
           losing the place the camera just flew to, which is the point of the flight. */}
-      <div className={`h-full w-full touch-none transition-[filter] duration-300 ease-out ${cardOpen ? "blur-[3px]" : ""}`}>
+      <div
+        className={`h-full w-full touch-none transition-[filter] duration-300 ease-out ${cardOpen ? "blur-[3px]" : ""}`}
+      >
         <Canvas
           // Capped so a dense display cannot multiply fragment cost - world-map spec.
-          dpr={[1, RENDERER.maxPixelRatio]}
+          dpr={[1, quality.maxPixelRatio]}
           shadows={{ type: PCFShadowMap }}
           camera={{
             fov: CAMERA.fov,
@@ -178,25 +203,29 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
           <color attach="background" args={[SKY_COLORS.haze]} />
           <fog attach="fog" args={[SKY_COLORS.haze, FOG.near, FOG.far]} />
 
-          {/* Warm key from the sun's side, cool sky fill: the contrast between the two is
-              what makes a sunset read as a sunset rather than a single orange. */}
+          {/* The warm key is the sun; the fill is the sky itself, baked into the
+              environment by SkyDome - no hemisphere or ambient stand-ins. */}
           <SunLight />
-          <directionalLight position={[110, 40, -160]} intensity={0.9} color="#ffb070" />
-          <hemisphereLight args={["#8a97c4", "#5a4a30", 0.6]} position={[0, 60, 0]} />
-          <ambientLight intensity={0.16} color="#d9c6ad" />
 
           <Suspense fallback={null}>
-            <WorldMaterialsProvider>
-              <SkyDome />
+            <WorldMaterialsProvider reducedMotion={reducedMotion}>
+              <SkyDome reducedMotion={reducedMotion} />
               <Neighborhood />
-              <Clouds />
+              <LakeReflection scale={quality.reflection} />
               <Vehicles />
-              <Smoke />
+              <Smoke reducedMotion={reducedMotion} />
             </WorldMaterialsProvider>
-            <PostEffects />
+            {/* Keyed on the tier: a new composer for each. Taking the AO pass out of a
+              running composer left its multisampled buffer resolving into a depth texture
+              of another format - every frame failed to blit and the canvas froze on its
+              last image while the pins went on moving over it. */}
+            <PostEffects key={tier} ambientOcclusion={quality.ambientOcclusion} />
             <SceneReady onReady={handleSceneReady} />
           </Suspense>
 
+          {/* Steps quality down after a sustained drop in frame rate, never back up, so the
+              image does not oscillate - design.md D10 of elevate-world-realism. */}
+          <PerformanceMonitor bounds={performanceBounds} onDecline={decline} />
           <ViewportFraming />
           <PinProjector places={places} nodes={pinNodes} hidden={!exploring || isFlying} />
 

@@ -78,8 +78,8 @@ const PLACES: readonly PlaceSeed[] = [
       "Uma plataforma de pedra no alto do morro a oeste. Nas manhãs frias a neblina cobre o lago até a ilha, e você fica em cima dela. Chegue antes do sol nascer — depois das nove, o mar de nuvem já foi embora.",
     offer: "Amanhecer guiado",
     accent: "#565a91",
-    world: [-132, 0, -96],
-    camera: [-112, 30, -44],
+    world: [-196, 0, -156],
+    camera: [-166, 30, -108],
     experiences: [
       { slug: "mar-de-nuvens", name: "Mar de nuvens ao amanhecer", description: "Saída às cinco da manhã. Café quente na garrafa e o lago sumindo debaixo da nuvem.", kind: "TOUR", durationMinutes: 150 },
     ],

@@ -19,7 +19,8 @@
     "check": "npm run check:layout && npm run check:assets && npx tsc --noEmit && npx eslint src scripts prisma --ext .ts,.tsx",
     "build:logo": "python3 scripts/build-logo.py",
     "build:crests": "tsx scripts/build-crests.ts",
-    "images:sharpen": "python3 scripts/sharpen-photos.py"
+    "images:sharpen": "python3 scripts/sharpen-photos.py",
+    "test": "node --import tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

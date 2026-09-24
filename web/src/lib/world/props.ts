@@ -2,6 +2,7 @@ import { BoxGeometry, BufferGeometry, ConeGeometry, CylinderGeometry, Float32Buf
 
 import { blob, box, createGableRoofGeometry, merge, paint, post } from "./builders";
 import { WORLD_COLORS } from "./constants";
+import type { SurfaceKey } from "./textures";
 import { createRandom } from "./noise";
 
 /**
@@ -127,23 +128,57 @@ export function createPierGeometry(length = 10, width = 2.2): BufferGeometry {
   return merge(parts);
 }
 
-/** An A-frame chalet facing +Z: the roof is the wall, all the way to the ground. */
+/** A flat triangle, wound as given. */
+function pane(points: ReadonlyArray<readonly [number, number, number]>, color: string, surface: SurfaceKey): BufferGeometry {
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new Float32BufferAttribute(points.flat(), 3));
+  return paint(geometry, color, surface);
+}
+
+/**
+ * An A-frame chalet facing +Z: the roof is the wall, two thick slabs down to a stone
+ * plinth, the front gable glazed floor to ridge behind timber mullions, a deck out front.
+ * Built as a solid prism with a door and a window, it read from the hub as a red tent.
+ */
 export function createAFrameGeometry(roofColor: string, roofSurface: "shingle" | "slate" | "tiles" = "shingle"): BufferGeometry {
-  const width = 4.4;
-  const depth = 5.2;
-  const height = 4.4;
-  const parts: BufferGeometry[] = [];
+  const width = 4.6;
+  const depth = 5.4;
+  const height = 4.8;
+  const base = 0.3;
+  const thickness = 0.16;
+  const halfWidth = width / 2;
+  const pitch = Math.atan2(height, halfWidth);
+  const slope = (halfWidth + 0.3) / Math.cos(pitch);
+  const length = depth + 0.7;
+  const parts: BufferGeometry[] = [box(width + 0.5, base, depth + 0.4, WORLD_COLORS.stoneDark, 0, base / 2, 0, 0, "stone")];
 
-  const roof = createGableRoofGeometry(width, depth, height);
-  parts.push(paint(roof, roofColor, roofSurface));
-  parts.push(box(width + 0.3, 0.3, depth + 0.3, WORLD_COLORS.stoneDark, 0, 0.15, 0, 0, "stone"));
+  for (const side of [-1, 1] as const) {
+    const slab = new BoxGeometry(slope, thickness, length);
+    slab.rotateZ(-side * pitch);
+    const centreX = side * (slope / 2) * Math.cos(pitch) - side * Math.sin(pitch) * (thickness / 2);
+    const centreY = base + height - (slope / 2) * Math.sin(pitch) - Math.cos(pitch) * (thickness / 2);
+    slab.translate(centreX, centreY, 0);
+    parts.push(paint(slab, roofColor, roofSurface));
+  }
+  parts.push(box(0.3, 0.18, length, WORLD_COLORS.tileDark, 0, base + height + 0.03, 0, 0, roofSurface));
 
-  // Door and a window in the front gable, a deck out front.
-  parts.push(box(0.9, 1.8, 0.1, WORLD_COLORS.timberDark, 0, 0.9, depth / 2 + 0.02, 0, "planks"));
-  parts.push(box(0.9, 0.7, 0.1, WORLD_COLORS.frostBlue, 0, 2.6, depth / 2 + 0.02, 0, "glass"));
-  parts.push(box(width, 0.14, 2.0, WORLD_COLORS.timber, 0, 0.3, depth / 2 + 1.0, 0, "planks"));
-  parts.push(box(0.4, 1.6, 0.4, WORLD_COLORS.tileDark, 1.2, height * 0.55 + 0.8, -0.8, 0, "brick"));
+  // The glazed front, set back behind the slabs' edges, and the planked back.
+  const inset = 0.28;
+  const top = base + height - 0.35;
+  const front = depth / 2 - 0.12;
+  parts.push(pane([[-halfWidth + inset, base, front], [halfWidth - inset, base, front], [0, top, front]], WORLD_COLORS.glass, "glass"));
+  parts.push(pane([[halfWidth - inset, base, -front], [-halfWidth + inset, base, -front], [0, top, -front]], WORLD_COLORS.timber, "planks"));
+  parts.push(box(0.1, top - base, 0.1, WORLD_COLORS.timberDark, 0, (base + top) / 2, front + 0.04, 0, "planks"));
+  parts.push(box(width * 0.62, 0.1, 0.1, WORLD_COLORS.timberDark, 0, base + 2.1, front + 0.04, 0, "planks"));
+  parts.push(box(1.0, 2.0, 0.12, WORLD_COLORS.timberDark, 0, base + 1.0, front + 0.06, 0, "planks"));
 
+  // The deck and its rail.
+  const deckZ = depth / 2 + 1.1;
+  parts.push(box(width + 1.4, 0.14, 2.2, WORLD_COLORS.timber, 0, base + 0.07, deckZ, 0, "planks"));
+  for (const x of [-2.9, -1.45, 0, 1.45, 2.9]) parts.push(post(0.05, 0.05, 0.9, 4, WORLD_COLORS.timberDark, x, base, deckZ + 1.0, "planks"));
+  parts.push(box(width + 1.4, 0.07, 0.07, WORLD_COLORS.timberDark, 0, base + 0.92, deckZ + 1.0, 0, "planks"));
+
+  parts.push(box(0.5, 2.2, 0.5, WORLD_COLORS.tileDark, 1.2, base + height * 0.62 + 0.6, -0.9, 0, "brick"));
   return merge(parts);
 }
 

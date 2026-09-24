@@ -1,154 +1,87 @@
 "use client";
 
-import { useFrame } from "@react-three/fiber";
-import { useLayoutEffect, useMemo, useRef } from "react";
-import type { IUniform, Mesh } from "three";
-import { AdditiveBlending, BackSide, Color, ShaderMaterial, Vector3 } from "three";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useMemo } from "react";
+import { BoxGeometry, CircleGeometry, Color, Mesh, MeshBasicMaterial, PMREMGenerator, Scene } from "three";
 
-import { SKY_COLORS, SUN_DIRECTION, WORLD_COLORS } from "@/lib/world/constants";
-
-/** The rays' own clock - a module-level uniform, so advancing it mutates no React value. */
-const RAYS_TIME: IUniform<number> = { value: 0 };
+import { ENVIRONMENT, SKY } from "@/lib/world/constants";
+import { SKY_CLOCK, createSkyMaterial } from "@/lib/world/sky";
 
 /**
- * The sky and the sun.
+ * The sky and the light it throws.
  *
- * A gradient on an inverted sphere: orange overhead, gold where the sun sits low over
- * the hills. The sun is a disc with a soft glow and a slow fan of rays - the rays are
- * what make the frame read as late afternoon rather than as a lamp.
+ * The sky is drawn with the Preetham model and its cloud layer; the sun is the model's
+ * own HDR disc, which alone crosses the bloom threshold. Once at load the same sky, with
+ * the sun left out, is baked into a prefiltered environment map: every lit surface takes
+ * its ambient light and its reflections from it, so the shade under an eave and the sky
+ * in a window are the sky that is actually there. See design.md D1 of elevate-world-realism.
  */
 
-const SKY_VERTEX = /* glsl */ `
-  varying vec3 vWorldPosition;
-  void main() {
-    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-    vWorldPosition = worldPosition.xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const SKY_FRAGMENT = /* glsl */ `
-  uniform vec3 uHigh;
-  uniform vec3 uMid;
-  uniform vec3 uLow;
-  uniform vec3 uHaze;
-  uniform vec3 uSunDirection;
-  uniform float uRadius;
-  varying vec3 vWorldPosition;
-
-  void main() {
-    vec3 direction = normalize(vWorldPosition);
-    float h = clamp(vWorldPosition.y / uRadius, -1.0, 1.0);
-
-    // The camera sees only the band just above the horizon, so the gradient has to
-    // warm to orange within a few degrees or the sky reads as haze.
-    vec3 color = mix(uLow, uMid, smoothstep(0.0, 0.07, h));
-    color = mix(color, uHigh, smoothstep(0.06, 0.3, h));
-    color = mix(uHaze, color, smoothstep(-0.17, 0.11, h));
-
-    // The sky warms toward the sun.
-    float toward = max(dot(direction, normalize(uSunDirection)), 0.0);
-    color = mix(color, uLow, pow(toward, 6.0) * 0.55);
-
-    gl_FragColor = vec4(color, 1.0);
-  }
-`;
-
-/** The disc is well over white so it alone crosses the bloom threshold. */
-const SUN_HDR = new Color(WORLD_COLORS.sun).multiplyScalar(3.2);
-
-const RAYS_VERTEX = /* glsl */ `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv - 0.5;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const RAYS_FRAGMENT = /* glsl */ `
-  uniform vec3 uColor;
-  uniform float uTime;
-  varying vec2 vUv;
-
-  void main() {
-    float r = length(vUv) * 2.0;
-    float angle = atan(vUv.y, vUv.x);
-    float rays = pow(abs(sin(angle * 9.0 + uTime * 0.04)), 5.0) * 0.7 + pow(abs(sin(angle * 23.0 - uTime * 0.03)), 8.0) * 0.5;
-    float falloff = smoothstep(1.0, 0.1, r);
-    float core = smoothstep(0.35, 0.0, r) * 0.6;
-    gl_FragColor = vec4(uColor, (rays * falloff * 0.42 + core));
-  }
-`;
-
 interface SkyDomeProps {
-  readonly radius?: number;
+  /** Holds the clouds still - world-appearance spec, ambient motion. */
+  readonly reducedMotion: boolean;
 }
 
-export function SkyDome({ radius = 760 }: SkyDomeProps): React.ReactElement {
-  const sunDirection = useMemo(() => new Vector3(SUN_DIRECTION.x, SUN_DIRECTION.y, SUN_DIRECTION.z).normalize(), []);
+/** How far below the environment's centre the bounce-light ground sits. */
+const ENVIRONMENT_GROUND_DEPTH = 40;
+/** Blur of the prefiltered environment's sharpest level, in radians. */
+const ENVIRONMENT_SIGMA = 0.02;
 
-  const skyMaterial = useMemo(
-    () =>
-      new ShaderMaterial({
-        side: BackSide,
-        depthWrite: false,
-        vertexShader: SKY_VERTEX,
-        fragmentShader: SKY_FRAGMENT,
-        uniforms: {
-          uHigh: { value: new Color(SKY_COLORS.high) },
-          uMid: { value: new Color(SKY_COLORS.mid) },
-          uLow: { value: new Color(SKY_COLORS.low) },
-          uHaze: { value: new Color(SKY_COLORS.haze) },
-          uSunDirection: { value: sunDirection },
-          uRadius: { value: radius },
-        },
-      }),
-    [radius, sunDirection],
-  );
+/**
+ * Bakes the sky into `scene.environment`. A scene of its own - the sky box without its sun,
+ * and a ground disc for bounce light - so the environment never contains the world itself.
+ */
+function useSkyEnvironment(): void {
+  // Read through the store's getter: the scene is three's to mutate, not React's.
+  const get = useThree((state) => state.get);
 
-  const raysMaterial = useMemo(
-    () =>
-      new ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        blending: AdditiveBlending,
-        vertexShader: RAYS_VERTEX,
-        fragmentShader: RAYS_FRAGMENT,
-        uniforms: {
-          uColor: { value: new Color(WORLD_COLORS.sun) },
-          uTime: RAYS_TIME,
-        },
-      }),
-    [],
-  );
+  useEffect(() => {
+    const { gl, scene } = get();
+    const generator = new PMREMGenerator(gl);
+    const environmentScene = new Scene();
+    const skyMaterial = createSkyMaterial(false);
+    const skyGeometry = new BoxGeometry(1, 1, 1);
+    const sky = new Mesh(skyGeometry, skyMaterial);
+    sky.scale.setScalar(SKY.scale);
+    environmentScene.add(sky);
 
-  const sunPosition = useMemo(() => sunDirection.clone().multiplyScalar(radius * 0.9), [radius, sunDirection]);
-  const sunRef = useRef<Mesh>(null);
-  const raysRef = useRef<Mesh>(null);
+    const groundMaterial = new MeshBasicMaterial({ color: new Color(ENVIRONMENT.ground) });
+    const groundGeometry = new CircleGeometry(SKY.scale, 32);
+    const ground = new Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -ENVIRONMENT_GROUND_DEPTH;
+    environmentScene.add(ground);
 
-  useLayoutEffect(() => {
-    sunRef.current?.lookAt(0, 0, 0);
-    raysRef.current?.lookAt(0, 0, 0);
-  }, []);
+    const target = generator.fromScene(environmentScene, ENVIRONMENT_SIGMA, 0.1, SKY.scale * 2);
+    scene.environment = target.texture;
+    scene.environmentIntensity = ENVIRONMENT.intensity;
+
+    return () => {
+      scene.environment = null;
+      target.dispose();
+      generator.dispose();
+      skyMaterial.dispose();
+      skyGeometry.dispose();
+      groundMaterial.dispose();
+      groundGeometry.dispose();
+    };
+  }, [get]);
+}
+
+export function SkyDome({ reducedMotion }: SkyDomeProps): React.ReactElement {
+  const material = useMemo(() => createSkyMaterial(true), []);
+
+  useSkyEnvironment();
 
   useFrame((_, delta) => {
-    RAYS_TIME.value += delta;
+    if (!reducedMotion) SKY_CLOCK.value += delta;
   });
 
   return (
-    <group>
-      <mesh material={skyMaterial} renderOrder={-3}>
-        <sphereGeometry args={[radius, 40, 20]} />
-      </mesh>
-
-      <mesh ref={raysRef} position={sunPosition} material={raysMaterial} renderOrder={-2}>
-        <planeGeometry args={[radius * 0.95, radius * 0.95]} />
-      </mesh>
-
-      <mesh ref={sunRef} position={sunPosition} renderOrder={-1}>
-        <circleGeometry args={[radius * 0.075, 40]} />
-        <meshBasicMaterial color={SUN_HDR} depthWrite={false} fog={false} toneMapped={false} />
-      </mesh>
-    </group>
+    // The sky's vertex shader pins every fragment to the far plane, so the box only has
+    // to enclose the camera; it is never culled, because its bounds are irrelevant.
+    <mesh material={material} scale={SKY.scale} frustumCulled={false} renderOrder={-1}>
+      <boxGeometry args={[1, 1, 1]} />
+    </mesh>
   );
 }

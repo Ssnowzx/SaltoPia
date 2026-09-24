@@ -26,9 +26,11 @@ export interface RoadWidths {
 
 /** Widths live here rather than in constants so the terrain can grade to them. */
 export const ROAD_WIDTHS: RoadWidths = {
-  streetWidth: 4.4,
-  /** Kerb and pavement strip either side of a street. */
-  kerbExtra: 1.2,
+  // Two lanes of 2.8 m. At 4.4 the carriageway was narrower than a house is wide and two
+  // cars could not have passed on it.
+  streetWidth: 5.6,
+  /** Both pavements together: 1.4 m either side of a street. */
+  kerbExtra: 2.8,
   drivewayWidth: 3.6,
   /** The plateau track: wider than a driveway, unpaved. */
   trackWidth: 4.2,
@@ -145,10 +147,20 @@ export const DRIVEWAYS: readonly Driveway[] = [
   { points: [[22, -256], [22, -258]], width: ROAD_WIDTHS.trackWidth, surface: "track", yard: [22, -259], yardRadius: 5 },
 ];
 
-/** Paved paths around the square. */
+/** Zebra crossings: the street they cross and where. */
+export const CROSSWALKS: ReadonlyArray<{ readonly road: readonly Waypoint[]; readonly at: Waypoint }> = [
+  // From the square to the shore street's houses.
+  { road: SHORE_STREET, at: [57, 21] },
+  // At the shops, across the main road.
+  { road: MAIN_ROAD, at: [64.5, 64] },
+];
+
+/**
+ * Paved paths from the square. They start at its paving's edge: laid across the square, as
+ * they once were, they fought its own paving for depth in a sawtooth.
+ */
 export const PATHS: readonly (readonly Waypoint[])[] = [
-  [[44, 18], [54, 12]],
-  [[44, 6], [56, 0], [66, -8]],
+  [[54.5, 3], [56, 0], [66, -8]],
 ];
 
 /** The footbridge below the dam. */
@@ -170,7 +182,7 @@ export interface ParkingLot {
 export const PARKING_LOTS: readonly ParkingLot[] = [
   // Between the shore street and the pousada. The lot used to sit on the street itself,
   // so the cars parked on the carriageway.
-  { x: 26, z: 100, width: 15, depth: 10, rotationY: -0.3 },
+  { x: 25.4, z: 100, width: 15, depth: 10, rotationY: -0.3 },
   { x: 144, z: 106, width: 10, depth: 7, rotationY: 0.5 },
 ];
 
@@ -200,11 +212,17 @@ export interface Polyline {
 }
 
 const STREET_WIDTH = ROAD_WIDTHS.streetWidth + ROAD_WIDTHS.kerbExtra;
+/**
+ * The lakefront street has its pavement on the landward side only; toward the water the
+ * kerb gives onto the grass bank. With a pavement both sides it no longer fitted between
+ * the lake and the lakefront houses.
+ */
+const SHORE_STREET_WIDTH = ROAD_WIDTHS.streetWidth + ROAD_WIDTHS.kerbExtra / 2;
 
 /** Every ribbon on the ground, with its full width, for keep-out tests and grading. */
 export const ROAD_POLYLINES: readonly Polyline[] = [
   { points: MAIN_ROAD, closed: false, width: STREET_WIDTH },
-  { points: SHORE_STREET, closed: false, width: STREET_WIDTH },
+  { points: SHORE_STREET, closed: false, width: SHORE_STREET_WIDTH },
   { points: ENTRY_ROAD, closed: false, width: STREET_WIDTH },
   { points: PLATEAU_TRACK, closed: false, width: ROAD_WIDTHS.trackWidth },
   { points: PLATEAU_WEST, closed: false, width: ROAD_WIDTHS.trackWidth },

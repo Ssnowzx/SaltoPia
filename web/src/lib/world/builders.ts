@@ -11,7 +11,7 @@ import {
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import { WORLD_COLORS } from "./constants";
-import { createRandom } from "./noise";
+import { createRandom, valueNoise2D } from "./noise";
 import { SURFACE, type SurfaceKey } from "./textures";
 
 /**
@@ -296,6 +296,59 @@ export function arch(
 }
 
 // ---------------------------------------------------------------------------------
+// Foliage shaping
+// ---------------------------------------------------------------------------------
+
+/**
+ * Roughens a blob by pushing each vertex along its direction from the blob's centre by a
+ * noise of its own position. The noise reads the position, so the copies of a vertex
+ * that adjacent faces share move together and the surface stays closed.
+ */
+function roughen(geometry: BufferGeometry, centre: readonly [number, number, number], amount: number, seed: number): BufferGeometry {
+  const positions = geometry.attributes.position;
+  for (let index = 0; index < positions.count; index += 1) {
+    const x = positions.getX(index) - centre[0];
+    const y = positions.getY(index) - centre[1];
+    const z = positions.getZ(index) - centre[2];
+    const n = valueNoise2D(x * 2.1 + z * 1.3 + seed, y * 2.3 - z * 0.7, seed) - 0.5;
+    const push = 1 + n * amount;
+    positions.setXYZ(index, centre[0] + x * push, centre[1] + y * push, centre[2] + z * push);
+  }
+  positions.needsUpdate = true;
+  return geometry;
+}
+
+/** A foliage clump: a blob, roughened so its outline is not a polyhedron's. */
+function clump(radius: number, color: string, x: number, y: number, z: number, scaleY: number, seed: number, detail = 1): BufferGeometry {
+  return roughen(blob(radius, color, x, y, z, scaleY, detail, "foliage"), [x, y, z], 0.34, seed);
+}
+
+/**
+ * Bends every foliage normal toward pointing away from the crown's centre, so a crown of
+ * many clumps shades as one soft mass - lit side, shadow side, a terminator between -
+ * rather than as a heap of separately lit balls.
+ */
+export function bendFoliageNormals(geometry: BufferGeometry, centre: readonly [number, number, number], amount: number): BufferGeometry {
+  const positions = geometry.attributes.position;
+  const normals = geometry.attributes.normal;
+  const surfaces = geometry.attributes.surface;
+  for (let index = 0; index < positions.count; index += 1) {
+    if (surfaces.getX(index) !== SURFACE.foliage) continue;
+    const ox = positions.getX(index) - centre[0];
+    const oy = (positions.getY(index) - centre[1]) * 1.4;
+    const oz = positions.getZ(index) - centre[2];
+    const length = Math.hypot(ox, oy, oz) || 1;
+    const nx = normals.getX(index) * (1 - amount) + (ox / length) * amount;
+    const ny = normals.getY(index) * (1 - amount) + (oy / length) * amount;
+    const nz = normals.getZ(index) * (1 - amount) + (oz / length) * amount;
+    const n = Math.hypot(nx, ny, nz) || 1;
+    normals.setXYZ(index, nx / n, ny / n, nz / n);
+  }
+  normals.needsUpdate = true;
+  return geometry;
+}
+
+// ---------------------------------------------------------------------------------
 // Trees
 // ---------------------------------------------------------------------------------
 
@@ -345,38 +398,44 @@ export function createAraucariaGeometry(
     return merge(parts);
   }
 
+  // Mature: a straight trunk bare to three quarters of the height, then whorls of branches
+  // that run out almost level and turn up at the ends, each ending in a dense dark tuft.
+  // The tips of every whorl end near one height, which is what makes the crown the flat,
+  // shallow cup of a candelabra rather than a ball on a stick.
+  const girth = height / 12;
   const trunkHeight = height * 0.74;
-  parts.push(post(0.24, 0.55, trunkHeight, 7, WORLD_COLORS.bark, 0, 0, 0, "bark"));
+  parts.push(post(0.2 * girth, 0.46 * girth, trunkHeight + height * 0.04, 7, WORLD_COLORS.bark, 0, 0, 0, "bark"));
 
+  const crownTop = trunkHeight + height * 0.16;
   const whorls = [
-    { y: trunkHeight * 0.86, count: 6, reach: height * 0.3, lift: 0.34, tuft: height * 0.085 },
-    { y: trunkHeight, count: 7, reach: height * 0.36, lift: 0.42, tuft: height * 0.1 },
+    { y: trunkHeight - height * 0.1, count: 8, reach: height * 0.36 },
+    { y: trunkHeight - height * 0.03, count: 7, reach: height * 0.3 },
+    { y: trunkHeight + height * 0.03, count: 5, reach: height * 0.18 },
   ];
 
-  for (const whorl of whorls) {
+  whorls.forEach((whorl, whorlIndex) => {
     const offset = random() * Math.PI * 2;
-
     for (let index = 0; index < whorl.count; index += 1) {
-      const angle = offset + (index / whorl.count) * Math.PI * 2 + (random() - 0.5) * 0.25;
-      const tilt = Math.PI / 2 - whorl.lift;
-
-      parts.push(leaningPost(0.07, whorl.reach, WORLD_COLORS.bark, 0, whorl.y, 0, angle, tilt, "bark"));
-
-      const horizontal = whorl.reach * Math.sin(tilt);
-      const tipX = Math.cos(angle) * horizontal;
-      const tipZ = -Math.sin(angle) * horizontal;
-      const tipY = whorl.y + whorl.reach * Math.cos(tilt);
-
-      parts.push(blob(whorl.tuft, WORLD_COLORS.canopy, tipX, tipY, tipZ, 0.5, 1, "foliage"));
-      parts.push(
-        blob(whorl.tuft * 0.62, WORLD_COLORS.canopyDark, tipX, tipY + whorl.tuft * 0.36, tipZ, 0.6, 1, "foliage"),
-      );
+      const angle = offset + (index / whorl.count) * Math.PI * 2 + (random() - 0.5) * 0.3;
+      const outward = whorl.reach * (0.9 + random() * 0.2);
+      // The first run is nearly level; the second turns up to reach the crown's top.
+      const run = outward * 0.66;
+      const elbowY = whorl.y + run * 0.18;
+      const elbowX = Math.cos(angle) * run;
+      const elbowZ = -Math.sin(angle) * run;
+      parts.push(leaningPost(0.06 * girth, Math.hypot(run, run * 0.18), WORLD_COLORS.bark, 0, whorl.y, 0, angle, Math.PI / 2 - 0.18, "bark"));
+      const rise = Math.max(0.2, crownTop - elbowY - height * 0.04);
+      const reachOut = outward - run;
+      parts.push(leaningPost(0.045 * girth, Math.hypot(reachOut, rise), WORLD_COLORS.bark, elbowX, elbowY, elbowZ, angle, Math.atan2(reachOut, rise), "bark"));
+      const tipX = Math.cos(angle) * outward;
+      const tipZ = -Math.sin(angle) * outward;
+      const tuft = height * (0.075 + whorlIndex * 0.004) * (0.9 + random() * 0.25);
+      parts.push(clump(tuft, index % 2 === 0 ? WORLD_COLORS.canopy : WORLD_COLORS.canopyDark, tipX, crownTop - tuft * 0.2, tipZ, 0.62, seed * 31 + index + whorlIndex * 7));
     }
-  }
+  });
+  parts.push(clump(height * 0.08, WORLD_COLORS.canopyDark, 0, crownTop, 0, 0.6, seed * 13));
 
-  parts.push(blob(height * 0.11, WORLD_COLORS.canopy, 0, trunkHeight + height * 0.05, 0, 0.55, 1, "foliage"));
-
-  return merge(parts);
+  return bendFoliageNormals(merge(parts), [0, crownTop - height * 0.05, 0], 0.55);
 }
 
 /** A generic conifer, for the forest mass behind the town. */
@@ -395,27 +454,39 @@ export function createConiferGeometry(height = 9): BufferGeometry {
   return merge(parts);
 }
 
-/** A broadleaf native tree - a rounded, softly shaded crown on a short trunk. */
+/**
+ * A broadleaf native tree: a crown built from overlapping roughened clumps round a
+ * short trunk, its normals bent outward so it shades as one mass.
+ */
 export function createBroadleafGeometry(height = 6, seed = 1): BufferGeometry {
   const random = createRandom(seed);
-  const trunkHeight = height * 0.42;
-  const crown = random() > 0.6 ? WORLD_COLORS.foliageWarm : WORLD_COLORS.foliage;
-  const parts = [post(0.16, 0.3, trunkHeight, 6, WORLD_COLORS.bark, 0, 0, 0, "bark")];
+  const trunkHeight = height * 0.4;
+  const warm = random() > 0.6;
+  const radius = height * 0.34;
+  const centre: readonly [number, number, number] = [0, trunkHeight + radius * 0.85, 0];
+  const parts = [post(0.14, 0.28, trunkHeight + radius * 0.5, 6, WORLD_COLORS.bark, 0, 0, 0, "bark")];
 
-  const radius = height * 0.36;
-  parts.push(blob(radius, crown, 0, trunkHeight + radius * 0.8, 0, 0.9, 2, "foliage"));
-  parts.push(blob(radius * 0.7, crown, radius * 0.5, trunkHeight + radius * 0.6, radius * 0.2, 0.9, 2, "foliage"));
-  parts.push(blob(radius * 0.65, crown, -radius * 0.45, trunkHeight + radius * 0.9, -radius * 0.3, 0.9, 2, "foliage"));
+  const clumps = 7;
+  for (let index = 0; index < clumps; index += 1) {
+    const angle = (index / clumps) * Math.PI * 2 + random() * 0.6;
+    const lift = (random() - 0.35) * radius * 0.7;
+    const spread = radius * (0.35 + random() * 0.3);
+    const color = index % 3 === 0 ? WORLD_COLORS.foliageDark : warm ? WORLD_COLORS.foliageWarm : WORLD_COLORS.foliage;
+    parts.push(clump(radius * (0.5 + random() * 0.22), color, Math.cos(angle) * spread, centre[1] + lift, Math.sin(angle) * spread, 0.82, seed * 17 + index));
+  }
+  parts.push(clump(radius * 0.62, warm ? WORLD_COLORS.foliageWarm : WORLD_COLORS.foliage, 0, centre[1] + radius * 0.4, 0, 0.8, seed * 5));
 
-  return merge(parts);
+  return bendFoliageNormals(merge(parts), centre, 0.7);
 }
 
-/** A low bush. */
+/** A low bush: a couple of clumps, shaded as one. */
 export function createBushGeometry(radius = 1.1): BufferGeometry {
-  return merge([
-    blob(radius, WORLD_COLORS.foliage, 0, radius * 0.55, 0, 0.7, 1, "foliage"),
-    blob(radius * 0.7, WORLD_COLORS.foliageWarm, radius * 0.6, radius * 0.45, radius * 0.2, 0.7, 1, "foliage"),
+  const merged = merge([
+    clump(radius, WORLD_COLORS.foliage, 0, radius * 0.55, 0, 0.7, 3),
+    clump(radius * 0.7, WORLD_COLORS.foliageWarm, radius * 0.6, radius * 0.45, radius * 0.2, 0.7, 7),
+    clump(radius * 0.6, WORLD_COLORS.foliageDark, -radius * 0.5, radius * 0.4, -radius * 0.3, 0.7, 11),
   ]);
+  return bendFoliageNormals(merged, [0, radius * 0.3, 0], 0.6);
 }
 
 /** A trimmed hedge along +X from the origin. */
@@ -553,222 +624,4 @@ export function createGableRoofGeometry(width: number, depth: number, height: nu
   geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
   geometry.computeVertexNormals();
   return geometry;
-}
-
-/** How a building is put together. */
-export interface BuildingSpec {
-  readonly width: number;
-  readonly depth: number;
-  /** Height of one storey. */
-  readonly height: number;
-  /** Ridge height above the wall top. */
-  readonly roofHeight: number;
-  readonly wallColor: string;
-  readonly roofColor: string;
-  readonly wallSurface?: SurfaceKey;
-  readonly roofSurface?: SurfaceKey;
-  readonly stories?: number;
-  /** Adds a chimney. Serra houses have them because the lareira is the point. */
-  readonly chimney?: boolean;
-  /** Adds a covered veranda along the front (+Z) - the deep varanda of a galpao. */
-  readonly veranda?: boolean;
-  /** Adds framed, glazed windows and a door on the front. */
-  readonly windows?: boolean;
-  /** Adds a shop awning over the ground-floor front. */
-  readonly awning?: string;
-  /** Adds a balcony along the upper floor. */
-  readonly balcony?: boolean;
-  /** Adds a blank signboard above the ground floor. */
-  readonly sign?: boolean;
-}
-
-/** Where a building's chimney top ends up, so smoke can be attached to it. */
-export function chimneyTopFor(spec: BuildingSpec): readonly [number, number, number] {
-  const wallTop = spec.height * (spec.stories ?? 1);
-  return [spec.width * 0.28, wallTop + spec.roofHeight * 1.5, spec.depth * 0.18];
-}
-
-/**
- * An opening in a wall, built in the wall's own frame: centred on x = 0, facing +Z,
- * with the wall's outer face at z = 0. The caller rotates and translates it onto
- * whichever wall it belongs to.
- *
- * Building openings in wall-local coordinates is what stops the placement arithmetic
- * from compounding: an earlier version built them at the front wall's z and then
- * rotated, which left every side window floating half the building's depth out in
- * mid-air.
- */
-function windowParts(width: number, height: number, sillY: number): BufferGeometry[] {
-  const frame = WORLD_COLORS.timberDark;
-  return [
-    // Glass, recessed well behind the wall face. At a 0.1-deep box centred on -0.05 its
-    // front face landed exactly on z = 0, coplanar with the wall, and the two surfaces
-    // fought for the depth buffer - which is what made every window flicker.
-    box(width, height, 0.1, WORLD_COLORS.frostBlue, 0, sillY + height / 2, -0.14, 0, "glass"),
-    // Lintel, sill and jambs, proud of it.
-    box(width + 0.16, 0.08, 0.14, frame, 0, sillY + height + 0.04, 0.02, 0, "planks"),
-    box(width + 0.22, 0.1, 0.2, WORLD_COLORS.whitewash, 0, sillY - 0.05, 0.04, 0, "plaster"),
-    box(0.08, height, 0.14, frame, -width / 2 - 0.04, sillY + height / 2, 0.02, 0, "planks"),
-    box(0.08, height, 0.14, frame, width / 2 + 0.04, sillY + height / 2, 0.02, 0, "planks"),
-    // Glazing bar.
-    box(0.05, height, 0.12, frame, 0, sillY + height / 2, 0.03, 0, "planks"),
-  ];
-}
-
-/** A door in the wall's own frame, same convention as `windowParts`. */
-function doorParts(width: number, height: number): BufferGeometry[] {
-  return [
-    box(width, height, 0.1, WORLD_COLORS.timberDark, 0, height / 2, -0.14, 0, "planks"),
-    box(width + 0.18, 0.09, 0.14, WORLD_COLORS.timber, 0, height + 0.04, 0.02, 0, "planks"),
-    box(0.09, height, 0.14, WORLD_COLORS.timber, -width / 2 - 0.045, height / 2, 0.02, 0, "planks"),
-    box(0.09, height, 0.14, WORLD_COLORS.timber, width / 2 + 0.045, height / 2, 0.02, 0, "planks"),
-    box(width + 0.5, 0.14, 0.5, WORLD_COLORS.stone, 0, 0.07, 0.3, 0, "stone"),
-  ];
-}
-
-/** Which wall an opening sits on. */
-type Wall = "front" | "back" | "left" | "right";
-
-/**
- * Moves an opening from the wall-local frame onto one of a box's four walls.
- *
- * @param parts - Geometry from `windowParts` or `doorParts`.
- * @param wall - Which wall to place it on.
- * @param along - Position along that wall, from its centre.
- * @param width - The building's width (its X extent).
- * @param depth - The building's depth (its Z extent).
- */
-function onWall(
-  parts: readonly BufferGeometry[],
-  wall: Wall,
-  along: number,
-  width: number,
-  depth: number,
-): BufferGeometry[] {
-  // rotateY maps +Z to the wall's outward normal; the offset is half the extent the
-  // wall faces along, so the opening lands exactly on the face and nowhere else.
-  const placement: Readonly<Record<Wall, { rotation: number; x: number; z: number; alongX: boolean }>> = {
-    front: { rotation: 0, x: 0, z: depth / 2, alongX: true },
-    back: { rotation: Math.PI, x: 0, z: -depth / 2, alongX: true },
-    right: { rotation: Math.PI / 2, x: width / 2, z: 0, alongX: false },
-    left: { rotation: -Math.PI / 2, x: -width / 2, z: 0, alongX: false },
-  };
-
-  const { rotation, x, z, alongX } = placement[wall];
-
-  for (const part of parts) {
-    if (rotation !== 0) part.rotateY(rotation);
-    part.translate(alongX ? x + along : x, 0, alongX ? z : z + along);
-  }
-
-  return [...parts];
-}
-
-/**
- * A building: walls, gable roof, and optionally storeys, framed windows, a door, a
- * chimney, a veranda, an awning, a balcony and a signboard.
- */
-export function createBuildingGeometry(spec: BuildingSpec): BufferGeometry {
-  const parts: BufferGeometry[] = [];
-  const stories = spec.stories ?? 1;
-  const wallTop = spec.height * stories;
-  const wallSurface = spec.wallSurface ?? "plaster";
-  const roofSurface = spec.roofSurface ?? "tiles";
-  const frontZ = spec.depth / 2 + 0.03;
-
-  parts.push(box(spec.width, wallTop, spec.depth, spec.wallColor, 0, wallTop / 2, 0, 0, wallSurface));
-
-  // A plinth and a cornice bracket the wall, which is what stops it reading as a box.
-  parts.push(box(spec.width + 0.16, 0.35, spec.depth + 0.16, WORLD_COLORS.stoneDark, 0, 0.175, 0, 0, "stone"));
-  parts.push(box(spec.width + 0.2, 0.18, spec.depth + 0.2, spec.wallColor, 0, wallTop - 0.09, 0, 0, wallSurface));
-
-  const roof = createGableRoofGeometry(spec.width * 1.12, spec.depth * 1.12, spec.roofHeight);
-  roof.translate(0, wallTop, 0);
-  parts.push(paint(roof, spec.roofColor, roofSurface));
-  parts.push(box(0.26, 0.18, spec.depth * 1.14, WORLD_COLORS.tileDark, 0, wallTop + spec.roofHeight, 0, 0, roofSurface));
-
-  if (spec.chimney === true) {
-    const [chimneyX, chimneyTop, chimneyZ] = chimneyTopFor(spec);
-    const chimneyHeight = spec.roofHeight * 1.5;
-    parts.push(box(spec.width * 0.14, chimneyHeight, spec.width * 0.14, WORLD_COLORS.tileDark, chimneyX, chimneyTop - chimneyHeight / 2, chimneyZ, 0, "brick"));
-    parts.push(box(spec.width * 0.18, 0.12, spec.width * 0.18, WORLD_COLORS.stoneDark, chimneyX, chimneyTop, chimneyZ, 0, "stone"));
-  }
-
-  if (spec.windows === true) {
-    const windowWidth = Math.min(0.95, spec.width * 0.18);
-    const windowHeight = Math.min(1.15, spec.height * 0.4);
-    const across = Math.max(2, Math.floor(spec.width / 2.4));
-    const along = Math.max(1, Math.floor(spec.depth / 2.6));
-
-    for (let storey = 0; storey < stories; storey += 1) {
-      const sill = storey * spec.height + spec.height * 0.42;
-
-      // Front: evenly spaced openings, the middle one a door on the ground floor.
-      for (let index = 0; index < across; index += 1) {
-        const offset = -spec.width / 2 + (spec.width / (across + 1)) * (index + 1);
-        const isDoor = storey === 0 && across % 2 === 1 && index === (across - 1) / 2;
-        parts.push(
-          ...onWall(
-            isDoor ? doorParts(windowWidth * 0.95, spec.height * 0.68) : windowParts(windowWidth, windowHeight, sill),
-            "front",
-            offset,
-            spec.width,
-            spec.depth,
-          ),
-        );
-      }
-
-      // Back: windows only.
-      for (let index = 0; index < across; index += 1) {
-        const offset = -spec.width / 2 + (spec.width / (across + 1)) * (index + 1);
-        parts.push(...onWall(windowParts(windowWidth, windowHeight, sill), "back", offset, spec.width, spec.depth));
-      }
-
-      // Both side walls, spaced along the depth.
-      for (const wall of ["left", "right"] as const) {
-        for (let index = 0; index < along; index += 1) {
-          const offset = -spec.depth / 2 + (spec.depth / (along + 1)) * (index + 1);
-          parts.push(...onWall(windowParts(windowWidth, windowHeight, sill), wall, offset, spec.width, spec.depth));
-        }
-      }
-    }
-  }
-
-  if (spec.awning !== undefined) {
-    parts.push(awning(spec.width * 0.86, 0.9, spec.awning, 0, spec.height * 0.82, frontZ + 0.42));
-  }
-
-  if (spec.sign === true) {
-    parts.push(box(spec.width * 0.7, 0.5, 0.1, WORLD_COLORS.whitewash, 0, spec.height * 0.98, frontZ + 0.05));
-    parts.push(box(spec.width * 0.72, 0.06, 0.14, WORLD_COLORS.timberDark, 0, spec.height * 0.98 + 0.27, frontZ + 0.05, 0, "planks"));
-  }
-
-  if (spec.balcony === true && stories > 1) {
-    const floorY = spec.height;
-    const reach = 0.9;
-    parts.push(box(spec.width * 0.8, 0.14, reach, WORLD_COLORS.stone, 0, floorY, frontZ + reach / 2, 0, "stone"));
-    const railCount = Math.floor((spec.width * 0.8) / 0.4);
-    for (let index = 0; index <= railCount; index += 1) {
-      const x = -spec.width * 0.4 + (index * spec.width * 0.8) / railCount;
-      parts.push(post(0.03, 0.03, 0.9, 4, WORLD_COLORS.metal, x, floorY + 0.07, frontZ + reach - 0.08, "metal"));
-    }
-    parts.push(box(spec.width * 0.8, 0.06, 0.06, WORLD_COLORS.metal, 0, floorY + 0.97, frontZ + reach - 0.08, 0, "metal"));
-  }
-
-  if (spec.veranda === true) {
-    const deckDepth = spec.depth * 0.42;
-    parts.push(box(spec.width * 1.04, 0.22, deckDepth, WORLD_COLORS.timber, 0, 0.11, spec.depth / 2 + deckDepth / 2, 0, "planks"));
-
-    const roofY = spec.height * 0.86;
-    for (let index = 0; index < 4; index += 1) {
-      parts.push(
-        post(0.1, 0.1, roofY, 6, WORLD_COLORS.timber, -spec.width * 0.44 + (index * spec.width * 0.88) / 3, 0, spec.depth / 2 + deckDepth * 0.85, "planks"),
-      );
-    }
-
-    parts.push(box(spec.width * 1.08, 0.16, deckDepth * 1.1, spec.roofColor, 0, roofY, spec.depth / 2 + deckDepth / 2, 0, roofSurface));
-    parts.push(box(spec.width * 1.04, 0.08, 0.08, WORLD_COLORS.timber, 0, 0.95, spec.depth / 2 + deckDepth * 0.85, 0, "planks"));
-  }
-
-  return merge(parts);
 }

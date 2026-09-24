@@ -37,8 +37,10 @@ export const SITES: readonly Site[] = [
   { slug: "estacao-velha", x: 150, z: 120, rotationY: Math.PI * 0.82, pad: 16, clearing: 16 },
   // North, on the high ground above the dam.
   { slug: "vinicola-de-altitude", x: 150, z: -44, rotationY: Math.PI * 0.86, pad: 12, clearing: 12 },
-  // The lookout, right across the water on the west hill.
-  { slug: "mirante-da-neblina", x: -132, z: -96, rotationY: 0.3, pad: 8, clearing: 9 },
+  // The lookout, on the hill at the north-west end of the far shore, looking back down the
+  // lake. It stood at (-132, -96), in the strait: the lake's basin was carved through its
+  // hill and the tower stood under water with only its flag showing.
+  { slug: "mirante-da-neblina", x: -196, z: -156, rotationY: 0.55, pad: 8, clearing: 9 },
   // The araucaria wood on the peninsula.
   { slug: "bosque-das-araucarias", x: -60, z: -44, rotationY: 0.6, pad: 12, clearing: 5 },
   // The falls at the dam, where the river leaves the reservoir.

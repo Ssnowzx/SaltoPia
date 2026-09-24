@@ -3,36 +3,19 @@ import { BufferGeometry, CatmullRomCurve3, Color, Float32BufferAttribute, PlaneG
 import { blob, merge } from "./builders";
 import { BRIDGE_DECK_HEIGHT, LAKE, RIVER, ROAD, WORLD_COLORS } from "./constants";
 import { createCurve } from "./curves";
-import {
-  BRIDGES,
-  DRIVEWAYS,
-  ENTRY_ROAD,
-  FOOTBRIDGE,
-  MAIN_ROAD,
-  PARKING_LOTS,
-  PATHS,
-  PLATEAU_EAST,
-  PLATEAU_TRACK,
-  PLATEAU_WEST,
-  PORT_SPUR,
-  ROAD_WIDTHS,
-  SHORE_STREET,
-  type ParkingLot,
-  type Waypoint,
-} from "./road-network";
-import { RIVER_COURSE, bridgeDeckAt, lakeDistance, riverDistance, riverSurfaceHeightAt, terrainHeightAt } from "./terrain";
+import { BRIDGES, ENTRY_ROAD, FOOTBRIDGE, MAIN_ROAD, PLATEAU_TRACK, PORT_SPUR, type Waypoint } from "./road-network";
+import { landHeightAt } from "./outer-land";
+import { RIVER_COURSE, bridgeDeckAt, riverDistance, riverSurfaceHeightAt, terrainHeightAt } from "./terrain";
 import { SURFACE, type SurfaceKey } from "./textures";
 
 /**
- * Streets, tracks and water - everything that is a ribbon laid on the ground, plus the
- * lake surface.
+ * The ribbons that are not road surfaces - the bridges, the river and the lake - and the
+ * routes the traffic and the boats follow.
  *
- * The network itself is data in road-network.ts, and the terrain is graded to it
- * before anything here runs: under every ribbon the ground is already flat across the
- * road's width and at the road's level, so a ribbon needs only a hair of lift. Drawing
- * order does the rest - every shoulder first, then every track and yard, then every
- * carriageway, then the lines - so a junction is a carriageway crossing a carriageway,
- * not one road's pavement painted across another's.
+ * The network itself is data in road-network.ts and its surfaces are built by
+ * road-surfaces.ts. The terrain is graded to the network before anything here runs: under
+ * every ribbon the ground is already flat across the road's width and at the road's level,
+ * so a ribbon needs only a hair of lift.
  */
 
 /** Whether a point sits on the footbridge deck over the river below the dam. */
@@ -157,61 +140,6 @@ function appendRibbon(curve: CatmullRomCurve3, options: RibbonOptions, sink: Sin
   }
 }
 
-function appendDisc(x: number, z: number, radius: number, lift: number, color: Color, surface: SurfaceKey, sink: Sink): void {
-  const segments = 20;
-  // In rings, so the disc follows the ground. As one fan of chords from the centre, a
-  // lawn on a rise bridged straight over the road graded through it and showed on top.
-  const rings = Math.max(1, Math.ceil(radius / 2.5));
-  const at = (ring: number, index: number): readonly [number, number] => {
-    const angle = (index / segments) * Math.PI * 2;
-    const r = (ring / rings) * radius;
-    return [x + Math.cos(angle) * r, z + Math.sin(angle) * r];
-  };
-  const push = (px: number, pz: number): void => pushVertex(sink, px, surfaceHeightAt(px, pz) + lift, pz, color, surface, 0, 0);
-
-  for (let ring = 0; ring < rings; ring += 1) {
-    for (let index = 0; index < segments; index += 1) {
-      const inner0 = at(ring, index);
-      const inner1 = at(ring, index + 1);
-      const outer0 = at(ring + 1, index);
-      const outer1 = at(ring + 1, index + 1);
-      push(inner0[0], inner0[1]);
-      push(outer1[0], outer1[1]);
-      push(outer0[0], outer0[1]);
-      if (ring > 0) {
-        push(inner0[0], inner0[1]);
-        push(inner1[0], inner1[1]);
-        push(outer1[0], outer1[1]);
-      }
-    }
-  }
-}
-
-function appendRectangle(lot: ParkingLot, lift: number, color: Color, surface: SurfaceKey, sink: Sink): void {
-  const cos = Math.cos(lot.rotationY);
-  const sin = Math.sin(lot.rotationY);
-  const corner = (u: number, v: number): readonly [number, number] => [lot.x + u * cos + v * sin, lot.z - u * sin + v * cos];
-  const cells = 5;
-
-  for (let i = 0; i < cells; i += 1) {
-    for (let j = 0; j < cells; j += 1) {
-      const u0 = -lot.width / 2 + (i / cells) * lot.width;
-      const u1 = -lot.width / 2 + ((i + 1) / cells) * lot.width;
-      const v0 = -lot.depth / 2 + (j / cells) * lot.depth;
-      const v1 = -lot.depth / 2 + ((j + 1) / cells) * lot.depth;
-      const a = corner(u0, v0);
-      const b = corner(u1, v0);
-      const c = corner(u1, v1);
-      const d = corner(u0, v1);
-      // Wound to face +Y. The other way round the whole car park was back-face culled -
-      // it had never actually drawn; the cars simply stood on the grass.
-      for (const [px, pz] of [a, d, b, b, d, c]) {
-        pushVertex(sink, px, surfaceHeightAt(px, pz) + lift, pz, color, surface, 0, 0);
-      }
-    }
-  }
-}
-
 /**
  * Turns a sink into geometry.
  *
@@ -263,29 +191,7 @@ const LAYER = {
 /** How high the bridge parapets stand above the deck. */
 const BRIDGE_PARAPET_HEIGHT = 0.9;
 
-const STREET = new Color(WORLD_COLORS.street);
-const KERB = new Color(WORLD_COLORS.kerb);
-const TRACK = new Color(WORLD_COLORS.road);
 const DECK = new Color(WORLD_COLORS.timber);
-const PAVING = new Color(WORLD_COLORS.paving);
-const LINE = new Color(WORLD_COLORS.roadLine);
-
-/** The broken white line down the middle of a carriageway. */
-function appendCentreLine(curve: CatmullRomCurve3, lift: number, sink: Sink): void {
-  const length = curve.getLength();
-  const dashes = Math.max(1, Math.floor(length / ROAD.centreLineSpacing));
-  for (let index = 0; index < dashes; index += 1) {
-    const from = (index + 0.32) / dashes;
-    const to = (index + 0.68) / dashes;
-    const start = curve.getPointAt(from);
-    const end = curve.getPointAt(to);
-    appendRibbon(
-      createCurve([[start.x, start.z], [end.x, end.z]], false),
-      { width: ROAD.centreLineWidth, lift, colorAt: () => LINE, surfaceAt: () => "plain", step: 1.4 },
-      sink,
-    );
-  }
-}
 
 /** Parapets either side of a road bridge, standing on the deck. */
 function appendBridgeParapets(sink: Sink): void {
@@ -316,48 +222,13 @@ function appendBridgeParapets(sink: Sink): void {
   }
 }
 
-/** Every street, driveway, path, car park, footbridge and yard, as one geometry. */
-export function createRoadGeometry(): BufferGeometry {
+/**
+ * The built parts of the network: the road bridge's parapets and deck, and the footbridge
+ * below the dam. The road surfaces themselves are drawn by road-surfaces.ts with the road
+ * material; these are stone and timber, and take the world atlas like any building.
+ */
+export function createRoadStructureGeometry(): BufferGeometry {
   const sink = createSink();
-  const streets = [MAIN_ROAD, SHORE_STREET, ENTRY_ROAD].map((points) => createCurve(points, false));
-  const tracks = [PLATEAU_TRACK, PLATEAU_WEST, PLATEAU_EAST, PORT_SPUR].map((points) => createCurve(points, false));
-  const streetWidth = ROAD_WIDTHS.streetWidth;
-  const shoulderWidth = streetWidth + ROAD_WIDTHS.kerbExtra;
-
-  // Layer 1: the pale shoulders of every street.
-  for (const curve of streets) {
-    appendRibbon(curve, { width: shoulderWidth, lift: LAYER.shoulder, colorAt: () => KERB, surfaceAt: () => "plain" }, sink);
-  }
-
-  // Layer 2: unpaved tracks, driveways, yards and car parks. Below the carriageways, so
-  // where a driveway meets a street the street wins.
-  for (const curve of tracks) {
-    appendRibbon(curve, { width: ROAD_WIDTHS.trackWidth, lift: LAYER.track, colorAt: () => TRACK, surfaceAt: () => "dirt" }, sink);
-  }
-  for (const driveway of DRIVEWAYS) {
-    const street = driveway.surface === "street";
-    appendRibbon(
-      createCurve(driveway.points, false),
-      { width: driveway.width, lift: street ? LAYER.carriageway : LAYER.track, colorAt: () => (street ? STREET : TRACK), surfaceAt: () => (street ? "plain" : "dirt") },
-      sink,
-    );
-    appendDisc(driveway.yard[0], driveway.yard[1], driveway.yardRadius, LAYER.track, street ? STREET : TRACK, street ? "plain" : "dirt", sink);
-  }
-  for (const lot of PARKING_LOTS) {
-    appendRectangle(lot, LAYER.track, KERB, "plain", sink);
-  }
-
-  // Layer 3: the carriageways, then their lines.
-  for (const curve of streets) {
-    appendRibbon(curve, { width: streetWidth, lift: LAYER.carriageway, colorAt: () => STREET, surfaceAt: () => "plain" }, sink);
-  }
-  for (const curve of streets) {
-    appendCentreLine(curve, LAYER.line, sink);
-  }
-
-  for (const path of PATHS) {
-    appendRibbon(createCurve(path, false), { width: ROAD_WIDTHS.pathWidth, lift: LAYER.line, colorAt: () => PAVING, surfaceAt: () => "paving" }, sink);
-  }
 
   appendBridgeParapets(sink);
   appendRibbon(
@@ -374,24 +245,18 @@ export function createRoadGeometry(): BufferGeometry {
 
   // One tile for the whole network. The atlas lookup wraps with fract(), and the mip
   // level the GPU picks from the derivative blows up at every wrap - a dark seam across
-  // the carriageway every couple of metres. Paved surfaces are flat colour anyway.
+  // the surface every couple of metres.
   return toGeometry(sink, 4000, true);
 }
 
-/** Lawns around the houses, as discs of mown grass. */
-export function createLawnGeometry(lawns: ReadonlyArray<{ readonly x: number; readonly z: number; readonly radius: number }>): BufferGeometry {
-  const sink = createSink();
-  const lawn = new Color(WORLD_COLORS.lawn);
-  for (const disc of lawns) {
-    appendDisc(disc.x, disc.z, disc.radius, ROAD.lift * 0.6, lawn, "grass", sink);
-  }
-  return toGeometry(sink, 2.2);
-}
-
-/** Ballast, sleepers and two rails. */
 // ---------------------------------------------------------------------------------
 // Water
 // ---------------------------------------------------------------------------------
+
+/** How far above the water a triangle of the surface grid may reach and still be kept. */
+const WATER_SURFACE_MARGIN = 1.5;
+/** The depth of water at which its colour is fully the open lake's. */
+const WATER_FULL_DEPTH = 2.4;
 
 /**
  * The lake surface: a grid over the bay at water level, trimmed to the shoreline with
@@ -411,9 +276,12 @@ export function createLakeSurfaceGeometry(): BufferGeometry {
   const index = grid.index;
   if (!index) throw new Error("PlaneGeometry is expected to be indexed.");
 
-  const distances = new Float32Array(source.count);
+  // Depth is measured from the ground, not from the shoreline curve: the ground dips under
+  // the water several metres inland of the curve, and measured from the curve the whole
+  // strip between read as shallows - a wide brown band round every shore.
+  const depthsAt = new Float32Array(source.count);
   for (let vertex = 0; vertex < source.count; vertex += 1) {
-    distances[vertex] = lakeDistance(source.getX(vertex), source.getZ(vertex));
+    depthsAt[vertex] = LAKE.level - landHeightAt(source.getX(vertex), source.getZ(vertex));
   }
 
   const positions: number[] = [];
@@ -424,17 +292,15 @@ export function createLakeSurfaceGeometry(): BufferGeometry {
 
   for (let tri = 0; tri < index.count; tri += 3) {
     const corners = [index.getX(tri), index.getX(tri + 1), index.getX(tri + 2)];
-    // Keep any triangle that touches water; the rest of it hides under the beach.
-    if (corners.every((vertex) => distances[vertex] > 6)) continue;
+    // Keep any triangle that reaches the water; the rest of it hides under the bank.
+    if (corners.every((vertex) => depthsAt[vertex] < -WATER_SURFACE_MARGIN)) continue;
 
     for (const vertex of corners) {
       const x = source.getX(vertex);
       const z = source.getZ(vertex);
       positions.push(x, LAKE.level, z);
       colors.push(1, 1, 1);
-      // Full colour a boat-length from the shore. Over 22 units the shallows read as a
-      // wide pale shelf along every bank.
-      depths.push(Math.min(1, Math.max(0, -distances[vertex] / 8)));
+      depths.push(Math.min(1, Math.max(0, depthsAt[vertex] / WATER_FULL_DEPTH)));
       foams.push(0);
       uvs.push(x / 3, z / 3);
     }

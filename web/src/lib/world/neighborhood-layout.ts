@@ -1,10 +1,9 @@
 import type { BufferGeometry } from "three";
 
+import { createBuildingGeometry } from "./building";
 import {
-  type BuildingSpec,
   createAraucariaGeometry,
   createBroadleafGeometry,
-  createBuildingGeometry,
   createBushGeometry,
   createConiferGeometry,
   createFenceGeometry,
@@ -12,7 +11,7 @@ import {
   createRockGeometry,
   createStoneWallGeometry,
 } from "./builders";
-import { LAKE, TERRAIN, UFO_PORT, VEHICLES, WORLD_COLORS, WORLD_SEED } from "./constants";
+import { DWELLING_COLORS, LAKE, OUTER_LAND, TERRAIN, UFO_PORT, VEHICLES, WORLD_COLORS, WORLD_SEED } from "./constants";
 import { createAmusementParkGeometry, createRestaurantGeometry } from "./attractions";
 import { createFarmGeometry } from "./farms";
 import { CHALET_SITES, SITES, siteAt } from "./sites";
@@ -31,7 +30,10 @@ import {
   createVineRowGeometry,
   createVinicolaGeometry,
 } from "./landmarks";
+import { groveDensityAt } from "./groves";
 import { createRandom } from "./noise";
+import { landHeightAt, outsideDistance } from "./outer-land";
+import { DWELLINGS, DWELLING_KEYS, type DwellingKey, assignDwellingDesigns } from "./dwellings";
 import { SHIRT_COLORS, createParasolGeometry, createPersonGeometry, createSeatedPersonGeometry } from "./people";
 import {
   createAFrameGeometry,
@@ -45,7 +47,7 @@ import {
 } from "./props";
 import { ROAD_POLYLINES, YARDS, type Waypoint } from "./road-network";
 import { createUfoPortGeometry } from "./ufo-port";
-import { eastShoreXAt, farShoreZAt, lakeDistance, peninsulaDistance, riverDistance, terrainHeightAt } from "./terrain";
+import { eastShoreXAt, farShoreZAt, lakeDistance, peninsulaDistance, riverDistance } from "./terrain";
 
 /**
  * What the community at the Salto is made of, as data.
@@ -66,10 +68,7 @@ export type ModelKey =
   | "bush"
   | "rock"
   | "palm"
-  | "houseWhitewash"
-  | "houseYellow"
-  | "houseTimber"
-  | "houseMint"
+  | DwellingKey
   | "cabana"
   | "lakeHouse"
   | "shopBrick"
@@ -79,6 +78,7 @@ export type ModelKey =
   | "aFrameShingle"
   | "aFrameSlate"
   | "aFrameTile"
+  | "chaletGable"
   | "stiltCabin"
   | "pier"
   | "sedanWhite"
@@ -126,10 +126,16 @@ export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
   bush: "smooth",
   rock: "flat",
   palm: "flat",
-  houseWhitewash: "flat",
+  houseWhite: "flat",
+  houseCream: "flat",
   houseYellow: "flat",
-  houseTimber: "flat",
-  houseMint: "flat",
+  houseSalmon: "flat",
+  houseGreenTimber: "flat",
+  houseBlueTimber: "flat",
+  houseOchreTimber: "flat",
+  sobrado: "flat",
+  chaletTimber: "flat",
+  houseSage: "flat",
   cabana: "flat",
   lakeHouse: "flat",
   shopBrick: "flat",
@@ -139,6 +145,7 @@ export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
   aFrameShingle: "flat",
   aFrameSlate: "flat",
   aFrameTile: "flat",
+  chaletGable: "flat",
   stiltCabin: "flat",
   pier: "flat",
   sedanWhite: "flat",
@@ -176,13 +183,22 @@ export const MODEL_SHADING: Readonly<Record<ModelKey, "flat" | "smooth">> = {
   restaurant: "flat",
 };
 
-const HOUSE_BASE: Omit<BuildingSpec, "wallColor" | "roofColor"> = {
-  width: 6.2,
-  depth: 5.0,
-  height: 3.4,
-  roofHeight: 2.1,
-  chimney: true,
-  windows: true,
+/** One builder per dwelling design. */
+function dwellingBuilder(key: DwellingKey): () => BufferGeometry {
+  return () => createBuildingGeometry(DWELLINGS[key]);
+}
+
+const DWELLING_BUILDERS: Readonly<Record<DwellingKey, () => BufferGeometry>> = {
+  houseWhite: dwellingBuilder("houseWhite"),
+  houseCream: dwellingBuilder("houseCream"),
+  houseYellow: dwellingBuilder("houseYellow"),
+  houseSalmon: dwellingBuilder("houseSalmon"),
+  houseGreenTimber: dwellingBuilder("houseGreenTimber"),
+  houseBlueTimber: dwellingBuilder("houseBlueTimber"),
+  houseOchreTimber: dwellingBuilder("houseOchreTimber"),
+  sobrado: dwellingBuilder("sobrado"),
+  chaletTimber: dwellingBuilder("chaletTimber"),
+  houseSage: dwellingBuilder("houseSage"),
 };
 
 /**
@@ -199,14 +215,7 @@ export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = 
   bush: () => createBushGeometry(0.9),
   rock: () => createRockGeometry(1.7),
   palm: () => createPalmGeometry(5.4, 4),
-  houseWhitewash: () =>
-    createBuildingGeometry({ ...HOUSE_BASE, wallColor: WORLD_COLORS.whitewash, roofColor: WORLD_COLORS.tile, wallSurface: "plaster", roofSurface: "tiles" }),
-  houseYellow: () =>
-    createBuildingGeometry({ ...HOUSE_BASE, wallColor: WORLD_COLORS.paleYellow, roofColor: WORLD_COLORS.slate, wallSurface: "plaster", roofSurface: "slate" }),
-  houseTimber: () =>
-    createBuildingGeometry({ ...HOUSE_BASE, wallColor: WORLD_COLORS.timber, roofColor: WORLD_COLORS.tileDark, wallSurface: "planks", roofSurface: "tiles" }),
-  houseMint: () =>
-    createBuildingGeometry({ ...HOUSE_BASE, wallColor: WORLD_COLORS.mint, roofColor: WORLD_COLORS.slateDark, wallSurface: "plaster", roofSurface: "slate" }),
+  ...DWELLING_BUILDERS,
   cabana: () =>
     createBuildingGeometry({ width: 4.8, depth: 4.2, height: 2.9, roofHeight: 1.7, wallColor: WORLD_COLORS.timberDark, roofColor: WORLD_COLORS.shingle, wallSurface: "planks", roofSurface: "shingle", windows: true }),
   lakeHouse: () => createLakeHouseGeometry(),
@@ -217,6 +226,11 @@ export const MODEL_REGISTRY: Readonly<Record<ModelKey, () => BufferGeometry>> = 
   aFrameShingle: () => createAFrameGeometry(WORLD_COLORS.shingle, "shingle"),
   aFrameSlate: () => createAFrameGeometry(WORLD_COLORS.slateDark, "slate"),
   aFrameTile: () => createAFrameGeometry(WORLD_COLORS.tile, "tiles"),
+  chaletGable: () =>
+    createBuildingGeometry({
+      width: 4.4, depth: 4.2, height: 2.7, roofHeight: 2.1, wallColor: DWELLING_COLORS.timberNatural, roofColor: DWELLING_COLORS.shingle,
+      wallSurface: "planks", roofSurface: "shingle", trim: DWELLING_COLORS.trimCream, windows: true, porch: true, chimney: true,
+    }),
   stiltCabin: () => createStiltCabinGeometry(),
   pier: () => createPierGeometry(10),
   sedanWhite: () => createSedanGeometry(WORLD_COLORS.sedanWhite),
@@ -297,6 +311,26 @@ function distanceToPolyline(px: number, pz: number, points: readonly Waypoint[],
 }
 
 /** Scenery keeps off the roads, the yards, the rails and the water. */
+/** Things by the water: how far they keep from it and from what is built. */
+const SHORE_PROPS = {
+  /** The rows, by z, a palm stands on along the east shore. */
+  palmRows: [16, 26, 34, 44, 54, 64, 74, 82, 92, 104, 112, 118],
+  palmSetBack: 3.5,
+  clearance: 1.5,
+  dryHeight: 0.5,
+  /** Trees need a little less: a trunk at the water's edge is how a bank looks. */
+  treeDryHeight: 0.45,
+  searchReach: 14,
+  buildingClearance: 1.2,
+  roadClearance: 1.5,
+} as const;
+
+/** How much ground a dwelling takes, whatever its design - they are sized alike. */
+const DWELLING_FOOTPRINT = 4.4;
+
+/** Dwellings nearer than this avoid sharing a design where the designs allow. */
+const DWELLING_NEIGHBOURHOOD = 28;
+
 /**
  * How much ground each building takes, for the spacing pass. Approximate on purpose -
  * it is a keep-out radius, not a measurement.
@@ -319,10 +353,7 @@ const FOOTPRINT: Readonly<Partial<Record<ModelKey, number>>> = {
   amusementPark: 30,
   restaurant: 9,
   lakeHouse: 8.4,
-  houseWhitewash: 3.6,
-  houseYellow: 3.6,
-  houseTimber: 3.6,
-  houseMint: 3.6,
+  ...Object.fromEntries(DWELLING_KEYS.map((key) => [key, DWELLING_FOOTPRINT])),
   cabana: 2.8,
   shopBrick: 4.2,
   shopYellow: 4.2,
@@ -331,17 +362,32 @@ const FOOTPRINT: Readonly<Partial<Record<ModelKey, number>>> = {
   aFrameShingle: 3.4,
   aFrameSlate: 3.4,
   aFrameTile: 3.4,
+  chaletGable: 3.2,
   stiltCabin: 4.0,
 };
 
-function footprintOf(placement: Placement): number {
+/** A building's keep-out radius, or null for anything that is not a building. */
+export function buildingFootprint(placement: Placement): number | null {
+  const radius = FOOTPRINT[placement.model];
+  return radius === undefined ? null : radius * placement.scale;
+}
+
+/** The keep-out radius of a placement, as the spacing pass and the layout check use it. */
+export function footprintOf(placement: Placement): number {
   return (FOOTPRINT[placement.model] ?? 2) * placement.scale;
 }
+
+/**
+ * How far out the nudge search goes, in rings of 2.6 units. Ten since the streets were
+ * widened to two real lanes and pavements: at seven, the lakefront house by the resort
+ * found no spot between the shore street and the main road and stayed on the street.
+ */
+const NUDGE_RINGS = 10;
 
 /** Candidate nudges, nearest first, so a building moves as little as it has to. */
 const NUDGES: ReadonlyArray<readonly [number, number]> = (() => {
   const offsets: Array<readonly [number, number]> = [[0, 0]];
-  for (let ring = 1; ring <= 7; ring += 1) {
+  for (let ring = 1; ring <= NUDGE_RINGS; ring += 1) {
     for (let step = 0; step < 12; step += 1) {
       const angle = (step / 12) * Math.PI * 2 + ring * 0.27;
       offsets.push([Math.cos(angle) * ring * 2.6, Math.sin(angle) * ring * 2.6]);
@@ -363,6 +409,21 @@ function roadClearance(x: number, z: number): number {
 }
 
 /**
+ * Whether the ground under a footprint stands clear of the water - its centre and eight
+ * points round its edge. The waterline the eye sees is where the ground meets the water
+ * level, some metres inland of the shoreline curve, and a cabin placed by the curve alone
+ * stood with its floor under the lake.
+ */
+function standsDry(x: number, z: number, radius: number): boolean {
+  if (landHeightAt(x, z) < LAKE.level + SHORE_PROPS.dryHeight) return false;
+  for (let step = 0; step < 8; step += 1) {
+    const angle = (step / 8) * Math.PI * 2;
+    if (landHeightAt(x + Math.cos(angle) * radius * 0.8, z + Math.sin(angle) * radius * 0.8) < LAKE.level + SHORE_PROPS.dryHeight) return false;
+  }
+  return true;
+}
+
+/**
  * Nudges buildings off each other, off the roads and out of the water.
  *
  * Hand-placed coordinates drift out of true every time a road or a landmark moves, and
@@ -381,6 +442,7 @@ function spaceApart(movable: readonly Placement[], fixed: readonly Placement[]):
         const x = building.x + dx;
         const z = building.z + dz;
         if (lakeDistance(x, z) < radius + 1.5) return false;
+        if (!standsDry(x, z, radius)) return false;
         if (roadClearance(x, z) < radius * 0.85) return false;
         return settled.every((other) => Math.hypot(x - other.x, z - other.z) >= (radius + footprintOf(other)) * 0.92);
       }) ?? [0, 0];
@@ -393,39 +455,44 @@ function spaceApart(movable: readonly Placement[], fixed: readonly Placement[]):
   return placed;
 }
 
+// Every house below is authored as "houseWhite" for its position alone; its design is
+// chosen after spacing, by `withDesigns`.
 const AUTHORED_HOUSES: readonly Placement[] = [
   // Lakefront, looking west over the water, from the south end up to the square.
   placed("lakeHouse", 30, 86, Math.PI * 0.95),
   placed("lakeHouse", 44, 40, Math.PI * 0.9),
   placed("lakeHouse", 70, -14, Math.PI * 0.75),
-  placed("cabana", 20, 116, 2.8),
+  // Up the slope from the pousada: by the water it found no dry ground clear of the inn.
+  placed("cabana", 66, 146, 2.8),
   placed("cabana", 34, 60, 2.6),
   placed("cabana", 54, -10, 2.4),
   // Behind the road, stepping back up the slope and out along it in both directions.
-  placed("houseYellow", 62, 112, 3.0),
-  placed("houseTimber", 116, 114, 2.9),
-  placed("houseMint", 78, 104, 3.0),
-  placed("houseYellow", 100, 88, 3.1),
-  placed("houseWhitewash", 86, 74, 2.9),
-  placed("houseMint", 112, 74, 3.1),
-  placed("houseWhitewash", 124, 82, 2.8),
+  placed("houseWhite", 62, 112, 3.0),
+  placed("houseWhite", 116, 114, 2.9),
+  placed("houseWhite", 78, 104, 3.0),
+  placed("houseWhite", 100, 88, 3.1),
+  placed("houseWhite", 86, 74, 2.9),
+  placed("houseWhite", 112, 74, 3.1),
+  placed("houseWhite", 124, 82, 2.8),
   placed("cabana", 136, 96, 3.0),
-  placed("houseYellow", 152, 84, 2.7),
-  placed("houseMint", 134, 62, 3.1),
-  placed("houseTimber", 120, 22, 2.9),
-  placed("houseWhitewash", 96, 22, 2.8),
-  placed("houseYellow", 104, -6, 2.6),
-  placed("houseTimber", 90, -26, 2.7),
-  placed("houseWhitewash", 112, -36, 2.8),
-  placed("houseMint", 142, 30, 3.0),
+  placed("houseWhite", 152, 84, 2.7),
+  placed("houseWhite", 134, 62, 3.1),
+  placed("houseWhite", 120, 22, 2.9),
+  placed("houseWhite", 96, 22, 2.8),
+  placed("houseWhite", 104, -6, 2.6),
+  placed("houseWhite", 90, -26, 2.7),
+  placed("houseWhite", 112, -36, 2.8),
+  placed("houseWhite", 142, 30, 3.0),
 ];
 
 /** The chalet village on the ridge behind the far shore, stepping up the slope. */
 const FAR_SHORE_CHALETS: readonly Placement[] = CHALET_SITES.map(([x, z], index) => {
-  const models: readonly ModelKey[] = ["aFrameShingle", "aFrameSlate", "aFrameTile"];
-  // They look out over the water, with just enough variation that the row of roofs
-  // does not line up into a single edge.
-  return placed(models[index % 3], x, z, 0.14 * (index % 5) - 0.28, 1.9);
+  // A-frames among timber chalets: every one an A-frame read from the hub as a grid of
+  // red tents. They look out over the water, turned just enough that the roofs do not
+  // line up into a single edge.
+  const models: readonly ModelKey[] = ["aFrameShingle", "chaletGable", "aFrameSlate", "aFrameTile", "chaletGable"];
+  const model = models[index % models.length];
+  return placed(model, x, z, 0.14 * (index % 5) - 0.28, model === "chaletGable" ? 1.5 : 1.9);
 });
 
 /** The stilt cabins and piers along the peninsula's south shore. */
@@ -486,34 +553,84 @@ const PINNED: readonly Placement[] = [
   ...FAR_SHORE_CHALETS,
 ];
 
+const DWELLING_SET: ReadonlySet<ModelKey> = new Set(DWELLING_KEYS);
+
+function isDwellingDesign(model: ModelKey): boolean {
+  return DWELLING_SET.has(model);
+}
+
+/**
+ * Gives every house its design once the spacing pass has settled where it stands, so that
+ * no house stands beside its twin - design.md D7 of elevate-world-realism.
+ */
+function withDesigns(placements: readonly Placement[]): readonly Placement[] {
+  const homes = placements.filter((placement) => isDwellingDesign(placement.model));
+  const fixed = placements
+    .filter((placement) => placement.model === "lakeHouse" || placement.model === "cabana")
+    .map((placement) => ({ x: placement.x, z: placement.z, design: placement.model }));
+  const designs = assignDwellingDesigns(homes, DWELLING_KEYS, fixed, WORLD_SEED + 211, DWELLING_NEIGHBOURHOOD);
+  let next = 0;
+  return placements.map((placement) => {
+    if (!isDwellingDesign(placement.model)) return placement;
+    const model = designs[next];
+    next += 1;
+    return { ...placement, model };
+  });
+}
+
 const SPACED_BUILDINGS: readonly Placement[] = [
   ...PINNED,
-  ...spaceApart([...AUTHORED_HOUSES, ...AUTHORED_SHOPS], PINNED),
+  ...withDesigns(spaceApart([...AUTHORED_HOUSES, ...AUTHORED_SHOPS], PINNED)),
 ];
 
 /** The dwellings, which get a mown lawn around them. Shops face the street instead. */
-const HOUSES: readonly Placement[] = SPACED_BUILDINGS.filter((placement) =>
-  ["lakeHouse", "houseWhitewash", "houseYellow", "houseTimber", "houseMint", "cabana"].includes(placement.model),
+export const HOUSES: readonly Placement[] = SPACED_BUILDINGS.filter(
+  (placement) => placement.model === "lakeHouse" || placement.model === "cabana" || isDwellingDesign(placement.model),
 );
+
+/**
+ * Moves something that belongs by the water - a person, a parasol, a palm - inland until
+ * it stands on dry ground, or drops it. Positions authored against an older shoreline
+ * had drifted into the lake: palms stood in the water up to their crowns.
+ */
+function ashore(placement: Placement): Placement | null {
+  for (let step = 0; step <= SHORE_PROPS.searchReach; step += 1) {
+    const x = placement.x + step;
+    if (lakeDistance(x, placement.z) > SHORE_PROPS.clearance && landHeightAt(x, placement.z) > LAKE.level + SHORE_PROPS.dryHeight) {
+      return { ...placement, x };
+    }
+  }
+  return null;
+}
+
+function isClearOfBuildings(placement: Placement): boolean {
+  return SPACED_BUILDINGS.every(
+    (building) => Math.hypot(building.x - placement.x, building.z - placement.z) > footprintOf(building) + SHORE_PROPS.buildingClearance,
+  );
+}
+
+/** Palms set back a few metres from the east shore, measured from the shore itself. */
+function shorePalms(): readonly Placement[] {
+  return SHORE_PROPS.palmRows.flatMap((z, index) => {
+    const x = eastShoreXAt(z) + SHORE_PROPS.palmSetBack + (index % 3) * 1.3;
+    const palm = ashore(placed("palm", x, z, index * 0.7, 0.9 + (index % 3) * 0.12));
+    return palm && isClearOfBuildings(palm) && roadClearance(palm.x, palm.z) > SHORE_PROPS.roadClearance ? [palm] : [];
+  });
+}
 
 export const LANDMARKS: readonly Placement[] = [
   ...SPACED_BUILDINGS,
 
   // Palms along the foreground shore, as in the photograph.
-  ...([
-    [16, 54], [20, 64], [13, 74], [23, 82], [10, 92], [6, 104],
-    [27, 34], [21, 26], [35, 16], [30, 44], [18, 112], [3, 118],
-  ] as ReadonlyArray<readonly [number, number]>).map(([x, z], index) =>
-    placed("palm", x, z, index * 0.7, 0.9 + (index % 3) * 0.12),
-  ),
+  ...shorePalms(),
 
   // Parked cars in the car parks and the yards.
-  placed("sedanWhite", 21.5, 97.5, 1.27),
-  placed("sedanDark", 25, 96.4, 1.27),
-  placed("sedanSilver", 28.5, 95.3, 1.27),
-  placed("sedanWhite", 23.5, 104, 1.27),
-  placed("sedanDark", 27, 102.9, 1.27),
-  placed("sedanSilver", 30.5, 101.8, 1.27),
+  placed("sedanWhite", 20.9, 97.5, 1.27),
+  placed("sedanDark", 24.4, 96.4, 1.27),
+  placed("sedanSilver", 27.9, 95.3, 1.27),
+  placed("sedanWhite", 22.9, 104, 1.27),
+  placed("sedanDark", 26.4, 102.9, 1.27),
+  placed("sedanSilver", 29.9, 101.8, 1.27),
   placed("sedanSilver", 142, 105, 0.5),
   placed("sedanWhite", 145, 107, 0.5),
   placed("sedanDark", 186, -186, 0.9),
@@ -522,8 +639,8 @@ export const LANDMARKS: readonly Placement[] = [
   ...[126, 132].flatMap((x) => [-26, -22, -18, -14, -10].map((z) => placed("vineRow", x, z))),
 
   // Lamps along the shore street and the square.
-  ...([[46, 24], [50, 12], [58, -2], [36, 60], [44, 80], [60, 82], [98, 70], [124, 92]] as ReadonlyArray<readonly [number, number]>).map(
-    ([x, z]) => placed("lamppost", x, z),
+  ...([[46, 24], [50, 12], [58, -2], [36, 60], [44, 80], [60, 82], [98, 70], [124, 92]] as ReadonlyArray<readonly [number, number]>).flatMap(
+    ([x, z]) => ashore(placed("lamppost", x, z)) ?? [],
   ),
 
   // Fences and taipas across the campo behind the town.
@@ -541,19 +658,21 @@ export const LANDMARKS: readonly Placement[] = [
     [136, -100, 0.9], [132, -104, 2.2],
     [104, 72, 1.0], [100, 70, 2.4],
     [92, 36, 0.7], [88, 34, 2.9],
-  ] as ReadonlyArray<readonly [number, number, number]>).map(([x, z, rotation], index) => {
+  ] as ReadonlyArray<readonly [number, number, number]>).flatMap(([x, z, rotation], index) => {
     const models: readonly ModelKey[] = ["personA", "personB", "personC", "personD"];
-    return placed(models[index % 4], x, z, rotation);
+    return ashore(placed(models[index % 4], x, z, rotation)) ?? [];
   }),
   placed("personSeated", 34, 52, 2.6),
   placed("personSeated", 52, 4, 1.2),
   placed("personSeated", 134, -102, 0.4),
 
   // Parasols by the water.
-  placed("parasolRed", 28, 48),
-  placed("parasolTeal", 34, 40),
-  placed("parasolRed", 44, 26),
-  placed("parasolTeal", 24, 74),
+  ...[
+    placed("parasolRed", 28, 48),
+    placed("parasolTeal", 34, 40),
+    placed("parasolRed", 44, 26),
+    placed("parasolTeal", 24, 74),
+  ].flatMap((parasol) => ashore(parasol) ?? []),
 
   // Boats: moored at the piers and pulled up on the shore.
   // Moorings: off the piers, clear of both boats' loops. One moored on a loop is a
@@ -625,12 +744,29 @@ function distanceToSegment(px: number, pz: number, ax: number, az: number, bx: n
 }
 
 function isOnInfrastructure(x: number, z: number): boolean {
+  // Nothing is built past the map's edge, and the lake's half-spaces run on out there
+  // although the far land has closed the water off.
+  if (outsideDistance(x, z) > 0) return false;
   if (ROAD_POLYLINES.some((road) => distanceToPolyline(x, z, road.points, road.closed) < road.width / 2 + 2.2)) return true;
   if (YARDS.some((yard) => Math.hypot(x - yard.x, z - yard.z) < yard.radius + 2)) return true;
   if (LAWNS.some((lawn) => Math.hypot(x - lawn.x, z - lawn.z) < lawn.radius - 1)) return true;
   if (x > LAKE.dam.x && riverDistance(x, z) < 12) return true;
   return lakeDistance(x, z) < 3;
 }
+
+/**
+ * How strictly each kind keeps to the woods, from 0 (anywhere) to 1 (only inside a wood).
+ * Anything not listed ignores the grove field.
+ */
+const GROVE_AFFINITY: Readonly<Partial<Record<ModelKey, number>>> = {
+  araucaria: 0.55,
+  araucariaB: 0.55,
+  araucariaYoung: 0.7,
+  conifer: 0.9,
+  broadleaf: 0.88,
+  broadleafWarm: 0.88,
+  bush: 0.5,
+};
 
 /**
  * Scatters trees, bushes and rocks.
@@ -641,6 +777,16 @@ function isOnInfrastructure(x: number, z: number): boolean {
  * reference photograph.
  */
 export function createScatter(): readonly Placement[] {
+  // Seeded and pure, so it is built once and shared: the scene and walk mode's obstacles
+  // both read it.
+  if (scatterCache) return scatterCache;
+  scatterCache = buildScatter();
+  return scatterCache;
+}
+
+let scatterCache: readonly Placement[] | null = null;
+
+function buildScatter(): readonly Placement[] {
   const random = createRandom(WORLD_SEED);
   const placements: Placement[] = [];
   const half = TERRAIN.size / 2;
@@ -652,18 +798,23 @@ export function createScatter(): readonly Placement[] {
     propose: () => readonly [number, number],
     accept: (x: number, z: number, height: number) => boolean,
     clearance = 2,
+    beyondEdge = false,
   ): void => {
     let placedCount = 0;
     let attempts = 0;
     while (placedCount < count && attempts < count * 30) {
       attempts += 1;
       const [x, z] = propose();
-      if (Math.abs(x) > half - 8 || Math.abs(z) > half - 8) continue;
+      if (!beyondEdge && (Math.abs(x) > half - 8 || Math.abs(z) > half - 8)) continue;
       if (isInClearing(x, z, clearance)) continue;
       if (isOnInfrastructure(x, z)) continue;
-      const height = terrainHeightAt(x, z);
-      if (height < LAKE.level + 0.3) continue;
+      const height = landHeightAt(x, z);
+      if (height < LAKE.level + SHORE_PROPS.treeDryHeight) continue;
       if (!accept(x, z, height)) continue;
+      // Trees gather where the grove field says the woods are; how strictly depends on
+      // the tree - a lone araucaria in open pasture is the Serra's own picture.
+      const affinity = GROVE_AFFINITY[model] ?? 0;
+      if (random() > 1 - affinity + affinity * groveDensityAt(x, z)) continue;
       placements.push({
         model,
         x,
@@ -741,11 +892,27 @@ export function createScatter(): readonly Placement[] {
   scatter("broadleaf", 300, [0.9, 1.6], onOutskirts, outskirts, 2);
   scatter("bush", 220, [0.7, 1.3], onOutskirts, outskirts, 1);
 
+  // The woods carry on over the map's edge and thin out into the far land, so the border
+  // is never a line where the trees stop. Cheap models only: at this range a conifer and
+  // a broadleaf are all that read.
+  const acrossEdge = (): readonly [number, number] => {
+    const reach = half + OUTER_LAND.treeBand;
+    return [-reach + random() * reach * 2, -reach + random() * reach * 2];
+  };
+  const inBand = (x: number, z: number): boolean => {
+    const outside = outsideDistance(x, z);
+    if (outside <= 0 && Math.abs(x) < half - 8 && Math.abs(z) < half - 8) return false;
+    const dry = outside > 0 ? landHeightAt(x, z) > LAKE.level + OUTER_LAND.shoreClearance : onLand(x, z);
+    return dry && random() > outside / OUTER_LAND.treeBand;
+  };
+  scatter("conifer", 520, [0.9, 1.6], acrossEdge, inBand, 2, true);
+  scatter("broadleafWarm", 260, [1.0, 1.7], acrossEdge, inBand, 2, true);
+
   return placements;
 }
 
 /** Ground height for a placement, so callers do not reach into the terrain module. */
 export function groundHeightFor(placement: Placement): number {
   if (placement.afloat) return LAKE.level + placement.yOffset;
-  return terrainHeightAt(placement.x, placement.z) + placement.yOffset;
+  return landHeightAt(placement.x, placement.z) + placement.yOffset;
 }
