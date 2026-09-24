@@ -1,7 +1,10 @@
 import { CAROUSEL, DROP_TOWER, SWING } from "@/lib/world/attractions";
 import { WALK } from "@/lib/world/constants";
 import { LANDMARKS, MODEL_REGISTRY, type ModelKey, type Placement, buildingFootprint, createScatter, groundHeightFor } from "@/lib/world/neighborhood-layout";
+import { roadSurfaceGeometry } from "@/lib/world/road-surfaces";
 import { SITES, siteAt } from "@/lib/world/sites";
+
+import { type HeightField, createHeightField, raiseAt, rasteriseTops } from "./height-field";
 
 import { occupancyOf } from "./prop-occupancy";
 import type { SiteFootprint } from "./visits";
@@ -50,7 +53,7 @@ function obstacleFor(placement: Placement): Circle | null {
 }
 
 /** A cell of walkable floor raised above the ground - paving, boards, a platform. */
-export interface Floor {
+interface Floor {
   readonly x: number;
   readonly z: number;
   readonly height: number;
@@ -107,9 +110,18 @@ export function worldObstacles(): readonly Circle[] {
   return [...placed, ...detail().circles, ...rideCircles()];
 }
 
-/** Every raised floor inside the open places. */
-export function worldFloors(): readonly Floor[] {
-  return detail().floors;
+/** Faces flatter than this are stood on: the verges' slope is, a kerb's face is not. */
+const STANDING_SLOPE = 0.3;
+
+/**
+ * Everything stood on above the ground: the open places' floors, and every road surface -
+ * carriageway, kerb-high pavement, verge, track, car park.
+ */
+export function worldSurfaces(): HeightField {
+  const field = createHeightField(WALK_OCCUPANCY.cell);
+  for (const floor of detail().floors) raiseAt(field, floor.x, floor.z, floor.height);
+  rasteriseTops(field, roadSurfaceGeometry(), STANDING_SLOPE);
+  return field;
 }
 
 /** Each place with the footprint of the building standing on it, for its arrival area. */

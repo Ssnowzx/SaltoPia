@@ -1,11 +1,9 @@
 import { LAKE, RIVER, TERRAIN, WALK } from "@/lib/world/constants";
-import { FOOTBRIDGE } from "@/lib/world/road-network";
-import { buildCentrelines, clearanceToOtherRoads } from "@/lib/world/road-junctions";
-import { LIFT } from "@/lib/world/road-surfaces";
-import { ROAD_POLYLINES } from "@/lib/world/road-network";
-import { surfaceHeightAt } from "@/lib/world/roads";
 import { landHeightAt } from "@/lib/world/outer-land";
+import { FOOTBRIDGE } from "@/lib/world/road-network";
 import { bridgeDeckAt, riverDistance } from "@/lib/world/terrain";
+
+import { type HeightField, heightFieldAt } from "./height-field";
 
 /**
  * The rules of where a walker can stand, as data a pure step can be given.
@@ -19,16 +17,6 @@ export interface Circle {
   readonly x: number;
   readonly z: number;
   readonly radius: number;
-}
-
-/** Raised floors keyed by a half-metre cell, for a lookup per step. */
-export function createFloorIndex(floors: ReadonlyArray<{ readonly x: number; readonly z: number; readonly height: number }>, cell: number): (x: number, z: number) => number {
-  const heights = new Map<string, number>();
-  for (const floor of floors) {
-    const cellKey = `${Math.floor(floor.x / cell)},${Math.floor(floor.z / cell)}`;
-    heights.set(cellKey, Math.max(heights.get(cellKey) ?? Number.NEGATIVE_INFINITY, floor.height));
-  }
-  return (x, z) => heights.get(`${Math.floor(x / cell)},${Math.floor(z / cell)}`) ?? Number.NEGATIVE_INFINITY;
 }
 
 export interface WalkWorld {
@@ -69,7 +57,6 @@ export function createObstacleIndex(circles: readonly Circle[], cell: number): (
   };
 }
 
-const CENTRELINES = buildCentrelines(ROAD_POLYLINES);
 const HALF = TERRAIN.size / 2;
 
 function distanceToFootbridge(x: number, z: number): number {
@@ -85,16 +72,6 @@ function distanceToFootbridge(x: number, z: number): number {
   return best;
 }
 
-/**
- * The height the feet stand at: the ground, or the road surface where there is one - the
- * roads float over the graded ground, and without their lift the feet sank into every street.
- */
-export function walkHeightAt(x: number, z: number): number {
-  const ground = landHeightAt(x, z);
-  if (clearanceToOtherRoads(x, z, [], CENTRELINES) < 0) return Math.max(ground, surfaceHeightAt(x, z) + LIFT.carriageway);
-  return ground;
-}
-
 /** Water, the river gorge, and everything past the map's edge. The footbridge crosses the gorge. */
 export function isGroundBlocked(x: number, z: number): boolean {
   if (Math.abs(x) > HALF - WALK.edgeMargin || Math.abs(z) > HALF - WALK.edgeMargin) return true;
@@ -105,18 +82,14 @@ export function isGroundBlocked(x: number, z: number): boolean {
   return landHeightAt(x, z) < LAKE.level + WALK.wetMargin;
 }
 
-/** Half a metre: the cell the open places' floors are read at. */
-const FLOOR_CELL = 0.5;
-
 /**
- * The walk world over the real terrain, with the given obstacles and raised floors. A
- * walker on the square stands on its paving, not on the ground under it - the feet sank
- * a hand's depth into it before.
+ * The walk world over the real terrain, with the given obstacles and the surfaces stood on
+ * above the ground - the square's paving, the pavements, the verges. Without them the feet
+ * sank a hand's depth into the square and to the ankle into every pavement.
  */
-export function createWalkWorld(obstacles: readonly Circle[], floors: ReadonlyArray<{ readonly x: number; readonly z: number; readonly height: number }> = []): WalkWorld {
-  const floorAt = createFloorIndex(floors, FLOOR_CELL);
+export function createWalkWorld(obstacles: readonly Circle[], surfaces: HeightField | null = null): WalkWorld {
   return {
-    heightAt: (x, z) => Math.max(walkHeightAt(x, z), floorAt(x, z)),
+    heightAt: surfaces ? (x, z) => Math.max(landHeightAt(x, z), heightFieldAt(surfaces, x, z)) : landHeightAt,
     isGroundBlocked,
     obstaclesNear: createObstacleIndex(obstacles, WALK.obstacleCell),
   };

@@ -23,7 +23,7 @@ import {
   createWaterfallFoamGeometry,
 } from "@/lib/world/roads";
 import { createOuterLandGeometry } from "@/lib/world/outer-land";
-import { createRoadSurfaceGeometry } from "@/lib/world/road-surfaces";
+import { roadSurfaceGeometry } from "@/lib/world/road-surfaces";
 import { createTerrainGeometry, lakeDistance } from "@/lib/world/terrain";
 import { createTerrainMaterial } from "@/lib/world/terrain-material";
 
@@ -133,7 +133,7 @@ export function Neighborhood(): React.ReactElement {
   const terrainGeometry = useMemo(() => createTerrainGeometry(LAWNS), []);
   const terrainMaterial = useMemo(() => createTerrainMaterial(materials.grass), [materials.grass]);
   const outerLandGeometry = useMemo(() => createOuterLandGeometry(), []);
-  const roadGeometry = useMemo(() => createRoadSurfaceGeometry(), []);
+  const roadGeometry = useMemo(() => roadSurfaceGeometry(), []);
   const roadStructureGeometry = useMemo(() => createRoadStructureGeometry(), []);
   const lakeGeometry = useMemo(() => createLakeSurfaceGeometry(), []);
   const riverGeometry = useMemo(() => createRiverGeometry(), []);

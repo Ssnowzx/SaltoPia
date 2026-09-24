@@ -369,6 +369,18 @@ export function createRoadSurfaceGeometry(): BufferGeometry {
   return geometry;
 }
 
+let shared: BufferGeometry | null = null;
+
+/**
+ * The road geometry, built once and shared: the scene draws it and walk mode reads the
+ * pavement's height from it. Building it asks the graded ground its height at every vertex
+ * and takes seconds, too long to do twice.
+ */
+export function roadSurfaceGeometry(): BufferGeometry {
+  shared ??= createRoadSurfaceGeometry();
+  return shared;
+}
+
 /** The height a vehicle's wheels stand at on a road - the carriageway's own surface. */
 export function carriagewayHeightAt(x: number, z: number): number {
   return surfaceHeightAt(x, z) + LIFT.carriageway;

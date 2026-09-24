@@ -1,6 +1,6 @@
 import { TERRAIN, WALK } from "@/lib/world/constants";
 
-import { worldFloors, worldObstacles } from "./obstacles";
+import { worldObstacles, worldSurfaces } from "./obstacles";
 import { type Point, type WalkGrid, buildWalkGrid, findPath } from "./pathfinding";
 import { type WalkWorld, createWalkWorld } from "./walk-world";
 
@@ -14,7 +14,7 @@ let world: WalkWorld | null = null;
 let grid: WalkGrid | null = null;
 
 export function walkWorld(): WalkWorld {
-  world ??= createWalkWorld(worldObstacles(), worldFloors());
+  world ??= createWalkWorld(worldObstacles(), worldSurfaces());
   return world;
 }
 

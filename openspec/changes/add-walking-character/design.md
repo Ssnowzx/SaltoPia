@@ -68,8 +68,12 @@ in, so the step is tested without a scene.
 
 ### D4 - The ground under the feet
 
-`walkHeightAt` is `landHeightAt`, plus the road surface's own lift where the point is on a
-road: carriageway or pavement. Without it the feet sank half a metre into every street.
+The feet stand on the highest of the ground (`landHeightAt`) and every surface drawn over it:
+the road geometry's upward faces - carriageway, kerb-high pavement, verge, track, car park -
+and the open places' floors, rasterised once into a half-metre height field and read back
+with bilinear interpolation, so a kerb is climbed rather than jumped. The first version put
+the feet at the carriageway's lift anywhere on a street; on the pavement they sank to the
+ankle, and on the verges deeper (fixed in `add-living-townsfolk`).
 
 ### D5 - A follow camera the visitor can turn
 

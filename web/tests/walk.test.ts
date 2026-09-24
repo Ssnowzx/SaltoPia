@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { WALK } from "@/lib/world/constants";
-import { LIFT } from "@/lib/world/road-surfaces";
+import { LIFT, PAVEMENT_TOP } from "@/lib/world/road-surfaces";
+import { SHORE_STREET } from "@/lib/world/road-network";
 import { surfaceHeightAt } from "@/lib/world/roads";
+import { walkWorld } from "@/lib/walk/navigator";
+import { pavementRoute } from "@/lib/walk/townsfolk";
 import { resolveStep, stepWalker, directionFromCamera } from "@/lib/walk/movement";
 import { buildWalkGrid, findPath } from "@/lib/walk/pathfinding";
 import { areaAt, arrivalAreas } from "@/lib/walk/visits";
-import { type WalkWorld, createObstacleIndex, isGroundBlocked, walkHeightAt } from "@/lib/walk/walk-world";
+import { type WalkWorld, createObstacleIndex, isGroundBlocked } from "@/lib/walk/walk-world";
 import { siteFootprints, worldObstacles } from "@/lib/walk/obstacles";
 
 /** A flat test world: water where x < 0, one house of radius 3 at (10, 0). */
@@ -23,10 +26,21 @@ describe("walk world", () => {
     const z = 86;
 
     // ACT
-    const height = walkHeightAt(x, z);
+    const height = walkWorld().heightAt(x, z);
 
     // ASSERT
     assert.ok(Math.abs(height - (surfaceHeightAt(x, z) + LIFT.carriageway)) < 0.05, `height ${height}`);
+  });
+
+  it("should stand a walker on the pavement at the pavement's top, a kerb above the carriageway", () => {
+    // ARRANGE - the middle of the lakefront street's landward pavement, along a stretch of it.
+    const points = pavementRoute(SHORE_STREET, 0.62, 0.7);
+
+    // ACT
+    const sunk = points.filter((point) => walkWorld().heightAt(point.x, point.z) < surfaceHeightAt(point.x, point.z) + PAVEMENT_TOP - 0.03);
+
+    // ASSERT
+    assert.deepEqual(sunk, []);
   });
 
   it("should block the lake and leave the street open", () => {
