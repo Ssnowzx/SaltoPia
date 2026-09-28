@@ -91,7 +91,7 @@ export default async function ExperiencePage({ params }: ExperiencePageProps): P
             <div>
               <dt className="font-sans text-[11px] font-bold tracking-[0.3em] text-[var(--place-accent)] uppercase">Como reservar</dt>
               <dd className="mt-1 font-sans text-sm font-semibold text-bark">
-                <a href="/planejar" className="text-teal underline-offset-4 hover:underline">Planejar visita</a>
+                <a href="/planejar" className="text-night underline-offset-4 hover:underline">Planejar visita</a>
               </dd>
             </div>
           </dl>

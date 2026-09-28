@@ -27,7 +27,7 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
       />
 
       <div className="relative flex flex-col items-center">
-        <p className="intro-lede font-script text-2xl text-teal sm:text-4xl">Bem-vindo a</p>
+        <p className="intro-lede font-script text-2xl text-wine sm:text-4xl">Bem-vindo a</p>
         {/* The card's own margin is part of the picture, so the box is wider than the
             emblem looks. Sized by what reads, not by the file. */}
         <h1 className="-mt-3 w-full max-w-[1000px] sm:-mt-6">
@@ -54,7 +54,7 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
           type="button"
           onClick={onExplore}
           disabled={!ready}
-          className="mt-6 rounded-button bg-teal-deep px-7 py-4 sm:mt-8 sm:px-8 font-sans text-sm font-bold tracking-[0.12em] text-mist uppercase shadow-[0_12px_30px_rgba(196,82,46,0.35)] transition-transform duration-200 not-disabled:hover:scale-105 not-disabled:hover:bg-teal-dark focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none disabled:opacity-60"
+          className="mt-6 rounded-button bg-night px-7 py-4 sm:mt-8 sm:px-8 font-sans text-sm font-bold tracking-[0.12em] text-mist uppercase shadow-[0_12px_30px_color-mix(in_srgb,var(--color-night)_35%,transparent)] transition-transform duration-200 not-disabled:hover:scale-105 not-disabled:hover:bg-wine focus-visible:ring-4 focus-visible:ring-wine/35 focus-visible:outline-none disabled:opacity-60"
         >
           {ready ? "Explorar Saltopia" : "Chegando a Saltopia…"}
         </button>

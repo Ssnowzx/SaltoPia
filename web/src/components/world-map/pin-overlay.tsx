@@ -48,7 +48,7 @@ export function PinOverlay({ places, nodes, onSelect }: PinOverlayProps): React.
           {place.offer ? (
             <span
               aria-hidden="true"
-              className="absolute -top-1 left-1/2 z-10 -translate-x-1/2 -translate-y-full rounded-pill bg-wine px-2.5 py-[3px] font-sans text-[10px] font-bold tracking-[0.1em] whitespace-nowrap text-mist uppercase shadow-[0_4px_10px_rgba(46,36,28,0.35)] ring-2 ring-mist"
+              className="absolute -top-1 left-1/2 z-10 -translate-x-1/2 -translate-y-full rounded-pill bg-wine px-2.5 py-[3px] font-sans text-[10px] font-bold tracking-[0.1em] whitespace-nowrap text-mist uppercase shadow-[0_4px_10px_color-mix(in_srgb,var(--color-night)_35%,transparent)] ring-2 ring-mist"
             >
               {place.offer}
             </span>
@@ -58,7 +58,7 @@ export function PinOverlay({ places, nodes, onSelect }: PinOverlayProps): React.
             height="64"
             viewBox="0 0 54 75"
             aria-hidden="true"
-            className="origin-bottom drop-shadow-[0_6px_10px_rgba(46,36,28,0.35)] transition-transform duration-200 ease-in-out group-hover:scale-115 group-focus-visible:scale-115"
+            className="origin-bottom drop-shadow-[0_6px_10px_color-mix(in_srgb,var(--color-night)_35%,transparent)] transition-transform duration-200 ease-in-out group-hover:scale-115 group-focus-visible:scale-115"
           >
             {place.offer ? (
               <circle cx="27" cy="26" r="16" fill="none" stroke="var(--color-wine)" strokeWidth="2.5" className="pin-ring" />
@@ -70,13 +70,13 @@ export function PinOverlay({ places, nodes, onSelect }: PinOverlayProps): React.
               strokeWidth="2.5"
             />
             <circle cx="27" cy="26" r="14" fill="var(--color-mist)" />
-            <g transform="translate(15 14) scale(1)" fill="var(--color-teal-deep)">
+            <g transform="translate(15 14) scale(1)" fill="var(--color-night)">
               <path d={PIN_ICONS[place.slug] ?? DEFAULT_PIN_ICON} />
             </g>
           </svg>
           {/* The label appears on hover and focus, as in the reference - nine labels
               at once would collide where the landmarks sit close together. */}
-          <span className="rounded-pill bg-mist px-2.5 py-1 font-sans text-[11px] font-bold tracking-[0.06em] whitespace-nowrap text-bark uppercase opacity-0 shadow-sm ring-2 ring-transparent transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-visible:ring-teal">
+          <span className="rounded-pill bg-mist px-2.5 py-1 font-sans text-[11px] font-bold tracking-[0.06em] whitespace-nowrap text-bark uppercase opacity-0 shadow-sm ring-2 ring-transparent transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-visible:ring-wine">
             {place.name}
           </span>
         </button>

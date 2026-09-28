@@ -36,19 +36,19 @@ export function ExperienceCard({ experience, place }: ExperienceCardProps): Reac
   return (
     <a
       href={`/${place.slug}/experiencias/${experience.slug}`}
-      className="ticket group block rounded-card bg-mist text-bark shadow-[0_18px_44px_rgba(46,36,28,0.18)] transition-transform duration-200 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none"
+      className="ticket group block rounded-card bg-mist text-bark shadow-[0_18px_44px_rgba(46,36,28,0.18)] transition-transform duration-200 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-wine/35 focus-visible:outline-none"
     >
       <div className="relative aspect-[4/3] overflow-hidden rounded-t-card">
         <Image src={experience.image} alt="" fill sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-        <span className="absolute top-3 left-3 rounded-pill bg-mist/95 px-3 py-1 font-sans text-[11px] font-bold tracking-[0.12em] text-[var(--place-accent,var(--color-teal))] uppercase">
+        <span className="absolute top-3 left-3 rounded-pill bg-mist/95 px-3 py-1 font-sans text-[11px] font-bold tracking-[0.12em] text-[var(--place-accent,var(--color-night))] uppercase">
           {KIND_LABELS[experience.kind]}
         </span>
       </div>
       <div className="ticket-perforation" aria-hidden="true" />
       <div className="flex items-center gap-4 px-6 pt-4 pb-6">
         <div className="min-w-0 flex-1">
-          <h3 className="font-sans text-lg leading-tight font-extrabold text-[var(--place-ink,var(--color-araucaria))]">{experience.name}</h3>
-          <p className="mt-1 font-sans text-xs font-bold tracking-[0.12em] text-[var(--place-accent,var(--color-teal))] uppercase">
+          <h3 className="font-sans text-lg leading-tight font-extrabold text-[var(--place-ink,var(--color-night))]">{experience.name}</h3>
+          <p className="mt-1 font-sans text-xs font-bold tracking-[0.12em] text-[var(--place-accent,var(--color-night))] uppercase">
             {place.name} · {durationLabel(experience.durationMinutes)}
           </p>
         </div>

@@ -12,9 +12,9 @@ import { mixHex } from "@/lib/colour";
 
 const CREST = {
   size: 200,
-  ring: "#24443a",
-  rim: "#e2b04a",
-  disc: "#1f6068",
+  ring: "#151830",
+  rim: "#d9bf86",
+  disc: "#1f2346",
   glyph: "#f6efe2",
   text: "#f6efe2",
   /** The bark token, which a place colour is darkened towards for the ring. */

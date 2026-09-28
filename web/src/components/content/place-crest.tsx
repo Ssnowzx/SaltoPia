@@ -5,7 +5,7 @@ import { crestSvg } from "@/lib/crest";
 interface PlaceCrestProps {
   readonly slug: string;
   readonly name: string;
-  /** The place's colour. Without it the crest keeps the site's teal. */
+  /** The place's colour. Without it the crest takes the site's night-blue. */
   readonly accent?: string;
   readonly className?: string;
 }

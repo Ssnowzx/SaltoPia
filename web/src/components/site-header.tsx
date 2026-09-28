@@ -36,7 +36,7 @@ function DestinationList({ places }: SiteHeaderProps): React.ReactElement {
         <li key={place.slug}>
           <a
             href={`/${place.slug}`}
-            className="block rounded-button px-3 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-bark uppercase transition-colors hover:bg-straw hover:text-teal"
+            className="block rounded-button px-3 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-bark uppercase transition-colors hover:bg-straw hover:text-wine"
           >
             {place.name}
           </a>
@@ -63,21 +63,21 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
         <details className="group relative sm:hidden">
           <summary
             aria-label="Menu"
-            className="flex size-11 cursor-pointer list-none items-center justify-center rounded-button text-teal transition-colors hover:bg-straw [&::-webkit-details-marker]:hidden"
+            className="flex size-11 cursor-pointer list-none items-center justify-center rounded-button text-night transition-colors hover:bg-straw [&::-webkit-details-marker]:hidden"
           >
             <MenuIcon />
           </summary>
           <div className="absolute top-full left-0 mt-2 max-h-[70svh] w-[min(80vw,300px)] overflow-y-auto rounded-card bg-mist p-2 shadow-[0_18px_50px_rgba(46,36,28,0.22)]">
-            <p className="px-3 pt-2 pb-1 font-script text-2xl text-teal">Destinos</p>
+            <p className="px-3 pt-2 pb-1 font-script text-2xl text-night">Destinos</p>
             <DestinationList places={places} />
             <div className="mt-2 border-t border-bark/10 pt-2">
-              <a href="/experiencias" className="block rounded-button px-3 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-bark uppercase hover:bg-straw hover:text-teal">
+              <a href="/experiencias" className="block rounded-button px-3 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-bark uppercase hover:bg-straw hover:text-wine">
                 Experiências
               </a>
-              <a href="/embaixador" className="block rounded-button px-3 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-bark uppercase hover:bg-straw hover:text-teal">
+              <a href="/embaixador" className="block rounded-button px-3 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-bark uppercase hover:bg-straw hover:text-wine">
                 Seja embaixador
               </a>
-              <a href="/planejar" className="mt-1 block rounded-button bg-teal-deep px-3 py-3 text-center font-sans text-xs font-bold tracking-[0.08em] text-mist uppercase">
+              <a href="/planejar" className="mt-1 block rounded-button bg-night px-3 py-3 text-center font-sans text-xs font-bold tracking-[0.08em] text-mist uppercase">
                 Planejar visita
               </a>
             </div>
@@ -87,7 +87,7 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
         {/* Wide: the menu, the second link and the call to action, side by side. */}
         <nav className="hidden items-center gap-6 sm:flex" aria-label="Principal">
           <details className="group relative">
-            <summary className="flex cursor-pointer list-none items-center gap-1.5 font-script text-2xl text-teal select-none [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center gap-1.5 font-script text-2xl text-night select-none [&::-webkit-details-marker]:hidden">
               Destinos
               <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" className="transition-transform group-open:rotate-180">
                 <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -104,10 +104,10 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
               </div>
             </div>
           </details>
-          <a href="/experiencias" className="font-script text-2xl text-teal">
+          <a href="/experiencias" className="font-script text-2xl text-night">
             Experiências
           </a>
-          <a href="/embaixador" className="hidden font-script text-2xl text-teal lg:inline">
+          <a href="/embaixador" className="hidden font-script text-2xl text-night lg:inline">
             Embaixador
           </a>
         </nav>
@@ -125,7 +125,7 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
 
         <a
           href="/planejar"
-          className="hidden rounded-button bg-teal-deep px-4 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-mist uppercase transition-colors hover:bg-teal-dark sm:block sm:px-5 sm:text-sm"
+          className="hidden rounded-button bg-night px-4 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-mist uppercase transition-colors hover:bg-wine sm:block sm:px-5 sm:text-sm"
         >
           Planejar visita
         </a>

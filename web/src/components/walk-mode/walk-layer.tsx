@@ -31,7 +31,7 @@ export function WalkLayer({ walk, places, cardOpen, onVisit }: WalkLayerProps): 
       <button
         type="button"
         onClick={walk.enter}
-        className="absolute right-3 bottom-4 z-10 rounded-pill bg-teal-deep px-5 py-3 font-sans text-xs font-bold tracking-[0.1em] text-mist uppercase shadow-[0_12px_30px_rgba(23,76,83,0.35)] transition-transform duration-200 hover:scale-105 hover:bg-teal-dark focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none sm:right-6 sm:bottom-6"
+        className="absolute right-3 bottom-4 z-10 rounded-pill bg-night px-5 py-3 font-sans text-xs font-bold tracking-[0.1em] text-mist uppercase shadow-[0_12px_30px_rgba(23,76,83,0.35)] transition-transform duration-200 hover:scale-105 hover:bg-wine focus-visible:ring-4 focus-visible:ring-wine/35 focus-visible:outline-none sm:right-6 sm:bottom-6"
       >
         Passear a pé
       </button>

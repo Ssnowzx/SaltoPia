@@ -89,6 +89,15 @@ export function oklabDistance(first: string, second: string): number {
   return Math.hypot(l1 - l2, a1 - a2, b1 - b2);
 }
 
+/**
+ * How colourful a colour is: its distance from the grey axis in OKLab. Below about 0.04 a
+ * colour reads as a tinted neutral - paper, ink - rather than as a hue of its own.
+ */
+export function oklabChroma(hex: string): number {
+  const [, a, b] = toOklab(hex);
+  return Math.hypot(a, b);
+}
+
 /** The reference swatch a colour sits closest to, and how close. */
 export function nearestReferenceSwatch(hex: string): { readonly name: string; readonly distance: number } {
   return Object.entries(REFERENCE_SWATCHES)

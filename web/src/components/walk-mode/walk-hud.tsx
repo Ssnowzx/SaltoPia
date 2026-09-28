@@ -22,7 +22,7 @@ interface WalkHudProps {
 }
 
 const PILL =
-  "pointer-events-auto rounded-pill bg-mist/95 px-4 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-teal-deep uppercase shadow-[0_8px_24px_rgba(46,36,28,0.22)] transition-colors duration-200 hover:bg-white focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none";
+  "pointer-events-auto rounded-pill bg-mist/95 px-4 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-night uppercase shadow-[0_8px_24px_rgba(46,36,28,0.22)] transition-colors duration-200 hover:bg-white focus-visible:ring-4 focus-visible:ring-wine/35 focus-visible:outline-none";
 
 function PlaceList({ places, visited, onRouteTo, onClose }: { readonly places: readonly Place[]; readonly visited: readonly string[]; readonly onRouteTo: (place: Place) => void; readonly onClose: () => void }): React.ReactElement {
   return (
@@ -36,10 +36,10 @@ function PlaceList({ places, visited, onRouteTo, onClose }: { readonly places: r
                 onRouteTo(place);
                 onClose();
               }}
-              className="flex w-full items-center justify-between gap-3 rounded-button px-3 py-2 text-left font-sans text-sm text-bark hover:bg-white focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none"
+              className="flex w-full items-center justify-between gap-3 rounded-button px-3 py-2 text-left font-sans text-sm text-bark hover:bg-white focus-visible:ring-4 focus-visible:ring-wine/35 focus-visible:outline-none"
             >
-              <span className={visited.includes(place.slug) ? "font-bold text-teal-deep" : ""}>{place.name}</span>
-              <span className="shrink-0 text-[11px] font-bold tracking-[0.08em] text-teal uppercase">{visited.includes(place.slug) ? "✓ visitado" : "ir até lá"}</span>
+              <span className={visited.includes(place.slug) ? "font-bold text-night" : ""}>{place.name}</span>
+              <span className="shrink-0 text-[11px] font-bold tracking-[0.08em] text-night uppercase">{visited.includes(place.slug) ? "✓ visitado" : "ir até lá"}</span>
             </button>
           </li>
         ))}
@@ -79,12 +79,12 @@ export function WalkHud({ places, arrivedAt, visited, cardOpen, onVisit, onRoute
       {arrivedAt && !cardOpen ? (
         <div role="status" className="pointer-events-auto absolute inset-x-3 bottom-44 mx-auto sm:bottom-6 flex w-fit max-w-[calc(100vw-24px)] flex-wrap items-center justify-center gap-3 rounded-card bg-mist/95 px-5 py-3 shadow-[0_18px_40px_rgba(46,36,28,0.25)]">
           <p className="font-sans text-sm text-bark">
-            Você chegou a <strong className="text-araucaria">{arrivedAt.name}</strong>
+            Você chegou a <strong className="text-night">{arrivedAt.name}</strong>
           </p>
           <button
             type="button"
             onClick={() => onVisit(arrivedAt)}
-            className="rounded-button bg-teal-deep px-5 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-mist uppercase hover:bg-teal-dark focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none"
+            className="rounded-button bg-night px-5 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-mist uppercase hover:bg-wine focus-visible:ring-4 focus-visible:ring-wine/35 focus-visible:outline-none"
           >
             Visitar <span className="opacity-70 [@media(pointer:coarse)]:hidden">(E)</span>
           </button>

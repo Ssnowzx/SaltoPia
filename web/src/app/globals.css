@@ -8,33 +8,23 @@
  */
 @theme {
   /*
-   * Palette - teal water, gold light, cream stone. Drawn from the reservoir at the
-   * Salto do Rio Caveiras at sunset; deliberately not the reference's orange, which
-   * read as a copy.
+   * Palette - the Serra at night: night-blue, wine and champagne on cream paper. The
+   * founding teal, araucaria green and gold sat within 0.04-0.07 (OKLab) of the
+   * reference's deep green and mustard, and were retired on 2026-09-28 for that reason;
+   * `tests/palette.test.ts` keeps every saturated token at least 0.08 away from the
+   * reference's colours. The 3D world keeps its own palette in lib/world/constants.ts.
    */
-  --color-teal: #1f6068;
-  --color-teal-deep: #174c53;
-  --color-teal-dark: #113a40;
-  --color-gold: #e2b04a;
+  /* Primary: filled buttons, links and script on pale surfaces, the deep bands. */
+  --color-night: #1f2346;
+  /* Accent: a primary button's hover, script accents, offers, ribbons. */
+  --color-wine: #7b2d3f;
+  /* Champagne: pins, highlights, type and buttons on dark surfaces. */
+  --color-gold: #d9bf86;
   --color-mist: #f6efe2;
   --color-straw: #efe4d0;
   --color-lake: #5b93ad;
-  --color-araucaria: #24443a;
   --color-bark: #2f2a24;
   --color-frost: #9fb8c8;
-  --color-wine: #7b2d3f;
-  /*
-   * The night over the Serra: the deep surface of the content pages - their footer and
-   * the contest's dark bands. Chosen away from the reference's deep green, which the
-   * araucaria token sits close to.
-   */
-  --color-night: #1f2346;
-
-  /* Sky - sunset over the reservoir */
-  --color-sky-high: #e8742f;
-  --color-sky-mid: #f3a03c;
-  --color-sky-low: #f7d67c;
-  --color-sky-haze: #f2e0b2;
 
   /* Type */
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
@@ -359,7 +349,7 @@ html:has(dialog[open]) {
 
 /* The stand-in's pattern: pinhão seeds in the place's colour, barely there. */
 .pinhao-pattern {
-  background-color: var(--place-accent, var(--color-teal));
+  background-color: var(--place-accent, var(--color-night));
   mask: var(--pinhao-tile) 0 0 / 64px 64px repeat;
   opacity: 0.09;
 }

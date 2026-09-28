@@ -19,7 +19,7 @@ export default async function ExperiencesPage(): Promise<React.ReactElement> {
 
   return (
     <ContentShell places={places}>
-      <header className="bg-teal-deep px-6 pt-40 pb-16 text-center text-mist sm:px-8">
+      <header className="bg-night px-6 pt-40 pb-16 text-center text-mist sm:px-8">
         <p className="font-script text-3xl text-gold sm:text-4xl">Tudo o que há para fazer</p>
         <h1 className="mt-2 font-sans text-4xl font-extrabold tracking-[0.04em] uppercase sm:text-6xl">Experiências</h1>
         <p className="mt-4 font-sans text-base font-semibold text-mist/85">

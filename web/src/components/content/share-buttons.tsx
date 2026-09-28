@@ -17,7 +17,7 @@ const BASE =
 
 const STYLES = {
   dark: {
-    primary: `${BASE} bg-gold text-araucaria hover:scale-105 focus-visible:ring-mist/50`,
+    primary: `${BASE} bg-gold text-night hover:scale-105 focus-visible:ring-mist/50`,
     secondary: `${BASE} border-2 border-mist/70 text-mist hover:bg-mist/10 focus-visible:ring-mist/50`,
   },
   light: {

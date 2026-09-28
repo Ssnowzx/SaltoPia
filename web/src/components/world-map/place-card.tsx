@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { PlaceCrest } from "@/components/content/place-crest";
+import { placeTheme } from "@/components/content/place-theme";
 import type { Place } from "@/types";
 
 /**
@@ -82,13 +84,19 @@ export function PlaceCard({ place, onClose, getReturnFocus }: PlaceCardProps): R
       role="dialog"
       aria-modal="true"
       aria-labelledby="place-card-title"
-      className="place-card pointer-events-auto absolute inset-x-3 bottom-3 max-h-[62svh] overflow-y-auto rounded-card bg-mist shadow-[0_24px_60px_rgba(46,36,28,0.28)] sm:inset-x-auto sm:top-[92px] sm:right-6 sm:bottom-4 sm:my-auto sm:h-fit sm:max-h-[calc(100svh-108px)] sm:w-[min(360px,calc(100vw-48px))]"
+      style={placeTheme(place.accent)}
+      className="place-card pointer-events-auto absolute inset-x-3 bottom-3 max-h-[62svh] overflow-y-auto rounded-card bg-mist shadow-[0_24px_60px_color-mix(in_srgb,var(--color-night)_30%,transparent)] sm:inset-x-auto sm:top-[92px] sm:right-6 sm:bottom-4 sm:my-auto sm:h-fit sm:max-h-[calc(100svh-108px)] sm:w-[min(360px,calc(100vw-48px))]"
     >
-      <div className="bg-lake/25 px-6 pt-5 pb-4 text-center sm:px-7 sm:pt-7 sm:pb-5">
-        <p className="font-script text-xl text-teal sm:text-2xl">Bem-vindo a</p>
-        <h2 id="place-card-title" className="mt-1 font-sans text-lg font-extrabold tracking-[0.04em] text-araucaria uppercase sm:text-xl">
-          {place.name}
-        </h2>
+      {/* The card is the door to the place's page, so it is painted the colour that page
+          opens in - the iris then opens onto the colour the visitor was already looking at. */}
+      <div className="flex items-center gap-4 bg-[var(--place-accent)] px-6 pt-5 pb-4 text-left text-mist sm:px-7 sm:pt-6 sm:pb-5">
+        <PlaceCrest slug={place.slug} name={place.name} accent={place.accent} className="w-14 shrink-0 drop-shadow-[0_6px_12px_color-mix(in_srgb,var(--color-night)_35%,transparent)] sm:w-16" />
+        <div>
+          <p className="font-script text-xl text-[var(--place-wash)] sm:text-2xl">Bem-vindo a</p>
+          <h2 id="place-card-title" className="mt-0.5 font-sans text-lg leading-tight font-extrabold tracking-[0.04em] uppercase sm:text-xl">
+            {place.name}
+          </h2>
+        </div>
       </div>
       <div className="px-6 py-5 text-center sm:px-7 sm:py-6">
         {place.offer ? (
@@ -96,20 +104,20 @@ export function PlaceCard({ place, onClose, getReturnFocus }: PlaceCardProps): R
             {place.offer}
           </p>
         ) : null}
-        <p className="font-sans text-sm font-semibold text-teal">{place.tagline}</p>
+        <p className="font-sans text-sm font-extrabold text-[var(--place-ink)]">{place.tagline}</p>
         <p className="mt-3 line-clamp-3 font-sans text-sm leading-relaxed text-bark sm:line-clamp-4">{place.description}</p>
         <div className="mt-5 flex flex-col items-center gap-3 sm:mt-6">
           <a
             ref={visitRef}
             href={`/${place.slug}`}
-            className="w-full rounded-button bg-teal-deep px-7 py-3.5 font-sans text-sm font-bold tracking-[0.08em] text-mist uppercase transition-colors duration-200 hover:bg-teal-dark focus-visible:ring-4 focus-visible:ring-teal/40 focus-visible:outline-none sm:w-auto"
+            className="w-full rounded-button bg-[var(--place-accent)] px-7 py-3.5 font-sans text-sm font-bold tracking-[0.08em] text-mist uppercase transition-colors duration-200 hover:bg-[var(--place-deep)] focus-visible:ring-4 focus-visible:ring-[var(--place-accent)]/35 focus-visible:outline-none sm:w-auto"
           >
             Visitar
           </a>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 font-sans text-xs font-bold tracking-[0.1em] text-teal uppercase underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+            className="px-4 py-2 font-sans text-xs font-bold tracking-[0.1em] text-[var(--place-ink)] uppercase underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
           >
             Fechar
           </button>
