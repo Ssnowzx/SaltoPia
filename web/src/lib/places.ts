@@ -1,8 +1,9 @@
 import "server-only";
 
-import type { Experience, Place } from "@/types";
+import type { Experience, MenuItem, Place, PlaceMenu } from "@/types";
 
 import { prisma } from "./db";
+import { presentOrNull } from "./public-file";
 
 /**
  * The data layer for places and experiences.
@@ -93,4 +94,30 @@ export async function getExperience(
   const place = await getPlaceBySlug(placeSlug);
   const experience = place?.experiences.find((candidate) => candidate.slug === experienceSlug);
   return place && experience ? { place, experience } : null;
+}
+
+/**
+ * A published place's menu, or null when the place does not exist, is unpublished or has
+ * no menu yet. A photograph that is not on disk comes back as null, so the page draws a
+ * stand-in rather than asking for a file that is not there.
+ */
+export async function getPlaceMenu(slug: string): Promise<PlaceMenu | null> {
+  const record = await prisma.place.findFirst({
+    where: { slug, published: true },
+    select: {
+      menuTitle: true,
+      menuLede: true,
+      menuItems: { where: { published: true }, orderBy: { position: "asc" } },
+    },
+  });
+  if (!record?.menuTitle || record.menuItems.length === 0) return null;
+
+  const items: MenuItem[] = record.menuItems.map((item) => ({
+    slug: item.slug,
+    name: item.name,
+    description: item.description,
+    tag: item.tag,
+    image: presentOrNull(item.image),
+  }));
+  return { title: record.menuTitle, lede: record.menuLede ?? "", items };
 }

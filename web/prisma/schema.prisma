@@ -47,7 +47,13 @@ model Place {
   position  Int     @default(0)
   published Boolean @default(false)
 
+  /// The heading of the place's menu - its own words, "Cardápio do galpão" - and the line
+  /// under it. Null until the place has a menu.
+  menuTitle String? @map("menu_title") @db.VarChar(80)
+  menuLede  String? @map("menu_lede") @db.VarChar(240)
+
   experiences Experience[]
+  menuItems   MenuItem[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -81,6 +87,33 @@ model Experience {
   @@unique([placeId, slug])
   @@index([published, position])
   @@map("experience")
+}
+
+/// One thing on a place's menu: a dish, a drink, a bottle, a jar.
+model MenuItem {
+  id          Int     @id @default(autoincrement())
+  slug        String  @db.VarChar(96)
+  name        String  @db.VarChar(120)
+  description String  @db.VarChar(240)
+  /// A short label - "Da casa", "Para dividir". Most items have none.
+  tag         String? @db.VarChar(32)
+  /// Where the photograph is expected. The file may not exist yet; the page draws a
+  /// stand-in until it does.
+  image       String  @db.VarChar(255)
+
+  placeId Int   @map("place_id")
+  place   Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  position  Int     @default(0)
+  published Boolean @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// Unique within its place, as experience slugs are.
+  @@unique([placeId, slug])
+  @@index([published, position])
+  @@map("menu_item")
 }
 
 enum ExperienceKind {

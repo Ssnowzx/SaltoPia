@@ -6,6 +6,14 @@
  * data source as replaceable without any spec changing.
  */
 
+import type { CSSProperties } from "react";
+
+/**
+ * Inline style that also sets custom properties - `--drift`, `--i`. React's own type has
+ * no room for them, and widening it here beats asserting at every call site.
+ */
+export type StyleWithVariables = CSSProperties & { readonly [variable: `--${string}`]: string | number };
+
 /** A three-dimensional point in the neighbourhood's world space. */
 export interface WorldPosition {
   readonly x: number;
@@ -44,4 +52,24 @@ export interface Place {
   /** Where the camera lands when flying to this place. */
   readonly cameraPosition: WorldPosition;
   readonly experiences: readonly Experience[];
+}
+
+/** One thing on a place's menu. */
+export interface MenuItem {
+  readonly slug: string;
+  readonly name: string;
+  readonly description: string;
+  readonly tag: string | null;
+  /** The photograph, or null while it has not arrived - the page draws a stand-in. */
+  readonly image: string | null;
+}
+
+/**
+ * A place's menu. Kept apart from `Place` on purpose: `Place` travels to the hub with
+ * every pin, and the hub has no use for 135 dishes.
+ */
+export interface PlaceMenu {
+  readonly title: string;
+  readonly lede: string;
+  readonly items: readonly MenuItem[];
 }
