@@ -56,8 +56,8 @@ export function PrizeBand({ places, photo }: PrizeBandProps): React.ReactElement
           </div>
         </Reveal>
         <Reveal as="div">
-          <p className="font-script text-5xl text-gold sm:text-6xl">E não esqueça</p>
-          <h2 className="mt-1 font-sans text-[clamp(2.75rem,7vw,5.5rem)] leading-none font-extrabold tracking-[0.01em] uppercase">O prêmio</h2>
+          <p className="font-script text-5xl text-gold sm:text-6xl">Quem vence leva</p>
+          <h2 className="mt-1 font-sans text-[clamp(2.75rem,7vw,5.5rem)] leading-none font-extrabold tracking-[0.01em] uppercase">O prêmio da Serra</h2>
           <ul className="mt-10 space-y-6">
             {PRIZE.map((item) => (
               <PrizeLine key={item.lead} item={item} places={places} />

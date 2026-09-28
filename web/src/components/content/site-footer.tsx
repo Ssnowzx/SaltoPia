@@ -33,7 +33,7 @@ export function SiteFooter({ places }: SiteFooterProps): React.ReactElement {
             href="/embaixador"
             className="shrink-0 rounded-button bg-gold px-6 py-3.5 font-sans text-sm font-bold tracking-[0.1em] text-night uppercase transition-transform duration-200 hover:scale-105 focus-visible:ring-4 focus-visible:ring-gold/40 focus-visible:outline-none"
           >
-            Entrar na disputa
+            Quero me candidatar
           </a>
         </div>
 
