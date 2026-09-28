@@ -5,8 +5,9 @@ on what, and the handful of rules that, when broken, produce the defects that to
 to find. The decisions themselves, with their reasoning, are in the design of each change
 under `openspec/changes/`: `add-serranopolis-experience` (D1–D27, the site),
 `elevate-world-realism` (sky, water, roads, houses, quality tiers), `add-walking-character`
-(walk mode) and `add-living-townsfolk` (the townsfolk, and the feet on what is drawn); this
-is the map of the code.
+(walk mode), `add-living-townsfolk` (the townsfolk, and the feet on what is drawn) and
+`elevate-place-pages` (the place pages' bands, the menus, the contest page); this is the map
+of the code.
 
 ## Two halves
 
@@ -126,7 +127,9 @@ not arrive leaves its people out, not the hub without a world.
 ## The checks
 
 `npm run check` runs all of them, and `npm test` the unit tests of the pure logic — noise,
-the lake's mirror, groves, junctions, house designs, the walk world and the townsfolk. Two
+the lake's mirror, groves, junctions, house designs, the walk world, the townsfolk, and on
+the pages' side the colour rules, the menus' content, the gallery and print layout and the
+contest's calendar and deck. Two
 of the checks are specific to this project and both have caught real defects:
 
 - **`check:layout`** — no building overlaps another, none stands on a road, no car park
@@ -140,7 +143,12 @@ of the checks are specific to this project and both have caught real defects:
   SVG, and the cause: the seed's update branch was not setting the paths, so rows created
   before a change kept the old one for ever. It also counts what each gallery folder holds
   and names the thin ones, without failing on them: a gallery fills up over several
-  sittings, and a page that is missing one is not a broken page.
+  sittings, and a page that is missing one is not a broken page. Menus are counted the same
+  way, photograph by photograph.
+- **`tests/content.test.ts`** — every place colour keeps the pale text at 4.5:1 or more
+  and stands at least 0.08 (OKLab) from each colour of the reference site. Two of the old
+  colours were its orange-red to within 0.02; the owner's condition was "not the
+  reference's colours", and this is what keeps a new place from drifting back.
 
 ## The hub's interface
 
@@ -183,17 +191,55 @@ across — at what it was composed for. That is the whole of the hub's responsiv
 ## The pages
 
 `ContentShell` carries the header, the footer and Lenis; the hub deliberately gets none of
-them. `Reveal` animates a section in once, and is careful to render everything visible
+them. `Reveal` animates content in once, and is careful to render everything visible
 when scripting or motion is unavailable — including clearing its own mark if the first
 client render happened before the motion preference was known.
 
+A place page is a stack of bands, in this order (`app/[place]/page.tsx`):
+
+```
+place-hero.tsx          pinned photograph and crest            (sticky, behind everything)
+place-welcome.tsx       "Bem-vindo a", facts, the faded place with prints over it
+marquee.tsx             the ribbon: bunting, the motto looping, the call to action boxed
+menu-block.tsx          the Serra's ridge, then the menu on the place's colour
+  menu-grid.tsx         ticket cards and the <dialog> one opens      (client)
+experience-itinerary    numbered stops, alternating sides
+place-sections.tsx      the gallery mosaic
+postcard-share.tsx      fog, the postcard, the share buttons
+```
+
+**The hero is pinned and every band after it paints its own opaque ground.** That is the
+whole trick of the page sliding over the place, and it has a consequence: a band must never
+fade in as a whole, or the hero shows through it while it does. Bands reveal their content
+(`<Reveal as="div">`) and keep their ground. The parallax is CSS tied to scrolling
+(`animation-timeline`), declared only where it is supported and motion is welcome.
+
 Each page takes its colour from its place's `accent`, which `place-theme.tsx` expands into
-the wash, the veil and the ink the bands are built from — fifteen places read as fifteen
-pages rather than one page fifteen times. The gallery band reads
-`public/images/places/<slug>/` from disk rather than the database: pictures arrive in
-batches and are named by whoever makes them, and ninety rows of nothing but a path would
-turn the seed, which is for words, into a file of filenames. An empty folder falls back to
-the pictures the page already has, so a page works before the last photograph does.
+the wash, the veil, the deep and the ink the bands are built from — fifteen places read as
+fifteen pages rather than one page fifteen times. The crests take it too: `crestSvg` accepts
+the accent and an id suffix, because one page now draws the same crest up to five times.
+
+**A menu** is a table (`menu_item`) plus a heading on `place`, read by `getPlaceMenu` —
+kept off `Place` so the hub does not carry 135 dishes. A photograph path is a promise, not
+a file: `lib/public-file.ts` turns a missing one into `null`, and the card draws
+`photo-stand-in.tsx` instead of asking for it. Dropping the file in replaces the stand-in on
+the next reload in development, and on the next build in production.
+
+The gallery band reads `public/images/places/<slug>/` from disk rather than the database:
+pictures arrive in batches and are named by whoever makes them, and ninety rows of nothing
+but a path would turn the seed, which is for words, into a file of filenames. An empty
+folder falls back to the pictures the page already has, and `galleryLayout` picks a mosaic
+that leaves no hole for any count.
+
+**The contest page** (`app/embaixador/`, `components/contest/`, `lib/contest/`) is the
+reference's "be the mayor" page in our own words and colours. It is fictional, says so
+first in its rulebook, and has no form. Its calendar marks today's phase with
+`campaignStatus`, in Lages' time zone, and the page revalidates hourly so the mark does not
+freeze at build time.
+
+The words of the pages live in `web/prisma/content/` (places, menus) and
+`web/src/lib/contest/content.ts`, all free of side effects so the tests can read them.
+`prisma/seed.ts` only writes them.
 
 Navigation is full-document, through plain `<a>` elements. That is what lets the browser
 run the iris as a cross-document view transition, which is how the reference does it; the
@@ -210,14 +256,20 @@ else is vendored.
 - **Wordmark** — `scripts/build-logo.py` cuts two files from `logo.png`: one with the paper
   card shaped to the emblem and faded out, for use over the map, and one cut out, for the
   cream header. Neither works in both places, which is why there are two.
-- **Crests** — `scripts/build-crests.ts` draws an SVG per place from its pin glyph.
+- **Crests** — `scripts/build-crests.ts` draws an SVG per place from its pin glyph, in the
+  place's own colour. The name is set smaller when it is long: the rim's text path drops
+  whatever does not fit, and "Galpão do Fogo de Chão" was losing a letter at each end.
 - **Photographs** — generated from `docs/image-prompts.md` and committed under
   `web/public/images/`. They are always enlargements: the generator tops out at 1280×720
   and 1152×864, and the files lose almost nothing when knocked down to 1280 and back, which
   is what an interpolated image does. `scripts/sharpen-photos.py` puts back the edges the
   enlargement smeared — destructive, so each result is recorded by digest and skipped next
-  time — and empties the optimiser's cache, which keys on the URL and not on the file
-  behind it.
+  time — converts any PNG or JPEG it finds to WebP first, and empties the optimiser's
+  cache, which keys on the URL and not on the file behind it.
+- **The Grok manifest** — `npm run images:prompts` writes `docs/grok/manifest.jsonl`, one
+  line per photograph still missing (path, aspect ratio, full prompt), from the briefs in
+  the content modules and the gallery lines of `docs/image-prompts.md`. `docs/grok/README.md`
+  has the one instruction that makes Grok Build work through it.
 
 ## Adding a place
 
@@ -227,9 +279,11 @@ else is vendored.
    square, an apron — add its model to `OPEN_GROUND` in `lib/walk/obstacles.ts`, so walk
    mode walks through it instead of round it.
 4. Add a pin glyph to `pin-icons.ts`.
-5. Add the place and its experiences to `prisma/seed.ts`, then `npm run db:seed`.
-6. Add a brief to `docs/image-prompts.md`, put the images in `public/images/` — hero,
-   experiences, and six in `public/images/places/<slug>/` — then `npm run images:sharpen`.
+5. Add the place and its experiences to `prisma/content/places.ts` — its accent must pass
+   `tests/content.test.ts` — and its menu to `prisma/content/menus.ts`, then
+   `npm run db:seed`.
+6. Add a brief to `docs/image-prompts.md`, run `npm run images:prompts`, generate what the
+   manifest lists, then `npm run images:sharpen`.
 7. Run `npm run check` and `npm test`.
 
 Steps 1–3 are separate files on purpose, and step 7 is what catches it when one is
