@@ -1,14 +1,22 @@
 # How Saltopia is built
 
-This is the document for the parts that are not obvious from the file names: what depends
-on what, and the handful of rules that, when broken, produce the defects that took longest
-to find. The decisions themselves, with their reasoning, are in the design of each change
-under `openspec/changes/`: `add-serranopolis-experience` (D1–D27, the site),
-`elevate-world-realism` (sky, water, roads, houses, quality tiers), `add-walking-character`
-(walk mode), `add-living-townsfolk` (the townsfolk, and the feet on what is drawn) and
-`elevate-place-pages` (the place pages' bands, the menus, the contest page) and
-`adopt-night-palette` (night, wine and champagne across the whole interface) and
-`add-contest-invitation` (the card that opens the visit); this is the map of the code.
+This is the detailed building-block view behind [`README.md`](README.md) §5, the arc42
+architecture description. It covers the parts that are not obvious from the file names:
+what depends on what, and the handful of rules that, when broken, produce the defects that
+took longest to find.
+
+The decisions themselves are summarised as ADRs in [`decisions/`](decisions/README.md). They
+are argued in full in the design of each change under `openspec/changes/`:
+- `add-serranopolis-experience` (D1–D28, the site);
+- `elevate-world-realism` (sky, water, roads, houses, quality tiers);
+- `add-walking-character` (walk mode);
+- `add-living-townsfolk` (the townsfolk, and the feet on what is drawn);
+- `elevate-place-pages` (the place pages, the menus, the contest page);
+- `adopt-night-palette` (night, wine and champagne across the interface);
+- `add-contest-invitation` (the card that opens the visit).
+
+What the data is and why is in [`data-model.md`](data-model.md); why Saltopia exists is in
+[`../requirements/vision.md`](../requirements/vision.md).
 
 ## Two halves
 
@@ -285,7 +293,8 @@ else is vendored.
 - **The Grok manifest** — `npm run images:prompts` writes `docs/grok/manifest.jsonl`, one
   line per photograph still missing (path, aspect ratio, full prompt), from the briefs in
   the content modules and the gallery lines of `docs/image-prompts.md`. `docs/grok/README.md`
-  has the one instruction that makes Grok Build work through it.
+  has the one instruction that makes Grok Build work through it. The manifest is generated
+  and not committed: it changes with every photograph that arrives.
 
 ## Adding a place
 
