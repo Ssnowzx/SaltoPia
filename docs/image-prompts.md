@@ -1,5 +1,9 @@
 # Saltopia — photo briefs for Grok
 
+**Status, 2026-09-28:** every brief below has its photograph: 15 heroes, 25 experiences,
+90 gallery pictures, 135 menu items and 3 for the contest. New places and new menu items add
+their own briefs, and `npm run images:prompts` lists what is missing.
+
 The site's images are **photographs**, not illustrations in the map's low-poly style:
 the map is the stylised layer, the pages are the real thing. One brief per place and one
 per experience. Paste the **PHOTO** block first, then one place or experience block, and

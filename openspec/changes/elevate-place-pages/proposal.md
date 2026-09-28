@@ -58,10 +58,14 @@ pointed at a page we never built, the reference's contest page, and set one cond
   place.
 - Prices, stock or ordering on the menus.
 - A popup that advertises the contest on every page, as the reference does. It would get
-  in the way of the live presentation.
+  in the way of the live presentation. *Superseded the same day, at the owner's request,
+  by `add-contest-invitation`: once a session, and never over what the visitor is
+  using.*
 - Changing the hub, the map or the brand teal used by the header and the map. The owner's
   condition is about the pages. The brand teal comes from the reservoir and is recorded
-  in the founding design.
+  in the founding design. *Superseded the same day by `adopt-night-palette`: the owner
+  asked for the whole site in the new palette, and the teal turned out to sit 0.043 from
+  the reference's deep green.*
 - Generating the photographs. The owner generates them with Grok from the briefs, and
   the pages are complete without them.
 

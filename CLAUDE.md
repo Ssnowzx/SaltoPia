@@ -20,6 +20,23 @@ A arquitetura medida do site de referência está em
 `openspec/changes/add-serranopolis-experience/design.md` — Context. Leia antes de mexer em
 qualquer coisa visual. Os números lá são medidos, não estimados; não os re-derive.
 
+**Vai virar produto** (decidido em 2026-09-28). O trabalho acadêmico é o começo; o
+destino é um produto que apresenta a comunidade e os estabelecimentos parceiros. Por isso
+o foco é:
+- **estrutura de dados** (`docs/architecture/data-model.md`);
+- **documentação bem escrita e nos padrões de engenharia** (é o projeto final de
+  **Engenharia de Sistemas**: documentação, manual e apresentação individual são
+  obrigatórios; a nota olha escrita documental, validação da ideia, criatividade e
+  resolução):
+  - visão e escopo;
+  - SRS na ISO/IEC/IEEE 29148, com matriz de rastreabilidade;
+  - arquitetura em arc42 com C4 e ADRs;
+  - plano de testes na ISO/IEC/IEEE 29119-3;
+  - manuais do visitante, do parceiro e de instalação e operação (`docs/manual/`);
+- **código limpo**.
+
+O índice de tudo está em `docs/README.md`; o processo, em `CONTRIBUTING.md`.
+
 ---
 
 ## 2. Spec primeiro — sem exceção
@@ -104,9 +121,13 @@ Três detalhes desta máquina que já custaram tempo — não os redescubra:
 Um quarto, do Next e não do banco:
 
 4. **Trocar uma imagem em `public/` não muda nada na tela.** O otimizador guarda a cópia
-   em `.next/dev/cache/images` e indexa **pela URL, não pelo arquivo**. Hard refresh,
-   reiniciar o servidor e limpar o navegador não resolvem — e `.next/cache/images` é outra
-   pasta, não a usada. `npm run images:sharpen` limpa a certa no fim da passagem.
+   em `.next/dev/cache/images` e indexa **pela URL, não pelo arquivo**. Hard refresh e
+   reiniciar o servidor não resolvem, e `.next/cache/images` é outra pasta, não a usada.
+   `npm run images:sharpen` e `npm run build:logo` limpam a pasta certa no fim da passagem.
+   **O navegador do visitante também guarda pela URL.** O logo corrigido continuou com os
+   risquinhos na tela do dono, e nada no servidor alcança esse cache. Quando uma imagem
+   muda de conteúdo e precisa sumir para todos, ela ganha **um nome novo**, como
+   `logo-saltopia.png` virou `saltopia-wordmark.png`.
 
 Recriar o banco do zero (perde os dados, roda o init script de novo):
 
@@ -139,6 +160,20 @@ Vale o que está no global. O que este projeto acrescenta:
 - **Sem `console.log` em commit.**
 - **Comentário explica o porquê, não o quê.** `// Ordena por score DESC porque...` sim;
   `// incrementa contador` não.
+- **Nenhuma cor da referência.** A interface é noite `#1F2346`, vinho `#7B2D3F` e champanhe
+  `#D9BF86` sobre creme. Nada de laranja-avermelhado, verde-petróleo, menta ou mostarda:
+  o dono pediu ("não é uma cópia descarada"). `tests/palette.test.ts` e
+  `tests/content.test.ts` falham se um token ou a cor de um lugar ficar a menos de 0,08
+  (OKLab) das cores da referência. O teal e o araucária foram aposentados e não voltam.
+- **Documentação anda junto com o código.** Mudou o modelo de dados? Atualize
+  `docs/architecture/data-model.md` no mesmo commit. Mudou algo que o visitante ou o
+  parceiro vê? Atualize o manual dele (`docs/manual/`). Requisito novo entra no SRS e na
+  matriz de rastreabilidade (`docs/requirements/`); decisão que amarra o futuro vira ADR
+  (`docs/architecture/decisions/`); mudança visível entra no `CHANGELOG.md`. Documento
+  desatualizado é pior que documento nenhum.
+- **Conteúdo é dado.** Texto, cor, cardápio e oferta moram em `web/prisma/content/` (ou em
+  `lib/contest/content.ts`), nunca num componente. Lugar novo ou prato novo é mudança de
+  conteúdo, não de código.
 
 ### Idioma
 
@@ -166,6 +201,11 @@ Estas existem porque a apresentação roda numa máquina que ninguém testou.
 - **`devicePixelRatio` travado em 2.** Tela densa não pode multiplicar custo de fragmento.
 - **Nada de `useState` dentro do loop de render.** Posição de pin é escrita direto no nó do
   DOM; 60 reconciliações por segundo é bug, não detalhe.
+- **Foto de página é fotografia, gerada no Grok a partir de brief.** O fluxo é
+  `npm run images:prompts` (gera `docs/grok/manifest.jsonl` só com o que falta), depois o
+  Grok Build percorre o manifesto (`docs/grok/README.md`), depois `npm run images:sharpen`.
+  O brief de cada item mora junto do conteúdo (`photo` em `menus.ts`). Foto que ainda não
+  existe vira um substituto desenhado, nunca uma imagem quebrada.
 - **Modelo 3D vem de fonte CC0** (Kenney, Quaternius, Poly Pizza) e a origem de cada arquivo
   fica registrada em `web/public/models/CREDITS.md`. CC0 não exige atribuição; trabalho
   acadêmico exige conseguir mostrar de onde veio tudo. Hoje os únicos modelos baixados são
@@ -220,8 +260,14 @@ npm run dev          # desenvolvimento local
 npm run build        # build de produção (gera os tipos de rota)
 npm run lint
 npm test             # testes da lógica pura (web/tests/)
+npm run test:coverage    # os mesmos, com cobertura
 npm run check        # layout, assets, tipos e lint de uma vez
 npx tsc --noEmit     # depois do build
+npm run db:seed      # reescreve lugares, experiências e cardápios de prisma/content/
+npm run images:prompts   # manifesto das fotos que faltam, para o Grok
+npm run images:sharpen   # depois de colocar fotos novas (converte, afia, limpa o cache)
+npm run build:crests     # brasões na cor de cada lugar
+npm run build:logo       # os dois arquivos do logo a partir de logo.png
 
 cd ..
 openspec list                    # changes e specs
@@ -236,22 +282,34 @@ openspec status --change <nome>  # o que falta na change
 ```
 .
 ├── CLAUDE.md                  ← este arquivo
+├── CONTRIBUTING.md            ← o processo: spec, código, teste, doc, commit
+├── CHANGELOG.md               ← Keep a Changelog, por data e change
 ├── docs/
-│   ├── architecture.md        ← mapa do código e as regras que custaram mais caro
-│   └── image-prompts.md       ← briefs de imagem para o Grok
+│   ├── README.md              ← índice da documentação, por disciplina e norma
+│   ├── requirements/          ← visão e escopo, SRS (29148), rastreabilidade
+│   ├── architecture/          ← arc42 + C4, ADRs, modelo de dados, building blocks
+│   ├── testing/               ← plano de testes (29119-3) e relatório
+│   ├── manual/                ← manuais: visitante, parceiro, instalação e operação
+│   ├── image-prompts.md       ← briefs de imagem para o Grok
+│   └── grok/                  ← como gerar as fotos que faltam (manifesto não vai pro git)
 ├── openspec/
 │   ├── config.yaml            ← contexto do projeto, lido pelos workflows
 │   ├── specs/                 ← specs vigentes (preenchidas ao arquivar changes)
 │   └── changes/               ← changes em andamento
 └── web/                       ← a aplicação Next.js
-    ├── prisma/                ← schema e migrations
+    ├── prisma/                ← schema, migrations e seed
+    │   └── content/           ← o conteúdo: lugares, experiências, cardápios
+    ├── public/images/         ← heroes, experiences, places/ (galerias), menu/, contest/
     ├── public/models/         ← modelos 3D CC0 + CREDITS.md
+    ├── scripts/               ← checks, brasões, logo, fotos, manifesto do Grok
     ├── tests/                 ← testes unitários (npm test)
     └── src/
-        ├── app/               ← rotas
-        ├── components/        ← world-map/ (hub 3D), walk-mode/ (modo a pé e moradores)
+        ├── app/               ← rotas: /, /[place], /[place]/experiencias/[x], /embaixador
+        ├── components/        ← world-map/ (hub 3D), walk-mode/, content/ (páginas), contest/
         ├── lib/               ← camada de dados, helpers
+        │   ├── places.ts      ← o único módulo que fala com o banco sobre lugares
         │   ├── world/         ← o mundo gerado em código
-        │   └── walk/          ← modo a pé e moradores, lógica pura
-        └── types/             ← tipos compartilhados
+        │   ├── walk/          ← modo a pé e moradores, lógica pura
+        │   └── contest/       ← texto, calendário e regra do convite do concurso
+        └── types/             ← tipos compartilhados (o contrato dos dados)
 ```

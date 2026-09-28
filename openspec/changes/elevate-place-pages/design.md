@@ -418,8 +418,12 @@ Where the build departed from the decisions above, and why:
   not contain a heading, and it would have read the whole card as its name.
 - **D7:** the crest stamp appears only on cards that have a photograph. On a stand-in it
   repeated the stand-in's own crest (spec amended).
-- **D8/D2:** the stand-in and the dialog both work before any photograph exists. At the time
-  of writing, all 135 menu photographs are stand-ins.
+- **D8/D2:** the stand-in and the dialog both work before any photograph exists. The owner
+  then generated all 228 briefs with Grok: 135 menu photographs, 3 for the contest and the
+  90 gallery pictures. The stand-in remains for any item added later.
+- **D13:** the manifest is not committed. It lists only what is missing, so it would change
+  with every photograph that arrives. It is a generated file:
+  `npm run images:prompts` rebuilds it, and git ignores it.
 - **D9:** the gallery's layout comes from `galleryLayout(count)` in `lib/menu-layout.ts`.
   The previous rule left a hole with three pictures, which is the fallback every place has
   today.

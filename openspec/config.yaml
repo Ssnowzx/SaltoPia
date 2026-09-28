@@ -50,6 +50,16 @@ context: |
   character and the townsfolk and fetched after the world has been drawn;
   web/public/models/CREDITS.md records their source.
 
+  PAGES: every place page is built around the place's own colour and carries a
+  photographed menu (a `menu_item` table, nine items per place). /embaixador is a
+  fictional ambassador contest - our take on the reference's "be the mayor" page - and
+  a card invites to it once a session. It never collects anything.
+
+  PALETTE: night #1F2346, wine #7B2D3F and champagne #D9BF86 on cream paper. Never the
+  reference's orange-red, teal or mustard: tests/palette.test.ts and
+  tests/content.test.ts hold every saturated colour at least 0.08 (OKLab) away from
+  them. The 3D world keeps its own palette.
+
   WALK MODE: the visitor creates a character and walks the community; townsfolk
   stroll and stand about it. A walker's feet stand on the drawn geometry, read
   into a height field - never on a height worked out by rule.
