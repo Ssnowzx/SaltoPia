@@ -22,7 +22,7 @@ import type { Place } from "@/types";
  * The header sits on a flat cream pill, so it takes the cut-out emblem; the card
  * version would read as a paler box inside the pill. See scripts/build-logo.py.
  */
-const LOGO = { src: "/logo-saltopia-flat.png", width: 900, height: 370 } as const;
+const LOGO = { src: "/saltopia-wordmark-flat.png", width: 900, height: 378 } as const;
 
 interface SiteHeaderProps {
   readonly places: readonly Place[];

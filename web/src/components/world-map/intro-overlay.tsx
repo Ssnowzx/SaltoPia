@@ -32,7 +32,7 @@ export function IntroOverlay({ onExplore, ready }: IntroOverlayProps): React.Rea
             emblem looks. Sized by what reads, not by the file. */}
         <h1 className="-mt-3 w-full max-w-[1000px] sm:-mt-6">
           <Image
-            src="/logo-saltopia.png"
+            src="/saltopia-wordmark.png"
             alt="Saltopia - Salto Caveiras, Serra Catarinense"
             width={1000}
             height={495}

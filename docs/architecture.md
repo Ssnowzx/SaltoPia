@@ -7,8 +7,8 @@ under `openspec/changes/`: `add-serranopolis-experience` (D1–D27, the site),
 `elevate-world-realism` (sky, water, roads, houses, quality tiers), `add-walking-character`
 (walk mode), `add-living-townsfolk` (the townsfolk, and the feet on what is drawn) and
 `elevate-place-pages` (the place pages' bands, the menus, the contest page) and
-`adopt-night-palette` (night, wine and champagne across the whole interface); this is the
-map of the code.
+`adopt-night-palette` (night, wine and champagne across the whole interface) and
+`add-contest-invitation` (the card that opens the visit); this is the map of the code.
 
 ## Two halves
 
@@ -236,6 +236,12 @@ but a path would turn the seed, which is for words, into a file of filenames. An
 folder falls back to the pictures the page already has, and `galleryLayout` picks a mosaic
 that leaves no hole for any count.
 
+**The invitation** (`components/contest/invitation-card.tsx`) is the contest's card over
+the first page of a session - the hub once the world is entered, or any content page but
+the contest's own. `shouldInvite` in `lib/contest/invitation.ts` decides; it waits behind
+the title state, a place card or the character creator rather than covering them, and
+`?convite` brings it back for a demonstration.
+
 **The contest page** (`app/embaixador/`, `components/contest/`, `lib/contest/`) is the
 reference's "be the mayor" page in our own words and colours. It is fictional, says so
 first in its rulebook, and has no form. Its calendar marks today's phase with
@@ -263,7 +269,9 @@ else is vendored.
   cream header. Neither works in both places, which is why there are two. The card's
   corner fleurons survive the crop as four small marks; the mask drops any small island
   standing more than 14px from the emblem, and the script empties Next's image cache so
-  the new file is actually served.
+  the new file is actually served. The files are `saltopia-wordmark*.png`: they were
+  renamed from `logo-saltopia*.png` because a visitor's browser kept the marked copy under
+  the old address, which nothing on the server can clear.
 - **Crests** — `scripts/build-crests.ts` draws an SVG per place from its pin glyph, in the
   place's own colour. The name is set smaller when it is long: the rim's text path drops
   whatever does not fit, and "Galpão do Fogo de Chão" was losing a letter at each end.

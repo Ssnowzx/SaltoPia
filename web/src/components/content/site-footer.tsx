@@ -18,7 +18,7 @@ export function SiteFooter({ places }: SiteFooterProps): React.ReactElement {
     <footer className="bg-night text-mist">
       <div className="mx-auto w-full max-w-6xl px-6 pt-16 pb-12 sm:px-8 sm:pt-20">
         <a href="/" aria-label="Saltopia - início" className="mx-auto block w-max">
-          <Image src="/logo-saltopia-flat.png" alt="Saltopia" width={900} height={370} className="h-20 w-auto sm:h-28" />
+          <Image src="/saltopia-wordmark-flat.png" alt="Saltopia" width={900} height={378} className="h-20 w-auto sm:h-28" />
         </a>
 
         <div className="mt-12 flex flex-col items-start gap-6 rounded-card bg-wine p-8 shadow-[0_24px_50px_color-mix(in_srgb,black_25%,transparent)] sm:p-10 md:flex-row md:items-center md:justify-between">

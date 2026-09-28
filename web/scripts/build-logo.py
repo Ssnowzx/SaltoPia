@@ -5,8 +5,12 @@ The artwork is printed on a paper card, and neither keeping it nor cutting it of
 everywhere: over the map the cut-out emblem's own shadow reads as a dirty edge, and over
 the header's cream pill the card reads as a box. So there are two.
 
-    logo-saltopia.png       the card, shaped to the emblem, dissolving to transparent
-    logo-saltopia-flat.png  the emblem alone, for the cream header and the dark footer
+    saltopia-wordmark.png       the card, shaped to the emblem, dissolving to transparent
+    saltopia-wordmark-flat.png  the emblem alone, for the cream header and the dark footer
+
+The names changed on 2026-09-28 (they were logo-saltopia*.png): a browser that had cached
+the marked version under the old address kept showing it after the file was fixed, and no
+server-side step can reach a visitor's own cache. A new address can.
 
 Run with: python3 scripts/build-logo.py
 """
@@ -180,8 +184,8 @@ def drop_image_cache():
 
 def main():
     crop = cropped_artwork()
-    save(build_card(crop), "logo-saltopia.png", 1000)
-    save(build_flat(crop), "logo-saltopia-flat.png", 900)
+    save(build_card(crop), "saltopia-wordmark.png", 1000)
+    save(build_flat(crop), "saltopia-wordmark-flat.png", 900)
     drop_image_cache()
 
 
