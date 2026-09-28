@@ -6,8 +6,9 @@ to find. The decisions themselves, with their reasoning, are in the design of ea
 under `openspec/changes/`: `add-serranopolis-experience` (D1–D27, the site),
 `elevate-world-realism` (sky, water, roads, houses, quality tiers), `add-walking-character`
 (walk mode), `add-living-townsfolk` (the townsfolk, and the feet on what is drawn) and
-`elevate-place-pages` (the place pages' bands, the menus, the contest page); this is the map
-of the code.
+`elevate-place-pages` (the place pages' bands, the menus, the contest page) and
+`adopt-night-palette` (night, wine and champagne across the whole interface); this is the
+map of the code.
 
 ## Two halves
 
@@ -145,6 +146,10 @@ of the checks are specific to this project and both have caught real defects:
   and names the thin ones, without failing on them: a gallery fills up over several
   sittings, and a page that is missing one is not a broken page. Menus are counted the same
   way, photograph by photograph.
+- **`tests/palette.test.ts`** — reads the tokens from `globals.css`: every saturated one
+  stands at least 0.08 (OKLab) from the reference's colours, and no interface file names
+  the retired teal or araucária. The founding teal and gold were within 0.04 of the
+  reference's deep green and mustard.
 - **`tests/content.test.ts`** — every place colour keeps the pale text at 4.5:1 or more
   and stands at least 0.08 (OKLab) from each colour of the reference site. Two of the old
   colours were its orange-red to within 0.02; the owner's condition was "not the
@@ -255,7 +260,10 @@ else is vendored.
 
 - **Wordmark** — `scripts/build-logo.py` cuts two files from `logo.png`: one with the paper
   card shaped to the emblem and faded out, for use over the map, and one cut out, for the
-  cream header. Neither works in both places, which is why there are two.
+  cream header. Neither works in both places, which is why there are two. The card's
+  corner fleurons survive the crop as four small marks; the mask drops any small island
+  standing more than 14px from the emblem, and the script empties Next's image cache so
+  the new file is actually served.
 - **Crests** — `scripts/build-crests.ts` draws an SVG per place from its pin glyph, in the
   place's own colour. The name is set smaller when it is long: the rim's text path drops
   whatever does not fit, and "Galpão do Fogo de Chão" was losing a letter at each end.
