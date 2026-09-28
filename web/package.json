@@ -20,7 +20,8 @@
     "build:logo": "python3 scripts/build-logo.py",
     "build:crests": "tsx scripts/build-crests.ts",
     "images:sharpen": "python3 scripts/sharpen-photos.py",
-    "test": "node --import tsx --test tests/*.test.ts"
+    "test": "node --import tsx --test tests/*.test.ts",
+    "images:prompts": "tsx scripts/write-image-prompts.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

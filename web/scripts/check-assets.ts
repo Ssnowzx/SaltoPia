@@ -27,7 +27,7 @@ async function main(): Promise<void> {
   const prisma = new PrismaClient({ adapter: new PrismaMariaDb(process.env.DATABASE_URL ?? "") });
   const places = await prisma.place.findMany({
     where: { published: true },
-    include: { experiences: { where: { published: true } } },
+    include: { experiences: { where: { published: true } }, menuItems: { where: { published: true } } },
     orderBy: { position: "asc" },
   });
   await prisma.$disconnect();
@@ -57,6 +57,17 @@ async function main(): Promise<void> {
     if (found < GALLERY_BRIEFS) thin.push(`${place.slug} (${found}/${GALLERY_BRIEFS})`);
   }
   console.log(`galleries: ${pictures} pictures${thin.length > 0 ? `, still thin: ${thin.join(", ")}` : ""}`);
+
+  // Menu photographs are optional in the same way: the page draws a stand-in for each one
+  // still missing, so a menu waiting on Grok is reported, never failed.
+  const menus = places.map((place) => {
+    const present = place.menuItems.filter((item) => existsSync(join(publicDir, item.image))).length;
+    return { slug: place.slug, present, total: place.menuItems.length };
+  });
+  const menuPhotos = menus.reduce((sum, menu) => sum + menu.present, 0);
+  const menuTotal = menus.reduce((sum, menu) => sum + menu.total, 0);
+  const waiting = menus.filter((menu) => menu.present < menu.total).map((menu) => `${menu.slug} (${menu.present}/${menu.total})`);
+  console.log(`menus: ${menuPhotos}/${menuTotal} photographs${waiting.length > 0 ? `, waiting on: ${waiting.join(", ")}` : ""}`);
 
   const checked = places.length * 2 + places.reduce((count, place) => count + place.experiences.length, 0);
   if (missing.length > 0) {

@@ -12,6 +12,14 @@ code change (after a hard refresh; the dev server caches optimised images by URL
   **1920×1440**. Six per place. The folders already exist, one per slug; drop the files in
   and the page fills itself, numbered in the order you want them shown. The first one is
   drawn large, so give it the widest view of the set.
+- **menu of a place**: `web/public/images/menu/<place>/<item>.webp` — 3:4. Nine per place,
+  briefed in the MENUS section at the end, which `npm run images:prompts` writes from the
+  content.
+- **contest page**: `web/public/images/contest/` — see the CONTEST section at the end.
+
+**With Grok Build, do not paste these by hand.** `npm run images:prompts` writes
+`docs/grok/manifest.jsonl`, one complete prompt per missing file, and `docs/grok/README.md`
+has the single instruction that makes Grok work through it.
 
 Ask for the largest the generator will give and save at those sizes or above. A hero fills
 the whole window, so on a Retina laptop it is drawn across roughly 3000 pixels, and a file
@@ -339,3 +347,185 @@ large, so it should be the widest view.
 4. Inside the powerhouse: the old turbine and a big iron valve wheel, riveted steel.
 5. The timber footbridge across the gorge, seen from below, basalt boulders and ferns.
 6. A picnic table under araucarias by the river, a basket, cheese and bread, the falls blurred behind.
+
+---
+
+<!-- menu:start -->
+
+## MENUS (3:4 → `web/public/images/menu/<place>/<item>.webp`)
+
+Written by `npm run images:prompts` from `web/prisma/content/menus.ts` - edit the briefs
+there. Nine per place; the page draws a stand-in for each one until its file exists.
+
+### praca-do-pinhao — Café e barracas da praça
+- **pinhao-na-panela-de-ferro** — A paper cone of boiled pinhão (brown, thumb-sized araucaria seeds), a few split to show the cream kernel, held over a blackened cast-iron pot steaming on a wood fire. 45-degree close-up, turquoise lake blurred behind, late golden-hour light.
+- **sapecada-de-pinhao** — Pinhão seeds charred black on a bed of burning dry araucaria branches on the ground, a few pulled aside onto a rough plank with a small knife. Close-up at 45 degrees, flames and smoke glowing orange at dusk.
+- **empadinha-de-pinhao** — Three small golden pies in fluted tins on a white enamel plate, one broken open to show a pinhão and chicken filling, on a café table under a canvas parasol. Close-up, soft afternoon light, lake and white bandstand blurred behind.
+- **sorvete-de-pinhao** — Two scoops of pale beige pinhão ice cream with crunchy seed pieces in a small ceramic bowl, a spoon beside it, on a painted wooden café table. Close-up at 45 degrees, bright midday light, turquoise water blurred behind.
+- **cafe-passado-na-hora** — Black coffee dripping through a cloth filter into a thick white porcelain cup, a piece of brown rapadura sugar on the saucer, on a lakeside café table. Close-up, soft morning light, steam rising.
+- **cappuccino-com-canela** — A wide ceramic cup of cappuccino dusted with cinnamon, a cinnamon stick on the saucer, held by two hands in wool gloves over a checked cloth. Overhead, cool late-afternoon light.
+- **sonho-de-doce-de-leite** — A sugar-dusted fried Brazilian doughnut split open and filled with thick caramel-coloured doce de leite, on a white paper napkin on a café counter. Close-up at 45 degrees, warm window light.
+- **bolo-de-cenoura** — A tall slice of orange carrot cake with glossy soft chocolate icing on a small ceramic plate, a fork beside it, on a weathered café table under a parasol. Close-up, soft golden-hour light, lake blurred behind.
+- **cha-de-maca-com-canela** — A glass mug of hot apple and cinnamon tea with apple slices and cloves floating, on a wooden stall counter at night, string lights and a cast-iron pot blurred behind. Close-up, warm firelight and soft bokeh.
+
+### galpao-do-fogo — Cardápio do galpão
+- **costela-de-fogo-de-chao** — A whole slab of beef ribs on an iron rod leaning over glowing embers on an earth floor, fat dripping and crust dark brown, inside an open timber shed. 45-degree close-up, firelight and drifting smoke, dusk outside.
+- **cordeiro-na-vara** — A butterflied lamb stretched on a cross-shaped iron frame beside a low open fire, skin golden and crackling. Close-up at 45 degrees, rough timber posts and smoke behind, orange firelight.
+- **vazio-na-brasa** — Sliced flank steak, pink in the centre and charred at the edges, on a thick wooden board with coarse salt and a knife, on a rough timber table. Overhead, warm firelight.
+- **farofa-de-pinhao** — A cast-iron pan of golden cassava-flour farofa with chopped pinhão (brown, thumb-sized araucaria seeds) and crisp bacon, a wooden spoon in it, on a rough timber table. 45-degree close-up, firelight from the side.
+- **mandioca-na-manteiga** — Chunks of boiled cassava split open and golden with butter and parsley in a white enamel dish on a timber table. Close-up at 45 degrees, warm firelight, embers blurred behind.
+- **salada-de-radicci** — A ceramic bowl of finely shredded green chicory leaves dressed with hot bacon pieces and vinegar, on a checked cloth on a timber table. Overhead, warm late-afternoon light.
+- **queijo-serrano-na-chapa** — A thick slice of pale cured highland cheese seared golden on a small cast-iron griddle, oregano scattered on top, on a timber table. Close-up at 45 degrees, embers glowing behind.
+- **chope-artesanal** — A frosted glass of golden draft beer with a thick white head on a rough timber table, the embers of an open fire blurred behind. Close-up, warm firelight.
+- **abacaxi-na-brasa** — Thick rings of pineapple on an iron grate over dying embers, caramelised sugar and cinnamon on top. Close-up at 45 degrees, deep orange firelight and a wisp of smoke.
+
+### mirante-da-neblina — Café do mirante
+- **cafe-da-garrafa** — Steaming black coffee poured from a vacuum flask into a white enamel mug on a stone ledge, a sea of fog covering a lake far below. Close-up, blue pre-dawn light turning pink on the horizon.
+- **chocolate-quente-cremoso** — Thick hot chocolate in a heavy ceramic mug, a spoon standing in it, on a wooden railing draped with a wool blanket. Close-up at 45 degrees, misty morning light, fog and araucaria silhouettes blurred behind.
+- **torta-de-maca** — A slice of apple pie with thin fanned apple slices and a golden crust on a small ceramic plate, a fork beside it, on a weathered wooden counter. 45-degree close-up, soft window light, fog outside the glass.
+- **pao-na-chapa** — A split bread roll toasted golden with melting butter on a small cast-iron griddle, on a rough wooden counter. Close-up, warm lamplight against a blue foggy dawn outside the window.
+- **bolo-de-fuba** — A slice of yellow cornmeal cake flecked with fennel seeds on a checked cloth napkin, the round cake in its tin behind. Overhead, soft misty window light.
+- **mingau-de-aveia** — A ceramic bowl of hot oat porridge with a swirl of honey and cinnamon, a spoon on a wool blanket beside it, on a stone ledge. Overhead, pale blue dawn light, fog below.
+- **biscoito-de-nata** — Small round butter cookies heaped in an open brown paper bag on a wooden counter, a few spilled out. Close-up at 45 degrees, soft morning light, a misty window behind.
+- **misto-quente** — A toasted ham and cheese sandwich cut diagonally, melted cheese oozing, on a white enamel plate on a rough wooden counter. Close-up, warm lamplight, fog outside the window.
+- **pao-de-queijo** — A small wicker basket of golden cheese bread rolls, one torn open and steaming, on a wooden counter. Close-up at 45 degrees, soft misty daylight.
+
+### bosque-das-araucarias — Quiosque da ilha
+- **cesta-da-ilha** — An open wicker picnic basket with wrapped sandwiches, apples, a slice of cake and a glass bottle of juice, on a checked cloth over fallen pine needles. Overhead, dappled light through araucaria branches.
+- **sanduiche-de-truta-defumada** — A rye bread sandwich with pink smoked trout, cucumber slices and dill, half unwrapped from waxed paper on a wooden picnic table. Close-up at 45 degrees, dappled forest light.
+- **salada-de-pinhao-com-maca** — A glass jar salad of peeled pinhão (thumb-sized araucaria seeds, brown-shelled and cream inside), green apple cubes and leaves, set on a mossy log. Close-up, soft light filtering through araucaria crowns.
+- **quiche-de-alho-poro** — A wedge of leek and cheese quiche on a sheet of brown paper on a rough wooden bench. Close-up at 45 degrees, dappled light, tall araucaria trunks blurred behind.
+- **suco-de-maca-com-gas** — A small glass bottle of sparkling apple juice and a glass with bubbles rising, standing on a wooden pier post, a lake and an island of araucarias behind. Close-up, bright afternoon light.
+- **chimarrao-para-a-trilha** — A gourd of green chimarrão with a metal straw and a vacuum flask resting on an araucaria root, fallen needles around. Close-up at 45 degrees, soft forest light.
+- **empanada-de-frango** — Two golden baked turnovers with crimped edges, one broken to show a shredded chicken filling, on a paper napkin on a picnic table. Close-up, dappled light through the trees.
+- **morangos-com-nata** — A small glass jar of red strawberries topped with thick whipped cream, a wooden spoon resting on it, on a checked cloth. Overhead, soft green-tinted forest light.
+- **pao-de-mel** — Chocolate-covered honey spice cakes, one cut in half, on a small wooden board on a mossy log. Close-up at 45 degrees, dappled light through araucaria branches.
+
+### vinicola-de-altitude — Rótulos da cantina
+- **sauvignon-blanc** — A glass of pale straw-coloured white wine on a stone windowsill, condensation on the bowl, vine rows descending to a turquoise lake beyond. Close-up at 45 degrees, bright cool morning light.
+- **pinot-noir** — A glass of translucent ruby red wine held by a hand among vine rows on a hillside, grape leaves turning yellow. Close-up, golden-hour backlight.
+- **cabernet-franc** — A glass of deep red wine on the head of an oak barrel in a cool stone cellar, a candle glowing beside it. Close-up at 45 degrees, warm dim light.
+- **merlot** — Dark red wine being poured into a glass on a rough wooden table, a wedge of cured cheese beside it, a stone wall behind. Close-up, warm window light.
+- **espumante-nature** — Two flutes of sparkling wine with fine rising bubbles on a stone ledge, frost-white grass and vines blurred behind. Close-up, crisp early-morning light.
+- **rose-de-merlot** — A glass of pale salmon-pink rosé on a wooden veranda rail, a vineyard hillside and a turquoise lake below. Close-up at 45 degrees, warm late-afternoon light.
+- **tabua-de-queijos-da-serra** — A wooden board with wedges of cured highland cheese, a pale sheep cheese, walnuts and a small bowl of dark honeydew honey, beside two glasses of red wine on a stone table. Overhead, soft window light.
+- **pinhao-na-manteiga-de-salvia** — Peeled pinhão (thumb-sized araucaria seeds, brown-shelled and cream inside) glazed in sage butter in a small clay bowl, crisp sage leaves on top, a glass of wine beside it. Close-up at 45 degrees, warm window light.
+- **suco-de-uva-integral** — A wine glass of opaque dark purple grape juice on a stone table, a bunch of dark grapes beside it. Close-up, soft window light, vineyard rows blurred outside.
+
+### ctg-porteira-do-tropeiro — Cozinha do CTG
+- **arroz-carreteiro** — A black cast-iron pot of rice with shredded dried beef and green onion, a wooden spoon in it, on a wood-burning stove. Close-up at 45 degrees, warm lamplight in a whitewashed hall.
+- **feijao-campeiro** — A deep plate of thick black beans with sausage, bacon and toasted cassava flour on a rough plank table. Overhead, warm lantern light.
+- **churrasco-de-espeto** — Chunks of beef on wooden skewers over glowing coals in a low brick pit, fat sizzling. Close-up at 45 degrees, firelight in a dim hall.
+- **linguica-campeira** — A coiled pork sausage browned over embers on an iron grill, a knife and coarse salt on a board beside it. Close-up, orange firelight.
+- **mocoto-da-madrugada** — A steaming bowl of thick beef-trotter stew with white beans and sausage on a timber table, a spoon beside it. Close-up at 45 degrees, late-night lantern light.
+- **quentao-de-vinho** — A white enamel mug of hot spiced red wine with ginger slices and cloves on the wooden rail of a deep veranda at night, an iron lantern glowing behind. Close-up, warm lantern light.
+- **cuca-de-uva** — A slice of crumb cake topped with whole purple grapes and sugary streusel on a white enamel plate on a plank table. Close-up at 45 degrees, soft window light.
+- **chimarrao-da-roda** — A hand passing a gourd of chimarrão with a silver straw beside a soot-blackened kettle on a wood stove. Close-up, warm firelight in a whitewashed hall.
+- **doce-de-abobora** — Glossy orange cubes of pumpkin in syrup with cloves in a small pressed-glass dish on a checked cloth. Close-up at 45 degrees, soft window light.
+
+### estacao-velha — Bancas da plataforma
+- **queijo-serrano-curado** — A whole wheel of pale yellow cured highland cheese with one wedge cut out, on a wooden market stall under a corrugated metal roof. Close-up at 45 degrees, soft misty morning light, old railway tracks blurred behind.
+- **mel-de-melato** — Jars of very dark amber honeydew honey on a wooden stall, a honey dipper dripping into one. Close-up, soft morning light, fog over railway tracks behind.
+- **cuca-de-banana** — A rectangular crumb cake with sliced bananas and cinnamon streusel in its baking tin on a market table, one slice lifted out. Overhead, soft morning light.
+- **salame-colonial** — Cured salamis hanging from a wooden beam and one sliced on a board with a knife, on a market stall. Close-up at 45 degrees, cool morning light, an old station platform behind.
+- **maca-fuji** — Red and yellow striped apples heaped in a wooden crate on a market stall, a halved apple showing crisp white flesh. Close-up, soft misty morning light.
+- **geleia-de-amora** — Jars of dark blackberry jam with checked cloth tied over the lids on a wooden stall, a spoonful spread on a slice of bread. Close-up at 45 degrees, soft morning light.
+- **erva-mate** — Bright green coarse-ground yerba mate heaped in an open paper sack with a metal scoop, on a wooden market stall. Close-up, soft morning light.
+- **doce-de-figo** — Whole green figs in dark glossy syrup in a glass jar and a small dish, on a checked cloth on a market table. Close-up at 45 degrees, soft light.
+- **broa-de-milho** — Round rustic cornbread loaves with cracked golden crusts stacked on a wooden table, one torn open to show the yellow crumb. Close-up at 45 degrees, cool morning light, a railway platform blurred behind.
+
+### pousada-da-geada — Mesa da pousada
+- **cafe-colonial-da-chegada** — A long table set for a colonial breakfast with crumb cake, bread, cold cuts, jam jars and a coffee pot, in a glazed room with frost on the lawn outside. 45-degree view, soft white morning light.
+- **fondue-de-queijo-serrano** — A ceramic fondue pot of bubbling melted cheese over a small flame, bread cubes on long forks, beside a stone fireplace. Close-up at 45 degrees, warm firelight.
+- **fondue-de-chocolate** — A small pot of melted dark chocolate with strawberries and apple pieces on forks around it, on a wooden table near a fire. Close-up, warm firelight and a dark background.
+- **sopa-de-capeletti** — A steaming bowl of small hand-made stuffed pasta in clear golden chicken broth with grated cheese, on a wool placemat by a window onto a dark lake. Close-up at 45 degrees, lamplight.
+- **creme-de-pinhao** — A bowl of smooth beige soup made from pinhão (brown, thumb-sized araucaria seeds), with croutons and chives, a few whole seeds on the table beside it. Close-up at 45 degrees, warm firelight from a hearth.
+- **sopa-de-abobora** — A bowl of bright orange pumpkin soup with a swirl of cream and toasted seeds on a wooden tray, a wool blanket and a frosted window behind. Overhead, soft window light.
+- **vinho-quente** — A glass mug of steaming mulled red wine with an orange slice and a cinnamon stick on the stone hearth of a lit fireplace. Close-up, warm firelight.
+- **omelete-de-queijo-serrano** — A folded golden omelette with melted cheese and chopped herbs on a white ceramic plate, a cup of coffee beside it, on a table by a window. Close-up at 45 degrees, bright morning light, frosty lawn outside.
+- **ponche-quente-de-frutas** — A ceramic mug of hot red fruit punch with apple and orange slices and a cinnamon stick, on the wooden arm of a chair draped with a wool blanket beside a fire. Close-up, warm firelight.
+
+### fazenda-do-cedro — Café colonial da fazenda
+- **mesa-do-cafe-colonial** — A farmhouse veranda table crowded with crumb cake, bread, a cheese wheel, jars of cane syrup and cream and a milk jug on a checked cloth, pasture and a red barn beyond. 45-degree view, bright morning light.
+- **queijo-colonial-da-leiteria** — Rows of small pale yellow cheese wheels curing on wooden shelves in a whitewashed dairy room, one cut open on a board. Close-up at 45 degrees, soft side light from a window.
+- **melado-de-cana** — Thick dark amber sugarcane syrup drizzled from a spoon over a slice of white cheese on bread, a glass jar behind. Close-up, warm morning light on a farmhouse table.
+- **cafe-com-leite-da-ordenha** — A large enamel mug of milky coffee next to a dented aluminium milk jug on a wooden veranda table, cows grazing in the pasture blurred behind. Close-up at 45 degrees, early morning light.
+- **pao-caseiro-com-nata** — A thick slice of rustic bread spread with thick yellow farm cream and a sprinkle of sugar on a wooden board. Close-up, warm window light on a farmhouse table.
+- **manteiga-da-fazenda** — A block of pale yellow hand-churned butter in a small clay pot with a butter knife, beside bread on a checked cloth. Close-up at 45 degrees, soft morning light.
+- **iogurte-natural** — A glass jar of thick white yogurt topped with oat granola and a drizzle of honey, on a wooden veranda rail, green pasture blurred behind. Close-up, bright morning light.
+- **requeijao-de-corte** — A golden-browned block of firm cooked cheese sliced on a wooden board, one slice seared on a small griddle. Close-up at 45 degrees, warm farmhouse kitchen light.
+- **bolo-de-milho-verde** — Squares of moist yellow fresh-corn cake on a white enamel tray, a husked corn cob beside it, on a checked tablecloth. Overhead, soft morning light.
+
+### fazenda-santa-barbara — Receitas da sede
+- **quirera-com-costelinha** — A cast-iron pot of creamy cracked-corn stew with pork ribs on an old wood-burning stove, a ladle resting on the rim. Close-up at 45 degrees, warm light from a small window in a wooden kitchen.
+- **galinha-caipira-com-pirao** — A clay dish of stewed free-range chicken in golden turmeric sauce beside a bowl of smooth cassava porridge, on a worn wooden table. Overhead, soft window light.
+- **pacoca-de-charque** — Shredded dried beef pounded with cassava flour in a heavy wooden mortar, the pestle resting inside, on an old plank floor. Close-up at 45 degrees, warm window light, leather saddlery blurred behind.
+- **sagu-de-vinho** — A glass bowl of translucent purple tapioca pearls in red wine topped with pale vanilla custard, on a lace doily on a wooden table. Close-up, soft window light.
+- **ambrosia** — A small porcelain bowl of golden curdled egg-and-milk sweet in syrup with cloves, a copper pan blurred beside it on an old wooden table. Close-up at 45 degrees, soft window light.
+- **cafe-no-fogao-a-lenha** — A soot-blackened kettle and a cloth coffee filter on the iron top of a wood-burning stove, a cup of coffee on the edge. Close-up, warm firelight from the open firebox.
+- **doce-de-leite-de-tacho** — Thick glossy caramel-brown doce de leite stirred with a long wooden paddle in a copper pan. Close-up at 45 degrees, warm light from a farmhouse window.
+- **polenta-na-chapa** — Golden slices of grilled polenta topped with melting cheese on the iron plate of a wood-burning stove. Close-up at 45 degrees, warm firelight.
+- **cha-de-marcela** — A porcelain cup of pale golden herbal tea beside a bundle of dried yellow marcela flowers on a wooden windowsill, pasture outside. Close-up, soft morning light.
+
+### fazenda-dos-pinheiros — Tudo do pinhão
+- **pinhao-da-safra** — A burlap sack spilling fresh raw pinhão (brown, thumb-sized araucaria seeds) onto the forest floor among fallen needles and a broken pine cone. Close-up at 45 degrees, soft morning light under araucaria crowns.
+- **farinha-de-pinhao** — A wooden bowl of fine beige pinhão flour with a scoop, whole brown seeds scattered around, on a rough timber table. Overhead, soft window light.
+- **pacoca-de-pinhao** — A cast-iron pan of ground pinhão sautéed with minced beef, bacon and green onion, a wooden spoon in it, on a timber table. Close-up at 45 degrees, warm window light, araucarias outside.
+- **bolo-de-pinhao** — A slice of moist hazelnut-brown pinhão cake on a ceramic plate, a few whole seeds beside it and a cup of coffee, on a checked cloth. Close-up at 45 degrees, soft window light.
+- **conserva-de-pinhao** — Glass jars of peeled cream-coloured pinhão seeds in brine with garlic and bay leaves, lined up on a wooden shelf. Close-up, soft side light from a window.
+- **nhoque-de-pinhao** — Hand-rolled beige gnocchi made with pinhão in brown butter and grated cheese in a shallow ceramic bowl. Close-up at 45 degrees, warm window light on a timber table.
+- **pao-de-pinhao** — A round rustic loaf cut open to show a tan crumb dotted with pinhão pieces, on a floured wooden board beside a wood-fired oven. Close-up at 45 degrees, warm light.
+- **pe-de-moleque-de-pinhao** — Shards of amber brittle packed with toasted pinhão pieces on parchment on a wooden board. Close-up, soft window light.
+- **licor-de-pinhao** — A small glass of amber liqueur beside a plain glass bottle and toasted pinhão seeds on a wooden table, araucaria trunks blurred through the window. Close-up at 45 degrees, golden-hour light.
+
+### parque-caveiras — Barracas do parque
+- **pastel-de-carne** — A large golden fried pastel split open to show a ground beef filling, on waxed paper on a stall counter, fairground lights blurred behind. Close-up at 45 degrees, warm night bokeh.
+- **churros-de-doce-de-leite** — Two sugar-coated churros filled with caramel doce de leite in a paper sleeve, a lit Ferris wheel blurred behind. Close-up, evening light and colourful bokeh.
+- **quentao** — A steaming enamel mug of hot ginger and clove spirit on a wooden stall counter, a large copper pot behind, carousel lights blurred in the night. Close-up, warm light.
+- **maca-do-amor** — Glossy bright red candied apples on sticks lined up on a stall tray, one bitten, colourful fairground lights blurred behind. Close-up at 45 degrees, night bokeh.
+- **algodao-doce** — A large pink cotton candy on a stick held up by a hand against a lit Ferris wheel at dusk. Close-up, blue-hour light and warm bokeh.
+- **pipoca-de-panela** — Popcorn overflowing from a paper bag beside a cast-iron pot on a stall counter under warm string lights. Close-up at 45 degrees, night light.
+- **milho-cozido** — A steaming boiled corn cob on a stick brushed with melting butter and salt, held over a stall counter. Close-up, warm light, a carousel blurred behind at dusk.
+- **cachorro-quente** — A Brazilian hot dog in a soft bun with sausage in tomato sauce, shoestring potato sticks and corn, wrapped in a paper napkin. Close-up at 45 degrees, amusement park lights blurred behind at night.
+- **morango-com-chocolate** — A wooden skewer of strawberries dipped in dripping milk chocolate, held above a stall counter, a lit carousel blurred behind. Close-up, colourful night bokeh.
+
+### deck-do-lago — Cardápio do deck
+- **truta-grelhada-na-brasa** — A whole grilled rainbow trout with herb butter and smashed roasted potatoes on a white plate on a wooden deck table, a turquoise lake behind. Close-up at 45 degrees, golden-hour light.
+- **risoto-de-pinhao** — A shallow bowl of creamy risotto with chopped pinhão (brown, thumb-sized araucaria seeds, cream inside), shaved cheese and browned butter, on a wooden table by the lake. Close-up at 45 degrees, warm sunset light.
+- **entrevero-de-pinhao** — A sizzling cast-iron skillet of mixed meats, peppers, onion and peeled pinhão seeds, a wooden spoon in it, on a lakeside deck table. Close-up at 45 degrees, golden-hour light.
+- **carpaccio-de-truta** — Thin slices of pink cured trout fanned on a slate plate with capers, olive oil and small herbs, beside a glass of white wine. Overhead, soft evening light over a lake.
+- **menu-do-por-do-sol** — A lakeside deck table set for two with plates of trout and risotto, a plain unlabelled bottle of red wine and two glasses, the sun low over turquoise water. 45-degree view, golden sunset light.
+- **caipirinha-de-bergamota** — A short glass of caipirinha with muddled tangerine wedges and crushed ice on the wooden rail of a deck, a lake at sunset behind. Close-up, golden backlight.
+- **maca-e-gengibre-com-tonica** — A tall glass of pale golden apple and ginger tonic with ice, apple slices and a coin of ginger, on a deck rail over the water. Close-up, warm sunset light.
+- **pavlova-com-amoras** — A crisp white meringue nest topped with whipped cream and dark blackberries on a ceramic plate on a wooden deck table, the lake blurred behind. Close-up at 45 degrees, soft dusk light.
+- **creme-brulee-de-erva-mate** — A ramekin of crème brûlée with a cracked caramel top and a spoon, a pinch of green yerba mate beside it, on a wooden table by the lake. Close-up, warm dusk light.
+
+### ovni-porto — Cardápio de bordo
+- **disco-voador** — A round sealed toasted sandwich, golden and disc-shaped, cut in half to show melted cheese and ham, on a white enamel plate on a metal table. Close-up at 45 degrees, cool bluish lamplight at night.
+- **asteroides** — A paper cone of irregular fried dough balls rolled in cinnamon sugar on a concrete ledge, a starry night sky blurred behind. Close-up, warm lamplight against deep blue night.
+- **buraco-negro** — Almost black, thick hot chocolate in a dark enamel mug seen from above, a spoon sinking into it, on a wool blanket. Overhead, cool lamplight at night.
+- **aneis-de-saturno** — Light, crunchy tapioca-starch rings spilling from a paper bag onto a concrete surface, small ground lights glowing blurred in the dark. Close-up at 45 degrees, night light.
+- **combustivel-de-foguete** — Black coffee pouring from a steel vacuum flask into an enamel mug on a concrete ledge, a clear starry sky and the silhouette of a small control tower behind. Close-up, cool night light.
+- **cratera** — A round crusty bread bowl filled with steaming bean soup, its cut lid resting beside it, on a metal table. Close-up at 45 degrees, warm lamplight against a dark night.
+- **via-lactea** — A white enamel mug of hot milk with a swirl of dark honey and a cinnamon stick, held by gloved hands under a starry sky. Close-up, soft cool night light, the Milky Way blurred behind.
+- **estrela-cadente** — Star-shaped butter cookies dusted with icing sugar on a dark metal tray, crumbs scattered. Overhead, cool bluish lamplight at night.
+- **kit-abducao** — A gourd of chimarrão, a vacuum flask and a folded wool blanket laid on a concrete landing pad, small ground lights glowing along its edge. Close-up at 45 degrees, deep blue night light.
+
+### salto-caveiras — Quiosque do salto
+- **cesta-de-piquenique** — A wicker basket open on a wooden picnic table with a wedge of cheese, sliced salami, a rustic loaf and apples, araucaria trunks and waterfall mist blurred behind. 45-degree view, dappled late-morning light.
+- **sanduiche-de-pernil** — A crusty bread roll stuffed with shredded roast pork and tomato-onion vinaigrette, half wrapped in paper, on a picnic table. Close-up at 45 degrees, dappled light.
+- **bolinho-de-pinhao** — A paper tray of golden fried croquettes made from pinhão (brown, thumb-sized araucaria seeds), one broken open, a few whole seeds beside it on a wooden table. Close-up, soft daylight, a waterfall blurred behind.
+- **maionese-de-batata** — A bowl of creamy potato salad with carrot and peas on a checked cloth on a picnic table under araucarias. Overhead, dappled light.
+- **limonada-com-hortela** — A glass jug of lemonade with mint leaves and ice, beaded with condensation, on a wooden picnic table, the river blurred behind. Close-up, bright midday light.
+- **picole-de-uva** — A deep purple homemade grape ice pop on a wooden stick held by a hand against a blurred waterfall and green foliage. Close-up, bright sunlight.
+- **bolo-de-laranja** — A slice of orange cake glazed with syrup on a paper napkin on a wooden deck rail, a waterfall and an old brick powerhouse blurred behind. Close-up at 45 degrees, morning light.
+- **romeu-e-julieta** — Cubes of pale cheese and dark red guava paste on toothpicks on a small wooden board on a picnic table. Close-up at 45 degrees, dappled light through araucarias.
+- **salada-de-frutas** — A clear cup of chopped apple, strawberry, pear and grapes in orange juice with a small spoon on a picnic table. Close-up, bright daylight, river and araucarias blurred behind.
+
+## CONTEST (→ `web/public/images/contest/`)
+
+- **candidata-pinhao.webp** (3:4) — A smiling woman in her thirties in a wool sweater and apron films herself with a phone on a small tripod while stirring a black cast-iron pot of boiled pinhão (brown, thumb-sized araucaria seeds) on a rustic farmhouse stove. Warm window light, araucarias blurred outside, candid documentary feel.
+- **candidato-chimarrao.webp** (3:4) — A cheerful older man in a gaúcho beret and wool poncho holds up a chimarrão gourd toward a phone camera on a fence post at sunrise, frost on the pasture and araucaria pines behind him in soft mist. Candid, warm, documentary portrait.
+- **cesta-da-serra.webp** (4:3) — A generous wicker hamper on a rough wooden table: a wheel of aged serrano cheese, two plain unlabelled bottles of red wine, a cloth bag of pinhão (brown, thumb-sized araucaria seeds), jars of dulce de leche and dark honey, a hand-knitted wool scarf folded on top, a checked cloth. Golden window light, araucarias blurred behind.
+
+<!-- menu:end -->

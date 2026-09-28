@@ -16,6 +16,10 @@ Running it twice would sharpen an already sharpened file, so each result is reco
 digest and skipped on the next run. A replaced photograph has a new digest, so it is caught
 without being told; `--force` sharpens everything again.
 
+Whatever format the generator saves in, the pages look for `.webp`: a `.png`, `.jpg` or
+`.jpeg` found in these folders is first re-encoded to WebP beside itself, and the original
+is removed once the WebP is written and reads back as an image.
+
 It finishes by emptying the dev server's image cache, which keys on the request URL and not
 on the file behind it: without that, replacing a photograph in place changes nothing on
 screen, however hard the page is refreshed.
@@ -37,9 +41,12 @@ WEB = Path(__file__).resolve().parent.parent
 IMAGES = WEB / "public" / "images"
 MANIFEST = WEB / "scripts" / ".sharpened.json"
 
-# Where the photographs live. Galleries are included so a batch dropped in later is caught
-# by the same pass.
-FOLDERS = ("heroes", "experiences", "places")
+# Where the photographs live. Galleries, menus and the contest page are included so a batch
+# dropped in later is caught by the same pass.
+FOLDERS = ("heroes", "experiences", "places", "menu", "contest")
+
+# What the generator may hand back instead of WebP.
+CONVERTIBLE = (".png", ".jpg", ".jpeg")
 
 # Radius in pixels, strength as a percentage, and the difference a pixel needs before it is
 # touched at all - the threshold is what keeps sky and water from turning grainy.
@@ -74,7 +81,30 @@ def photographs() -> list[Path]:
     return found
 
 
+def convert_to_webp() -> int:
+    """Re-encode any PNG or JPEG in the photograph folders as WebP, beside the original."""
+    converted = 0
+    for folder in FOLDERS:
+        root = IMAGES / folder
+        if not root.is_dir():
+            continue
+        for source in sorted(p for p in root.rglob("*") if p.suffix.lower() in CONVERTIBLE):
+            target = source.with_suffix(".webp")
+            with Image.open(source) as image:
+                image.convert("RGB").save(target, "WEBP", quality=QUALITY, method=6)
+            # Only once the WebP opens as an image is the original let go.
+            with Image.open(target) as check:
+                check.verify()
+            source.unlink()
+            converted += 1
+            print(f"  converted {source.relative_to(IMAGES)} -> {target.name}")
+    return converted
+
+
 def main() -> None:
+    converted = convert_to_webp()
+    if converted:
+        print(f"CONVERTED {converted} files to WebP")
     force = "--force" in sys.argv
     done: dict[str, str] = {} if force else json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
 
