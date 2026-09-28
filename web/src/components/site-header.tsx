@@ -6,7 +6,8 @@ import type { Place } from "@/types";
 
 /**
  * The navigation bar every page carries, in the reference's form: a floating pill
- * with the destinations menu, the wordmark and the primary call to action.
+ * with the destinations menu, the experiences, the contest, the wordmark and the primary
+ * call to action.
  *
  * Its links are plain anchors on purpose: every navigation is a full document, which is
  * what lets the browser run the iris as a cross-document view transition.
@@ -73,6 +74,9 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
               <a href="/experiencias" className="block rounded-button px-3 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-bark uppercase hover:bg-straw hover:text-teal">
                 Experiências
               </a>
+              <a href="/embaixador" className="block rounded-button px-3 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-bark uppercase hover:bg-straw hover:text-teal">
+                Seja embaixador
+              </a>
               <a href="/planejar" className="mt-1 block rounded-button bg-teal-deep px-3 py-3 text-center font-sans text-xs font-bold tracking-[0.08em] text-mist uppercase">
                 Planejar visita
               </a>
@@ -91,10 +95,20 @@ export function SiteHeader({ places }: SiteHeaderProps): React.ReactElement {
             </summary>
             <div className="absolute top-full left-0 mt-3 max-h-[70svh] w-64 overflow-y-auto rounded-card bg-mist p-2 shadow-[0_18px_50px_rgba(46,36,28,0.22)]">
               <DestinationList places={places} />
+              {/* The contest sits beside "Experiências" only where the bar has room for it;
+                  here it is reachable at every width. */}
+              <div className="mt-2 border-t border-bark/10 pt-2">
+                <a href="/embaixador" className="block rounded-button px-3 py-2.5 font-sans text-xs font-bold tracking-[0.08em] text-wine uppercase transition-colors hover:bg-straw">
+                  Seja embaixador
+                </a>
+              </div>
             </div>
           </details>
           <a href="/experiencias" className="font-script text-2xl text-teal">
             Experiências
+          </a>
+          <a href="/embaixador" className="hidden font-script text-2xl text-teal lg:inline">
+            Embaixador
           </a>
         </nav>
 
