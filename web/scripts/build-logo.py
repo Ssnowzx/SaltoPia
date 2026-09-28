@@ -12,7 +12,9 @@ Run with: python3 scripts/build-logo.py
 """
 
 import colorsys
+import shutil
 import statistics
+from collections import deque
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
@@ -23,6 +25,59 @@ PUBLIC = ROOT / "web" / "public"
 
 # How much room the card is given to dissolve into, in source pixels.
 PAD = 150
+
+# A small patch of the mask lying well clear of the emblem is not emblem. The card has a
+# fleuron in each corner; the crop cuts the frame but keeps their tips, and being saturated
+# they pass the paper test - four marks round the wordmark on the title screen, reported
+# by the owner on 2026-09-28. Measured on the reduced masks, every such tip sits more than
+# 14px from the emblem and every real piece of it - the banner's letters are islands too -
+# within 10px.
+MIN_ISLAND_SHARE = 0.005
+STRAY_DISTANCE = 14
+
+
+def drop_islands(mask):
+    """Remove small regions standing apart from the emblem, found by a breadth-first fill.
+
+    Pure Python on purpose: the machine that builds the logo has Pillow and no numpy, and
+    the masks this runs on are reduced to a few hundred thousand pixels.
+    """
+    width, height = mask.size
+    pixels = mask.load()
+    label = [[0] * width for _ in range(height)]
+    regions = [[]]
+    for start_y in range(height):
+        for start_x in range(width):
+            if pixels[start_x, start_y] == 0 or label[start_y][start_x]:
+                continue
+            region = len(regions)
+            points = []
+            queue = deque([(start_x, start_y)])
+            label[start_y][start_x] = region
+            while queue:
+                x, y = queue.popleft()
+                points.append((x, y))
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < width and 0 <= ny < height and pixels[nx, ny] and not label[ny][nx]:
+                        label[ny][nx] = region
+                        queue.append((nx, ny))
+            regions.append(points)
+
+    emblem = max(regions, key=len)
+    body = Image.new("L", mask.size, 0)
+    body_pixels = body.load()
+    for x, y in emblem:
+        body_pixels[x, y] = 255
+    near = body.filter(ImageFilter.MaxFilter(STRAY_DISTANCE * 2 + 1)).load()
+
+    out = mask.copy()
+    result = out.load()
+    for points in regions[1:]:
+        small = len(points) < len(emblem) * MIN_ISLAND_SHARE
+        if small and not any(near[x, y] for x, y in points):
+            for x, y in points:
+                result[x, y] = 0
+    return out
 
 
 def emblem_mask(image):
@@ -52,7 +107,7 @@ def emblem_mask(image):
             red, green, blue = (channel / 255 for channel in pixels[x, y])
             if colorsys.rgb_to_hsv(red, green, blue)[1] < 0.22:
                 out[x, y] = 0
-    return mask
+    return drop_islands(mask)
 
 
 def paper_colour(image):
@@ -112,10 +167,22 @@ def save(image, name, longest):
     print(f"{name}: {image.size[0]}x{image.size[1]}")
 
 
+# Where Next keeps its optimised copies, keyed by URL rather than by file: a rebuilt logo
+# at the same path is not seen until they go. Only these two names are ever removed.
+IMAGE_CACHES = (ROOT / "web" / ".next" / "dev" / "cache" / "images", ROOT / "web" / ".next" / "cache" / "images")
+
+
+def drop_image_cache():
+    for cache in IMAGE_CACHES:
+        if cache.is_dir() and cache.name == "images":
+            shutil.rmtree(cache)
+
+
 def main():
     crop = cropped_artwork()
     save(build_card(crop), "logo-saltopia.png", 1000)
     save(build_flat(crop), "logo-saltopia-flat.png", 900)
+    drop_image_cache()
 
 
 if __name__ == "__main__":
