@@ -4,6 +4,7 @@ import Lenis from "lenis";
 import { useEffect } from "react";
 
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { registerSmoothScroll } from "@/lib/smooth-scroll";
 
 /** How closely the scroll follows the wheel: lower is smoother, higher is tighter. */
 const LERP = 0.1;
@@ -19,7 +20,11 @@ export function LenisProvider(): null {
   useEffect(() => {
     if (reducedMotion) return;
     const lenis = new Lenis({ autoRaf: true, lerp: LERP });
-    return () => lenis.destroy();
+    registerSmoothScroll(lenis);
+    return () => {
+      registerSmoothScroll(null);
+      lenis.destroy();
+    };
   }, [reducedMotion]);
 
   return null;

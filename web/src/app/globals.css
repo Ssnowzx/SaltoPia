@@ -23,6 +23,12 @@
   --color-bark: #2f2a24;
   --color-frost: #9fb8c8;
   --color-wine: #7b2d3f;
+  /*
+   * The night over the Serra: the deep surface of the content pages - their footer and
+   * the contest's dark bands. Chosen away from the reference's deep green, which the
+   * araucaria token sits close to.
+   */
+  --color-night: #1f2346;
 
   /* Sky - sunset over the reservoir */
   --color-sky-high: #e8742f;
@@ -48,6 +54,16 @@
   --duration-panel: 300ms;
   --duration-flight: 2000ms;
   --duration-transition: 1500ms;
+  /* A card of the contest's idea deck leaving the table. */
+  --duration-deal: 450ms;
+
+  /*
+   * Paper grain for the pale grounds and the cards: fractal noise tinted to the bark
+   * colour at 7%, generated here rather than downloaded.
+   */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .18 0 0 0 0 .16 0 0 0 0 .14 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* A pinhão seed, the tile of the stand-in's pattern. */
+  --pinhao-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cpath d='M20 10c6 0 9 8 9 17s-4 15-9 15-9-6-9-15 3-17 9-17z' transform='rotate(-18 20 26)'/%3E%3Cpath d='M48 34c5 0 8 7 8 14s-3 12-8 12-8-5-8-12 3-14 8-14z' transform='rotate(14 48 47)'/%3E%3C/svg%3E");
 }
 
 body {
@@ -239,6 +255,213 @@ body {
 
 .ticket-perforation::after {
   right: -29px;
+}
+
+/*
+ * ---------------------------------------------------------------------------------
+ * Place pages and the contest page (elevate-place-pages).
+ * ---------------------------------------------------------------------------------
+ */
+
+/* Paper: a ground colour from a utility, the grain laid over it from here. */
+.grain {
+  background-image: var(--grain);
+  background-size: 220px 220px;
+}
+
+/*
+ * Cards inside a revealed section arrive one after another. The delay stops growing after
+ * eight, so a long grid never keeps the visitor waiting for its last row. It sits on a
+ * wrapper, never on the card, so the card's own hover transition is left alone.
+ */
+[data-reveal="pending"] [data-stagger] {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+[data-reveal="shown"] [data-stagger] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 700ms var(--ease-ui),
+    transform 700ms var(--ease-ui);
+  transition-delay: calc(min(var(--i, 0), 8) * 70ms);
+}
+
+/*
+ * Scroll-linked motion. Declared only where the browser can tie an animation to scrolling
+ * and only when motion is welcome; everywhere else the page is simply still.
+ */
+@keyframes hero-photo {
+  to {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes hero-lift {
+  to {
+    transform: translateY(-14vh);
+    opacity: 0;
+  }
+}
+
+@keyframes print-drift {
+  from {
+    translate: 0 var(--drift, 48px);
+  }
+  to {
+    translate: 0 calc(var(--drift, 48px) * -1);
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-photo {
+      animation: hero-photo linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
+    }
+
+    .hero-lift {
+      animation: hero-lift linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 80vh;
+    }
+
+    .print-drift {
+      animation: print-drift linear both;
+      animation-timeline: view();
+    }
+  }
+}
+
+/* The larger view of a menu item. */
+.menu-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-night) 72%, transparent);
+}
+
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .menu-dialog[open] {
+    animation: dialog-in var(--duration-panel) var(--ease-ui);
+  }
+}
+
+/* The stand-in's pattern: pinhão seeds in the place's colour, barely there. */
+.pinhao-pattern {
+  background-color: var(--place-accent, var(--color-teal));
+  mask: var(--pinhao-tile) 0 0 / 64px 64px repeat;
+  opacity: 0.09;
+}
+
+/* A postage stamp's perforated edge, punched by a mask so the stamp stays one element. */
+.stamp-edge {
+  mask:
+    radial-gradient(circle at 5px 5px, transparent 3px, black 3.5px) -5px -5px / 10px 10px,
+    linear-gradient(black, black) 5px 5px / calc(100% - 10px) calc(100% - 10px) no-repeat;
+}
+
+/* Fog over the postcard band. */
+@keyframes fog-drift {
+  from {
+    transform: translateX(-6%);
+  }
+  to {
+    transform: translateX(6%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fog {
+    animation: fog-drift 60s linear infinite alternate;
+  }
+}
+
+/* A word run over with a gold marker. */
+.marker {
+  background: linear-gradient(transparent 55%, color-mix(in srgb, var(--color-gold) 80%, transparent) 55%);
+  padding: 0 0.12em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Type filled with a photograph of the falls - the contest's wordmark. */
+.photo-type {
+  background-image: url("/images/heroes/salto-caveiras.webp");
+  background-size: cover;
+  background-position: center 58%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 3px var(--color-night);
+}
+
+/* The contest skyline: the wheel turns, the UFO crosses and bobs. */
+@keyframes wheel-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ufo-cross {
+  from {
+    translate: -10vw 0;
+  }
+  to {
+    translate: 10vw 0;
+  }
+}
+
+@keyframes ufo-bob {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.wheel-spin,
+.ufo-bob {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wheel-spin {
+    animation: wheel-turn 40s linear infinite;
+  }
+
+  .ufo-cross {
+    animation: ufo-cross 28s ease-in-out infinite alternate;
+  }
+
+  .ufo-bob {
+    animation: ufo-bob 3s ease-in-out infinite;
+  }
+}
+
+/* The contest's idea deck. */
+.deck-card {
+  transition:
+    translate var(--duration-panel) var(--ease-ui),
+    rotate var(--duration-panel) var(--ease-ui),
+    scale var(--duration-panel) var(--ease-ui),
+    opacity var(--duration-panel) var(--ease-ui);
+}
+
+.deck-card[data-leaving="true"] {
+  translate: -120% 0;
+  rotate: -18deg;
+  opacity: 0;
+  transition-duration: var(--duration-deal);
 }
 
 /*
