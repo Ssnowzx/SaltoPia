@@ -5,6 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { type DirectionalLight, Object3D, PCFShadowMap } from "three";
 
+import { InvitationCard } from "@/components/contest/invitation-card";
 import { SiteHeader } from "@/components/site-header";
 import { Townsfolk } from "@/components/walk-mode/townsfolk";
 import { useWalkMode } from "@/components/walk-mode/use-walk-mode";
@@ -94,6 +95,9 @@ installAerialPerspective();
 
 /** How long the entry waits for the world before opening regardless. */
 const ENTRY_TIMEOUT_MS = 8000;
+
+/** How long the visitor has the world to themselves before the contest's card arrives. */
+const HUB_INVITATION_DELAY_MS = 1200;
 
 /** Session-storage key set once the visitor has entered the world. */
 const EXPLORED_KEY = "saltopia:explored";
@@ -308,6 +312,13 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
       {exploring ? <WalkLayer walk={walk} places={places} cardOpen={cardOpen} onVisit={setFocus} /> : null}
       {cardOpen && focus ? <PlaceCard place={focus} onClose={handleClose} getReturnFocus={getPinNode} /> : null}
       {exploring ? null : <IntroOverlay onExplore={handleExplore} ready={sceneReady} />}
+      {/* The contest's card opens the visit once a session - never over the title state,
+          a place the visitor has chosen, or the character they are making. */}
+      <InvitationCard
+        blocked={!exploring || !sceneReady || focus !== null || walk.mode === "create"}
+        onContestPage={false}
+        delayMs={HUB_INVITATION_DELAY_MS}
+      />
     </div>
   );
 }

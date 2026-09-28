@@ -347,6 +347,18 @@ html:has(dialog[open]) {
   }
 }
 
+/* The contest's invitation: a softer veil than a menu item's, and the map blurred behind. */
+.invitation-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-night) 45%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .invitation-dialog[open] {
+    animation: dialog-in var(--duration-panel) var(--ease-ui);
+  }
+}
+
 /* The stand-in's pattern: pinhão seeds in the place's colour, barely there. */
 .pinhao-pattern {
   background-color: var(--place-accent, var(--color-night));

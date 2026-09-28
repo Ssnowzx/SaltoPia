@@ -39,7 +39,7 @@ export default async function ContestPage(): Promise<React.ReactElement> {
   const status = campaignStatus(calendarDate(new Date()), PHASES);
 
   return (
-    <ContentShell places={places}>
+    <ContentShell places={places} inviteToContest={false}>
       <ContestHero />
       <HowToRun cookPhoto={presentOrNull(CONTEST_PHOTOS.cook.path)} gauchoPhoto={presentOrNull(CONTEST_PHOTOS.gaucho.path)} />
       <IdeasSection />
