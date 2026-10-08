@@ -15,13 +15,15 @@ import { BLOOM, QUALITY } from "@/lib/world/constants";
 interface PostEffectsProps {
   /** Ambient occlusion is the costliest pass; the lower quality tiers go without it. */
   readonly ambientOcclusion: boolean;
+  /** Samples per pixel; the lowest tier goes without. */
+  readonly multisampling: number;
 }
 
-export function PostEffects({ ambientOcclusion }: PostEffectsProps): React.ReactElement | null {
+export function PostEffects({ ambientOcclusion, multisampling }: PostEffectsProps): React.ReactElement | null {
   if (!QUALITY.postProcessing) return null;
 
   return (
-    <EffectComposer multisampling={4}>
+    <EffectComposer multisampling={multisampling}>
       {ambientOcclusion ? (
         <N8AO halfRes intensity={1.7} aoRadius={4} distanceFalloff={1.2} quality="medium" />
       ) : (

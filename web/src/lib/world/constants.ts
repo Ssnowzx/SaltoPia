@@ -578,13 +578,29 @@ export const QUALITY = {
   postProcessing: true,
 } as const;
 
-/** The quality tiers, highest first - design.md D10 of elevate-world-realism. */
+/**
+ * The quality tiers, highest first - design.md D10 of elevate-world-realism. Below the high
+ * tier the sun's shadow map is a quarter the size - the 4096² map is 64 MB of depth a weak
+ * GPU writes every frame - and the lowest tier gives up multisampling. See design.md D5 of
+ * speed-up-the-hub.
+ */
 export type QualityTier = "high" | "medium" | "low";
 
-export const QUALITY_TIERS: Readonly<Record<QualityTier, { readonly reflection: number; readonly ambientOcclusion: boolean; readonly maxPixelRatio: number }>> = {
-  high: { reflection: 0.5, ambientOcclusion: true, maxPixelRatio: 2 },
-  medium: { reflection: 0.35, ambientOcclusion: false, maxPixelRatio: 1.5 },
-  low: { reflection: 0, ambientOcclusion: false, maxPixelRatio: 1 },
+export interface QualitySettings {
+  /** Share of the drawing buffer the lake's reflection renders at; 0 turns it off. */
+  readonly reflection: number;
+  readonly ambientOcclusion: boolean;
+  readonly maxPixelRatio: number;
+  /** The sun's shadow map, in texels a side. */
+  readonly shadowMapSize: number;
+  /** Samples per pixel in the effect composer's buffer; 0 for none. */
+  readonly multisampling: number;
+}
+
+export const QUALITY_TIERS: Readonly<Record<QualityTier, QualitySettings>> = {
+  high: { reflection: 0.5, ambientOcclusion: true, maxPixelRatio: 2, shadowMapSize: 4096, multisampling: 4 },
+  medium: { reflection: 0.35, ambientOcclusion: false, maxPixelRatio: 1.5, shadowMapSize: 2048, multisampling: 4 },
+  low: { reflection: 0, ambientOcclusion: false, maxPixelRatio: 1, shadowMapSize: 2048, multisampling: 0 },
 };
 
 export const QUALITY_ORDER: readonly QualityTier[] = ["high", "medium", "low"];

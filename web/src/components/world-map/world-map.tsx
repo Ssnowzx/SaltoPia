@@ -14,7 +14,7 @@ import { WalkLayer } from "@/components/walk-mode/walk-layer";
 import { WalkScene } from "@/components/walk-mode/walk-scene";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { installAerialPerspective } from "@/lib/world/atmosphere";
-import { CAMERA, FOG, QUALITY_TIERS, SHADOW, SKY_COLORS, SUN_LIGHT } from "@/lib/world/constants";
+import { CAMERA, FOG, QUALITY, QUALITY_TIERS, SHADOW, SKY_COLORS, SUN_LIGHT } from "@/lib/world/constants";
 import type { Place } from "@/types";
 
 import { CameraRig } from "./camera-rig";
@@ -49,7 +49,7 @@ interface WorldMapProps {
  * The key light, aimed at the middle of the community. A directional light shines at
  * its target, and the default target is the origin - out in the bay.
  */
-function SunLight(): React.ReactElement {
+function SunLight({ shadowMapSize }: { readonly shadowMapSize: number }): React.ReactElement {
   const lightRef = useRef<DirectionalLight>(null);
   const target = useMemo(() => new Object3D(), []);
 
@@ -72,7 +72,7 @@ function SunLight(): React.ReactElement {
         // The frustum has to contain everything that receives shadow: past its edge a
         // fragment samples outside the depth map and comes back fully shadowed, which
         // once drew a dark slab with a hard diagonal edge across half the frame.
-        shadow-mapSize={[4096, 4096]}
+        shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-left={-380}
         shadow-camera-right={380}
         shadow-camera-top={380}
@@ -80,8 +80,9 @@ function SunLight(): React.ReactElement {
         shadow-camera-near={1}
         shadow-camera-far={1400}
         shadow-bias={-0.0003}
-        // One shadow texel is about 0.19 world units here; the bias has to clear the
-        // roads' own depth without lifting the shadows off the trees' feet.
+        // One shadow texel is about 0.19 world units on the high tier's map, 0.37 below
+        // it; the bias has to clear the roads' own depth without lifting the shadows off
+        // the trees' feet.
         shadow-normalBias={0.5}
         shadow-intensity={0.82}
         shadow-radius={SHADOW.radius}
@@ -249,14 +250,16 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
               far: CAMERA.far,
               position: [...CAMERA.initialPosition],
             }}
-            gl={{ antialias: true }}
+            // The composer smooths edges in its own buffer; a multisampled canvas only
+            // resolved the finished image a second time.
+            gl={{ antialias: !QUALITY.postProcessing }}
           >
             <color attach="background" args={[SKY_COLORS.haze]} />
             <fog attach="fog" args={[SKY_COLORS.haze, FOG.near, FOG.far]} />
 
             {/* The warm key is the sun; the fill is the sky itself, baked into the
                 environment by SkyDome - no hemisphere or ambient stand-ins. */}
-            <SunLight />
+            <SunLight shadowMapSize={quality.shadowMapSize} />
 
             <Suspense fallback={null}>
               <WorldMaterialsProvider reducedMotion={reducedMotion}>
@@ -270,7 +273,7 @@ export function WorldMap({ places }: WorldMapProps): React.ReactElement {
                 running composer left its multisampled buffer resolving into a depth texture
                 of another format - every frame failed to blit and the canvas froze on its
                 last image while the pins went on moving over it. */}
-              <PostEffects key={tier} ambientOcclusion={quality.ambientOcclusion} />
+              <PostEffects key={tier} ambientOcclusion={quality.ambientOcclusion} multisampling={quality.multisampling} />
               <SceneReady onReady={handleSceneReady} />
             </Suspense>
             {worldDrawn ? <Townsfolk reducedMotion={reducedMotion} /> : null}
