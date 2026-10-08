@@ -1,5 +1,6 @@
 "use client";
 
+import { useFrame, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import type { BufferGeometry, InstancedMesh } from "three";
 import { Color, Euler, Matrix4, type Object3D, Quaternion, Vector3 } from "three";
@@ -13,6 +14,7 @@ import {
   MODEL_SHADING,
   type ModelKey,
   type Placement,
+  SIMPLE_MODEL_REGISTRY,
   createScatter,
   groundHeightFor,
 } from "@/lib/world/neighborhood-layout";
@@ -26,6 +28,7 @@ import { createOuterLandGeometry } from "@/lib/world/outer-land";
 import { roadSurfaceGeometry } from "@/lib/world/road-surfaces";
 import { createTerrainGeometry, lakeDistance } from "@/lib/world/terrain";
 import { createTerrainMaterial } from "@/lib/world/terrain-material";
+import { type Batch, DETAIL_REFRESH_DISTANCE, type TreeCopies, assignDetail, packBatches } from "@/lib/world/tree-detail";
 
 import { useWorldMaterials } from "./world-materials-context";
 
@@ -71,22 +74,30 @@ interface InstancedGroupProps {
 }
 
 /**
- * One geometry per model, however many groups draw it - the woods near the lake and the
- * woods far from it are the same trees.
+ * One geometry per model and detail, however many groups draw it - the woods near the lake
+ * and the woods far from it are the same trees.
  */
-const GEOMETRIES = new Map<ModelKey, BufferGeometry | null>();
+const GEOMETRIES = new Map<string, BufferGeometry | null>();
 
-function geometryFor(model: ModelKey): BufferGeometry | null {
-  if (GEOMETRIES.has(model)) return GEOMETRIES.get(model) ?? null;
+function buildOnce(key: string, build: (() => BufferGeometry) | undefined): BufferGeometry | null {
+  if (GEOMETRIES.has(key)) return GEOMETRIES.get(key) ?? null;
   let geometry: BufferGeometry | null = null;
   try {
-    geometry = MODEL_REGISTRY[model]();
+    geometry = build ? build() : null;
   } catch (error) {
     // A model that fails to build must not blank the scene - world-map spec.
-    console.error(`Failed to build model "${model}":`, error);
+    console.error(`Failed to build model "${key}":`, error);
   }
-  GEOMETRIES.set(model, geometry);
+  GEOMETRIES.set(key, geometry);
   return geometry;
+}
+
+function geometryFor(model: ModelKey): BufferGeometry | null {
+  return buildOnce(model, MODEL_REGISTRY[model]);
+}
+
+function simpleGeometryFor(model: ModelKey): BufferGeometry | null {
+  return buildOnce(`${model}:simple`, SIMPLE_MODEL_REGISTRY[model]);
 }
 
 function InstancedGroup({ model, placements, layer }: InstancedGroupProps): React.ReactElement | null {
@@ -118,6 +129,91 @@ function InstancedGroup({ model, placements, layer }: InstancedGroupProps): Reac
       receiveShadow
       frustumCulled={false}
     />
+  );
+}
+
+/** Every copy's matrix and, for growing things, its own shade - worked out once. */
+function treeCopies(model: ModelKey, placements: readonly Placement[]): TreeCopies {
+  const matrices = new Float32Array(placements.length * 16);
+  const tints = VEGETATION.has(model) ? new Float32Array(placements.length * 3) : null;
+  const tint = new Color();
+  placements.forEach((placement, index) => {
+    matrixFor(placement).toArray(matrices, index * 16);
+    if (tints) vegetationTint(placement, tint).toArray(tints, index * 3);
+  });
+  return { matrices, tints, full: new Uint8Array(placements.length) };
+}
+
+const WHITE = new Color(1, 1, 1);
+
+/** The layer, and the tint buffer before the first frame: added later, it needs a new shader. */
+function prepareBatch(mesh: InstancedMesh, layer: number, tinted: boolean): void {
+  mesh.layers.set(layer);
+  if (tinted && !mesh.instanceColor) mesh.setColorAt(0, WHITE);
+}
+
+function batchOf(mesh: InstancedMesh): Batch {
+  return { matrices: mesh.instanceMatrix.array, tints: mesh.instanceColor?.array ?? null };
+}
+
+function showBatch(mesh: InstancedMesh, count: number): void {
+  mesh.count = count;
+  mesh.visible = count > 0;
+  mesh.instanceMatrix.needsUpdate = true;
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+}
+
+function fillBatches(copies: TreeCopies, full: InstancedMesh, simple: InstancedMesh): void {
+  const counts = packBatches(copies, batchOf(full), batchOf(simple));
+  showBatch(full, counts.full);
+  showBatch(simple, counts.simple);
+}
+
+const REFRESH_SQUARED = DETAIL_REFRESH_DISTANCE * DETAIL_REFRESH_DISTANCE;
+
+/**
+ * A tree model drawn as two batches: the copies near the camera in full, the rest simple.
+ * The copies are reassigned whenever the camera has moved a couple of metres - design.md D3
+ * of speed-up-the-hub.
+ */
+function DetailedInstancedGroup({ model, placements, layer }: InstancedGroupProps): React.ReactElement | null {
+  const fullRef = useRef<InstancedMesh>(null);
+  const simpleRef = useRef<InstancedMesh>(null);
+  const lastLook = useRef(new Vector3());
+  const get = useThree((state) => state.get);
+  const materials = useWorldMaterials();
+  const fullGeometry = useMemo(() => geometryFor(model), [model]);
+  const simpleGeometry = useMemo(() => simpleGeometryFor(model), [model]);
+  const copies = useMemo(() => treeCopies(model, placements), [model, placements]);
+
+  useLayoutEffect(() => {
+    const full = fullRef.current;
+    const simple = simpleRef.current;
+    if (!full || !simple) return;
+    prepareBatch(full, layer, copies.tints !== null);
+    prepareBatch(simple, layer, copies.tints !== null);
+    const { position } = get().camera;
+    assignDetail(copies, position.x, position.y, position.z);
+    fillBatches(copies, full, simple);
+    lastLook.current.copy(position);
+  }, [copies, layer, get]);
+
+  useFrame(({ camera }) => {
+    const full = fullRef.current;
+    const simple = simpleRef.current;
+    if (!full || !simple || camera.position.distanceToSquared(lastLook.current) < REFRESH_SQUARED) return;
+    lastLook.current.copy(camera.position);
+    if (assignDetail(copies, camera.position.x, camera.position.y, camera.position.z)) fillBatches(copies, full, simple);
+  });
+
+  if (!fullGeometry || !simpleGeometry || placements.length === 0) return null;
+  const material = MODEL_SHADING[model] === "smooth" ? materials.smooth : materials.flat;
+
+  return (
+    <>
+      <instancedMesh ref={fullRef} args={[fullGeometry, material, placements.length]} castShadow receiveShadow frustumCulled={false} />
+      <instancedMesh ref={simpleRef} args={[simpleGeometry, material, placements.length]} castShadow receiveShadow frustumCulled={false} />
+    </>
   );
 }
 
@@ -171,9 +267,13 @@ export function Neighborhood(): React.ReactElement {
       <mesh geometry={riverGeometry} material={materials.river.material} onUpdate={onWaterLayer} />
       <mesh geometry={foamGeometry} material={materials.smooth} />
 
-      {groups.map(([key, group]) => (
-        <InstancedGroup key={key} model={group.model} placements={group.placements} layer={group.layer} />
-      ))}
+      {groups.map(([key, group]) =>
+        SIMPLE_MODEL_REGISTRY[group.model] ? (
+          <DetailedInstancedGroup key={key} model={group.model} placements={group.placements} layer={group.layer} />
+        ) : (
+          <InstancedGroup key={key} model={group.model} placements={group.placements} layer={group.layer} />
+        ),
+      )}
     </group>
   );
 }

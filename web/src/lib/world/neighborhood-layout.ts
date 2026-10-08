@@ -192,6 +192,18 @@ const DWELLING_BUILDERS: Readonly<Record<DwellingKey, () => BufferGeometry>> = {
 };
 
 /**
+ * The simpler form of the trees that are most of the world's triangles - the araucárias and
+ * the broadleaf trees - drawn where they are far from the camera. Every part stands where
+ * it does in the full tree. See design.md D3 of speed-up-the-hub.
+ */
+export const SIMPLE_MODEL_REGISTRY: Readonly<Partial<Record<ModelKey, () => BufferGeometry>>> = {
+  araucaria: () => createAraucariaGeometry("mature", 9, 3, "simple"),
+  araucariaB: () => createAraucariaGeometry("mature", 7.6, 11, "simple"),
+  broadleaf: () => createBroadleafGeometry(4.4, 2, "simple"),
+  broadleafWarm: () => createBroadleafGeometry(4.0, 9, "simple"),
+};
+
+/**
  * Resolves a model key to geometry. This registry is the seam design.md D1 keeps open:
  * swapping a procedural builder for a loaded `.glb` is a change here and nowhere else.
  */

@@ -199,7 +199,10 @@ export function cone(
   return paint(geometry, color, surface);
 }
 
-/** A tilted cylinder from (x, y, z) leaning in direction `angle` by `tilt` radians. */
+/**
+ * A tilted cylinder from (x, y, z) leaning in direction `angle` by `tilt` radians. Open-ended,
+ * it is a tube whose ends must be hidden - in a trunk, in a tuft.
+ */
 export function leaningPost(
   radius: number,
   length: number,
@@ -210,8 +213,10 @@ export function leaningPost(
   angle: number,
   tilt: number,
   surface: SurfaceKey = "plain",
+  sides = 6,
+  openEnded = false,
 ): BufferGeometry {
-  const geometry = new CylinderGeometry(radius, radius * 1.15, length, 6);
+  const geometry = new CylinderGeometry(radius, radius * 1.15, length, sides, 1, openEnded);
   geometry.translate(0, length / 2, 0);
   geometry.rotateZ(-tilt);
   geometry.rotateY(angle);
@@ -356,6 +361,24 @@ export function bendFoliageNormals(geometry: BufferGeometry, centre: readonly [n
 export type AraucariaVariant = "mature" | "young";
 
 /**
+ * How finely a tree is built. A distant tree is drawn simple: coarser tufts and thinner-sided
+ * branches open at their hidden ends, every part where the full tree has it - design.md D3
+ * of speed-up-the-hub.
+ */
+export type TreeDetail = "full" | "simple";
+
+/**
+ * A tuft of 20 faces shows less of its sphere than one of 80 - a mean silhouette radius of
+ * 0.916 against 0.976 - so a simple tuft is built that much larger to look the same size.
+ */
+const SIMPLE_TUFT_SCALE = 0.976 / 0.916;
+
+const TREE_TESSELLATION: Readonly<Record<TreeDetail, { readonly tuft: number; readonly tuftScale: number; readonly branchSides: number; readonly openBranches: boolean }>> = {
+  full: { tuft: 1, tuftScale: 1, branchSides: 6, openBranches: false },
+  simple: { tuft: 0, tuftScale: SIMPLE_TUFT_SCALE, branchSides: 4, openBranches: true },
+};
+
+/**
  * An araucaria - Araucaria angustifolia, the tree of the Serra Catarinense.
  *
  * The mature silhouette is what carries the region: a tall trunk bare for most of its
@@ -366,48 +389,91 @@ export type AraucariaVariant = "mature" | "young";
  * Young trees are different - a pyramid of tiered whorls - so both are built, and the
  * forest mixes them. See design.md D2.
  */
-export function createAraucariaGeometry(
-  variant: AraucariaVariant = "mature",
-  height = 15,
-  seed = 1,
-): BufferGeometry {
+export function createAraucariaGeometry(variant: AraucariaVariant = "mature", height = 15, seed = 1, detail: TreeDetail = "full"): BufferGeometry {
+  return variant === "young" ? youngAraucaria(height, seed) : matureAraucaria(height, seed, detail);
+}
+
+function youngAraucaria(height: number, seed: number): BufferGeometry {
   const random = createRandom(seed);
-  const parts: BufferGeometry[] = [];
+  const trunkHeight = height * 0.92;
+  const parts: BufferGeometry[] = [post(0.1, 0.26, trunkHeight, 6, WORLD_COLORS.bark, 0, 0, 0, "bark")];
 
-  if (variant === "young") {
-    const trunkHeight = height * 0.92;
-    parts.push(post(0.1, 0.26, trunkHeight, 6, WORLD_COLORS.bark, 0, 0, 0, "bark"));
+  for (let tier = 0; tier < 5; tier += 1) {
+    const y = height * (0.22 + tier * 0.16);
+    const reach = height * (0.3 - tier * 0.05);
+    const offset = random() * Math.PI;
 
-    for (let tier = 0; tier < 5; tier += 1) {
-      const y = height * (0.22 + tier * 0.16);
-      const reach = height * (0.3 - tier * 0.05);
-      const offset = random() * Math.PI;
+    for (let index = 0; index < 6; index += 1) {
+      const angle = offset + (index / 6) * Math.PI * 2;
+      parts.push(leaningPost(0.05, reach, WORLD_COLORS.bark, 0, y, 0, angle, Math.PI * 0.4, "bark"));
 
-      for (let index = 0; index < 6; index += 1) {
-        const angle = offset + (index / 6) * Math.PI * 2;
-        parts.push(leaningPost(0.05, reach, WORLD_COLORS.bark, 0, y, 0, angle, Math.PI * 0.4, "bark"));
-
-        const tipX = Math.cos(angle) * reach * Math.sin(Math.PI * 0.4);
-        const tipZ = -Math.sin(angle) * reach * Math.sin(Math.PI * 0.4);
-        const tipY = y + reach * Math.cos(Math.PI * 0.4);
-        parts.push(blob(reach * 0.34, WORLD_COLORS.canopy, tipX, tipY, tipZ, 0.55, 1, "foliage"));
-      }
+      const tipX = Math.cos(angle) * reach * Math.sin(Math.PI * 0.4);
+      const tipZ = -Math.sin(angle) * reach * Math.sin(Math.PI * 0.4);
+      const tipY = y + reach * Math.cos(Math.PI * 0.4);
+      parts.push(blob(reach * 0.34, WORLD_COLORS.canopy, tipX, tipY, tipZ, 0.55, 1, "foliage"));
     }
-
-    parts.push(cone(0.55, 1.6, 6, WORLD_COLORS.canopyDark, 0, trunkHeight - 0.4, 0, "foliage"));
-    return merge(parts);
   }
 
-  // Mature: a straight trunk bare to three quarters of the height, then whorls of branches
-  // that run out almost level and turn up at the ends, each ending in a dense dark tuft.
-  // The tips of every whorl end near one height, which is what makes the crown the flat,
-  // shallow cup of a candelabra rather than a ball on a stick.
+  parts.push(cone(0.55, 1.6, 6, WORLD_COLORS.canopyDark, 0, trunkHeight - 0.4, 0, "foliage"));
+  return merge(parts);
+}
+
+interface Whorl {
+  readonly y: number;
+  readonly count: number;
+  readonly reach: number;
+}
+
+/** Everything one branch of a mature whorl is built from. */
+interface BranchSpec {
+  readonly height: number;
+  readonly girth: number;
+  readonly crownTop: number;
+  readonly seed: number;
+  readonly whorl: Whorl;
+  readonly whorlIndex: number;
+  readonly index: number;
+  readonly offset: number;
+  readonly random: () => number;
+  readonly detail: TreeDetail;
+}
+
+/** One branch: a nearly level run, a rise to the crown's top, and a dense dark tuft. */
+function araucariaBranch(spec: BranchSpec): BufferGeometry[] {
+  const { height, girth, crownTop, whorl, whorlIndex, index, random } = spec;
+  const { tuft: tuftDetail, tuftScale, branchSides, openBranches } = TREE_TESSELLATION[spec.detail];
+  const angle = spec.offset + (index / whorl.count) * Math.PI * 2 + (random() - 0.5) * 0.3;
+  const outward = whorl.reach * (0.9 + random() * 0.2);
+  // The first run is nearly level; the second turns up to reach the crown's top.
+  const run = outward * 0.66;
+  const elbowY = whorl.y + run * 0.18;
+  const elbowX = Math.cos(angle) * run;
+  const elbowZ = -Math.sin(angle) * run;
+  const rise = Math.max(0.2, crownTop - elbowY - height * 0.04);
+  const reachOut = outward - run;
+  const tuft = height * (0.075 + whorlIndex * 0.004) * (0.9 + random() * 0.25);
+  const tuftColor = index % 2 === 0 ? WORLD_COLORS.canopy : WORLD_COLORS.canopyDark;
+  return [
+    leaningPost(0.06 * girth, Math.hypot(run, run * 0.18), WORLD_COLORS.bark, 0, whorl.y, 0, angle, Math.PI / 2 - 0.18, "bark", branchSides, openBranches),
+    leaningPost(0.045 * girth, Math.hypot(reachOut, rise), WORLD_COLORS.bark, elbowX, elbowY, elbowZ, angle, Math.atan2(reachOut, rise), "bark", branchSides, openBranches),
+    clump(tuft * tuftScale, tuftColor, Math.cos(angle) * outward, crownTop - tuft * 0.2, -Math.sin(angle) * outward, 0.62, spec.seed * 31 + index + whorlIndex * 7, tuftDetail),
+  ];
+}
+
+/**
+ * Mature: a straight trunk bare to three quarters of the height, then whorls of branches
+ * that run out almost level and turn up at the ends, each ending in a dense dark tuft.
+ * The tips of every whorl end near one height, which is what makes the crown the flat,
+ * shallow cup of a candelabra rather than a ball on a stick.
+ */
+function matureAraucaria(height: number, seed: number, detail: TreeDetail): BufferGeometry {
+  const random = createRandom(seed);
   const girth = height / 12;
   const trunkHeight = height * 0.74;
-  parts.push(post(0.2 * girth, 0.46 * girth, trunkHeight + height * 0.04, 7, WORLD_COLORS.bark, 0, 0, 0, "bark"));
+  const parts: BufferGeometry[] = [post(0.2 * girth, 0.46 * girth, trunkHeight + height * 0.04, 7, WORLD_COLORS.bark, 0, 0, 0, "bark")];
 
   const crownTop = trunkHeight + height * 0.16;
-  const whorls = [
+  const whorls: readonly Whorl[] = [
     { y: trunkHeight - height * 0.1, count: 8, reach: height * 0.36 },
     { y: trunkHeight - height * 0.03, count: 7, reach: height * 0.3 },
     { y: trunkHeight + height * 0.03, count: 5, reach: height * 0.18 },
@@ -416,24 +482,11 @@ export function createAraucariaGeometry(
   whorls.forEach((whorl, whorlIndex) => {
     const offset = random() * Math.PI * 2;
     for (let index = 0; index < whorl.count; index += 1) {
-      const angle = offset + (index / whorl.count) * Math.PI * 2 + (random() - 0.5) * 0.3;
-      const outward = whorl.reach * (0.9 + random() * 0.2);
-      // The first run is nearly level; the second turns up to reach the crown's top.
-      const run = outward * 0.66;
-      const elbowY = whorl.y + run * 0.18;
-      const elbowX = Math.cos(angle) * run;
-      const elbowZ = -Math.sin(angle) * run;
-      parts.push(leaningPost(0.06 * girth, Math.hypot(run, run * 0.18), WORLD_COLORS.bark, 0, whorl.y, 0, angle, Math.PI / 2 - 0.18, "bark"));
-      const rise = Math.max(0.2, crownTop - elbowY - height * 0.04);
-      const reachOut = outward - run;
-      parts.push(leaningPost(0.045 * girth, Math.hypot(reachOut, rise), WORLD_COLORS.bark, elbowX, elbowY, elbowZ, angle, Math.atan2(reachOut, rise), "bark"));
-      const tipX = Math.cos(angle) * outward;
-      const tipZ = -Math.sin(angle) * outward;
-      const tuft = height * (0.075 + whorlIndex * 0.004) * (0.9 + random() * 0.25);
-      parts.push(clump(tuft, index % 2 === 0 ? WORLD_COLORS.canopy : WORLD_COLORS.canopyDark, tipX, crownTop - tuft * 0.2, tipZ, 0.62, seed * 31 + index + whorlIndex * 7));
+      parts.push(...araucariaBranch({ height, girth, crownTop, seed, whorl, whorlIndex, index, offset, random, detail }));
     }
   });
-  parts.push(clump(height * 0.08, WORLD_COLORS.canopyDark, 0, crownTop, 0, 0.6, seed * 13));
+  const { tuft: tuftDetail, tuftScale } = TREE_TESSELLATION[detail];
+  parts.push(clump(height * 0.08 * tuftScale, WORLD_COLORS.canopyDark, 0, crownTop, 0, 0.6, seed * 13, tuftDetail));
 
   return bendFoliageNormals(merge(parts), [0, crownTop - height * 0.05, 0], 0.55);
 }
@@ -458,8 +511,9 @@ export function createConiferGeometry(height = 9): BufferGeometry {
  * A broadleaf native tree: a crown built from overlapping roughened clumps round a
  * short trunk, its normals bent outward so it shades as one mass.
  */
-export function createBroadleafGeometry(height = 6, seed = 1): BufferGeometry {
+export function createBroadleafGeometry(height = 6, seed = 1, detail: TreeDetail = "full"): BufferGeometry {
   const random = createRandom(seed);
+  const { tuft: tuftDetail, tuftScale } = TREE_TESSELLATION[detail];
   const trunkHeight = height * 0.4;
   const warm = random() > 0.6;
   const radius = height * 0.34;
@@ -472,9 +526,9 @@ export function createBroadleafGeometry(height = 6, seed = 1): BufferGeometry {
     const lift = (random() - 0.35) * radius * 0.7;
     const spread = radius * (0.35 + random() * 0.3);
     const color = index % 3 === 0 ? WORLD_COLORS.foliageDark : warm ? WORLD_COLORS.foliageWarm : WORLD_COLORS.foliage;
-    parts.push(clump(radius * (0.5 + random() * 0.22), color, Math.cos(angle) * spread, centre[1] + lift, Math.sin(angle) * spread, 0.82, seed * 17 + index));
+    parts.push(clump(radius * (0.5 + random() * 0.22) * tuftScale, color, Math.cos(angle) * spread, centre[1] + lift, Math.sin(angle) * spread, 0.82, seed * 17 + index, tuftDetail));
   }
-  parts.push(clump(radius * 0.62, warm ? WORLD_COLORS.foliageWarm : WORLD_COLORS.foliage, 0, centre[1] + radius * 0.4, 0, 0.8, seed * 5));
+  parts.push(clump(radius * 0.62 * tuftScale, warm ? WORLD_COLORS.foliageWarm : WORLD_COLORS.foliage, 0, centre[1] + radius * 0.4, 0, 0.8, seed * 5, tuftDetail));
 
   return bendFoliageNormals(merge(parts), centre, 0.7);
 }
