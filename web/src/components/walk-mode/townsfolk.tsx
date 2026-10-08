@@ -11,6 +11,7 @@ import { runWhenIdle } from "@/lib/idle-work";
 import { CHARACTERS, CHARACTER_KEYS, type CharacterKey } from "@/lib/walk/characters";
 import { leaveCrowd, placeInCrowd, visitorPosition } from "@/lib/walk/crowd";
 import { prepareWalkWorld, walkWorld } from "@/lib/walk/navigator";
+import { shareSkeleton } from "@/lib/walk/skeletons";
 import { type TownsfolkClip, type TownspersonSpec, type TownspersonState, initialState, stepTownsperson, townsfolkPlans } from "@/lib/walk/townsfolk";
 import { WALK } from "@/lib/world/constants";
 
@@ -68,9 +69,13 @@ function heightAt(x: number, z: number): number {
   return height;
 }
 
-/** Clones a model with its own bones and its own materials, recoloured and scaled. */
+/**
+ * Clones a model with its own bones and its own materials, recoloured and scaled, its parts
+ * moving with one skeleton rather than one each.
+ */
 function buildRig(scene: Object3D, animations: readonly AnimationClip[], spec: TownspersonSpec): Rig {
   const root = cloneSkinned(scene);
+  shareSkeleton(root);
   root.updateMatrixWorld(true);
   root.scale.setScalar(characterScale(root));
 
