@@ -7,6 +7,34 @@ grouped by date and by the OpenSpec change that specified it.
 
 ## [Unreleased]
 
+### 2026-10-07 — `speed-up-the-hub`
+
+#### Fixed
+
+- In walk mode, a character chosen after another one in the creator now moves its legs.
+  It used to slide frozen until the visitor left walk mode and came back.
+- Opening walk mode for the first time no longer freezes the screen. The freeze lasted
+  about 1 s on the M5 and 1.2 s with the CPU throttled four times. The ground and the
+  routes are now prepared in slices while the world goes on drawing.
+
+#### Changed
+
+- Araucárias and broadleaf trees more than 200 m from the camera are drawn with a simpler
+  crown of the same outline: 768 triangles instead of 2,668, and 184 instead of 664.
+  Trees closer than that are drawn exactly as before.
+- Each of the 15 townspeople moves with one skeleton instead of about twelve. Their CPU
+  cost per frame fell from 2.4 ms to 0.3 ms with the CPU throttled four times.
+- Below the high quality tier the sun's shadow map is 2048² instead of 4096², and the
+  lowest tier draws without multisampling. The canvas no longer multisamples an image the
+  effect composer has already smoothed.
+- Measured on production builds at 1920×1080 on the M5:
+  - with vsync on, the high tier holds 60 fps from the air, where it held 46 with 30% of
+    frames missed;
+  - with the CPU throttled four times, the high tier holds 48 fps from the air instead of
+    34;
+  - uncapped, the lowest tier draws about twice the frames it did: 60 to 118 from the
+    air, 79 to 147 on foot.
+
 ### 2026-09-28 — `elevate-place-pages`
 
 #### Added

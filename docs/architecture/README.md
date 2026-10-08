@@ -66,7 +66,7 @@ flowchart LR
 
 | Goal | Approach | ADR |
 | --- | --- | --- |
-| Reliability on unknown hardware | Generate the world in code (no 3D downloads); quality tiers that only step down; contain failures (stand-ins, error boundaries) | [0002](decisions/0002-generate-the-world-in-code.md), [0013](decisions/0013-quality-tiers-step-down.md), [0008](decisions/0008-asset-paths-are-promises.md) |
+| Reliability on unknown hardware | Generate the world in code (no 3D downloads); quality tiers that only step down; distant trees drawn in a simpler form of themselves; slow preparation done in idle slices; contain failures (stand-ins, error boundaries) | [0002](decisions/0002-generate-the-world-in-code.md), [0013](decisions/0013-quality-tiers-step-down.md), [0015](decisions/0015-trees-at-two-levels-of-detail.md), [0008](decisions/0008-asset-paths-are-promises.md) |
 | An interface over the world that stays accessible | Pins as HTML projected over the canvas | [0003](decisions/0003-pins-as-projected-html.md) |
 | The reference's page choreography without experimental APIs | Full-document navigation with a native view transition | [0004](decisions/0004-full-document-navigation.md) |
 | A data source that can be replaced | One data layer over MariaDB, with domain types as the contract | [0005](decisions/0005-data-layer-over-mariadb.md), [0007](decisions/0007-menu-off-the-place-type.md) |
@@ -209,7 +209,7 @@ flowchart LR
 
 ## 9. Architecture decisions
 
-See [`decisions/README.md`](decisions/README.md): fourteen ADRs, each linked to the design
+See [`decisions/README.md`](decisions/README.md): fifteen ADRs, each linked to the design
 section it came from.
 
 ## 10. Quality requirements
@@ -224,7 +224,7 @@ How they are verified is in [`../testing/test-plan.md`](../testing/test-plan.md)
 | --- | --- | --- | --- |
 | 1 | No fallback without WebGL (NFR-11) | A visitor without WebGL2 cannot use the hub | The largest open item; the founding change's tasks 3.1–3.3 |
 | 2 | Pins are not hidden behind terrain (FR-09) | A pin can show over a hill | Raycast occlusion (task 8.4) |
-| 3 | Performance not measured on the target hardware (NFR-01) | 60 fps is unconfirmed | Measure on integrated graphics before the presentation |
+| 3 | Performance not measured on the target hardware (NFR-01) | 60 fps is unconfirmed. On the M5 with the CPU throttled 4x the high tier holds 48 fps from the air, and the lowest tier is twice as fast as it was (`speed-up-the-hub`) | Measure on integrated graphics before the presentation |
 | 4 | Browser verification is scripted but not in the repository | Checks cannot be re-run by anyone else | Move the capture scripts into an end-to-end suite (test plan §10) |
 | 5 | Specs are not yet archived into `openspec/specs/` | The current truth is spread over several changes | Archive in order, starting with `add-serranopolis-experience` once its open tasks close |
 | 6 | Offers are a string; photographs are path conventions; `crest_image` is unused | Limits the product | Data-model product steps 2 and 5 |

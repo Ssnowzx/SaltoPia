@@ -4,7 +4,7 @@
 | --- | --- |
 | Document | Software Requirements Specification, structured after ISO/IEC/IEEE 29148:2018 §9.6 |
 | Product | Saltopia |
-| Version | 1.0, 2026-09-28 |
+| Version | 1.1, 2026-10-07 (FR-65 to FR-67 and NFR-01's measurements, from `speed-up-the-hub`) |
 | Related | [`vision.md`](vision.md) · [`traceability.md`](traceability.md) · [`../testing/test-plan.md`](../testing/test-plan.md) · [`../architecture/README.md`](../architecture/README.md) |
 
 ## 1. Introduction
@@ -78,7 +78,7 @@ document is corrected.
 **Status:** ✅ implemented and verified · 🟡 partial · ⛔ not built. **Source** is the
 OpenSpec change and capability holding the full requirement, with its scenarios.
 
-### 2.1 World map (source: `add-serranopolis-experience/world-map`; FR-06 also `add-walking-character/world-map`)
+### 2.1 World map (source: `add-serranopolis-experience/world-map`; FR-06 also `add-walking-character/world-map`; FR-65 `speed-up-the-hub/world-map`)
 
 | ID | Requirement | Status |
 | --- | --- | --- |
@@ -89,6 +89,7 @@ OpenSpec change and capability holding the full requirement, with its scenarios.
 | FR-05 | The neighbourhood is composed from typed layout data | ✅ |
 | FR-06 | The explore action waits for the world to be drawn; character models load only after it | ✅ |
 | FR-07 | The whole neighbourhood stays in frame at any viewport shape; one finger orbits and two fingers zoom | ✅ |
+| FR-65 | Every tree within 200 m of the camera is drawn in full. A farther tree may be drawn in a simpler form that keeps its outline and colour, and it does not switch back and forth while the camera rests | ✅ |
 
 ### 2.2 Map pins (source: `add-serranopolis-experience/map-pins`)
 
@@ -135,7 +136,7 @@ OpenSpec change and capability holding the full requirement, with its scenarios.
 | FR-31 | An item without a photograph shows a drawn stand-in, with no broken image and no failed request | ✅ |
 | FR-32 | Every menu photograph has a brief, listed with its path and aspect in a machine-readable manifest | ✅ |
 
-### 2.6 Walk mode (source: `add-walking-character/walk-mode`)
+### 2.6 Walk mode (source: `add-walking-character/walk-mode`; FR-66 and FR-67 `speed-up-the-hub/walk-mode`)
 
 | ID | Requirement | Status |
 | --- | --- | --- |
@@ -147,6 +148,8 @@ OpenSpec change and capability holding the full requirement, with its scenarios.
 | FR-38 | Places can be visited on foot and their card opened | ✅ |
 | FR-39 | A passport records the places visited, kept in the browser | ✅ |
 | FR-40 | Coming back from a page resumes the walk where it was | ✅ |
+| FR-66 | Entering walk mode never holds a frame for more than 100 ms. What it needs is prepared while the world goes on drawing | ✅ |
+| FR-67 | Whichever person is chosen, and however many times the choice changes, the character stands, walks and runs with that person's own animation | ✅ |
 
 ### 2.7 Townsfolk (source: `add-living-townsfolk/townsfolk`)
 
@@ -198,7 +201,7 @@ Categories follow ISO/IEC 25010.
 
 | ID | Category | Requirement | Source | Status |
 | --- | --- | --- | --- | --- |
-| NFR-01 | Performance efficiency | On integrated graphics at 1920×1080 the hub sustains 60 fps when idle and ≥ 30 fps during a flight | `world-map` Performance budget | 🟡 quality tiers step down automatically; not yet measured on the target hardware |
+| NFR-01 | Performance efficiency | On integrated graphics at 1920×1080 the hub sustains 60 fps when idle and ≥ 30 fps during a flight; below 30 fps it steps its quality down, one tier at a time and never back up | `world-map` Performance budget | 🟡 on the M5 (Apple integrated graphics), production build, vsync on: 60 fps on every tier, idle, in flight and on foot (the high tier held 46 before `speed-up-the-hub`). With the CPU throttled 4x the high tier holds 48 fps from the air and during a flight, and the lowest tier 60. Not yet measured on the presentation machine |
 | NFR-02 | Performance efficiency | The renderer's pixel ratio is capped at 2 | `world-map` Performance budget | ✅ |
 | NFR-03 | Performance efficiency | The compressed 3D payload is ≤ 8 MB. The world downloads nothing but six character models | `world-map` Loading; `world-appearance` | ✅ |
 | NFR-04 | Usability / accessibility | Every defined text/background token pairing meets WCAG 2.1 AA | `design-system` Palette tokens | 🟡 night/mist, champagne/night and every place accent are tested; not every pairing |

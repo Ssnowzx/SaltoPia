@@ -19,7 +19,7 @@ name or colour is copied.
 **Documentation** follows software-engineering standards and is indexed in
 [`docs/README.md`](docs/README.md):
 - requirements: vision and scope, an ISO/IEC/IEEE 29148 SRS and a traceability matrix;
-- architecture: arc42 with C4 diagrams, 14 ADRs, and the data model with an ER diagram;
+- architecture: arc42 with C4 diagrams, 15 ADRs, and the data model with an ER diagram;
 - an ISO/IEC/IEEE 29119-3 test plan;
 - manuals for visitors, for partner establishments, and for installation and operation
   (in Portuguese).

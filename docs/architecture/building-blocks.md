@@ -45,6 +45,7 @@ builders.ts  building.ts  dwellings.ts          primitives, houses, ten regional
 landmarks.ts  farms.ts  attractions.ts  ufo-port.ts  props.ts  groves.ts
         ↓
 neighborhood-layout.ts   what is placed where, and the spacing pass
+tree-detail.ts           which copies of a tree are drawn simple, by their distance
 
 sky.ts  atmosphere.ts  planar-reflection.ts     the sky, aerial perspective, the lake's mirror
 world-material.ts  terrain-material.ts  road-material.ts  lake-material.ts   the shaders
@@ -56,8 +57,11 @@ may decide how high the ground is — that is why nothing floats or sinks.
 
 `src/lib/walk/` is walk mode and the townsfolk, pure as well: the walk world (blocked
 ground, obstacle circles, the height field of everything stood on), movement, A* routes,
-arrival areas, and the townsfolk's routes and behaviour. It reads the world; the world
-never reads it.
+arrival areas, and the townsfolk's routes and behaviour. It also holds the character's
+animation (`character-animation.ts`) and the skeleton a person's parts share
+(`skeletons.ts`). It reads the world; the world never reads it. The walk world and the
+route grid are slow to build, so `navigator.ts` prepares them in slices through
+`src/lib/idle-work.ts`, and whoever needs one early finishes it there and then.
 
 `sites.ts` and `road-network.ts` import nothing on purpose. The terrain reads them to
 grade the ground; the geometry reads them to draw. If either imported the terrain the
@@ -133,10 +137,40 @@ or changed by module functions.
 **A download can fail.** Every model load sits inside an error boundary; a model that does
 not arrive leaves its people out, not the hub without a world.
 
+## Rules from making it fast
+
+**Two tree models are most of the world.** Araucárias and broadleaf trees are 92% of its
+triangles, drawn again for the shadow and the mirror. Beyond 200 m from the camera they
+are drawn in a simpler form of themselves (ADR-0015). A tree planted by the hundred needs a
+simple form in `SIMPLE_MODEL_REGISTRY`, or it costs in full everywhere.
+
+**A character's mixer belongs to its model.** three caches what an animation binds to by
+root and track name, and the six people share one rig. drei's `useAnimations` kept one
+mixer across a change of person. Its bindings went on posing the first person's bones,
+and the new one slid along with its legs still. Each model gets its own mixer, which is
+uncached when the model goes.
+
+**A cloned person shares one skeleton.** `SkeletonUtils.clone` gives every skinned part
+its own copy, and three updates and uploads each one on every render: 177 for fifteen
+people. `lib/walk/skeletons.ts` binds the parts to one skeleton and folds each part's
+quantization difference into its bind matrix.
+
+**Slow work is sliced, never run whole during a visit.** The route grid took over a second
+in one task and froze the screen as walk mode opened, and the walk world held a frame for
+140 ms. Both now run in idle slices of 4-12 ms (`runWhenIdle`). Anything new that takes
+more than a frame should do the same.
+
+**An uncapped frame time is not a stutter.** With vsync and the frame-rate limit off, the
+GPU queue fills and empties in a `9 25 2 3 9` pattern. That pattern made the townsfolk
+look like a source of periodic long frames, and they were not. Judge a stutter with vsync
+on, and use uncapped runs only for average throughput.
+
 ## The checks
 
 `npm run check` runs all of them, and `npm test` the unit tests of the pure logic — noise,
-the lake's mirror, groves, junctions, house designs, the walk world, the townsfolk, and on
+the lake's mirror, groves, junctions, house designs, the walk world and its preparation in
+slices, the townsfolk, the character's animation, shared skeletons, the trees' two levels
+of detail, and on
 the pages' side the colour rules, the menus' content, the gallery and print layout and the
 contest's calendar and deck. Two
 of the checks are specific to this project and both have caught real defects:
@@ -180,7 +214,9 @@ it is back in its widest band, it eases the aim back onto the composed wide shot
 in `camera-rig.tsx`, because all of it contends for one camera.
 
 Three quality tiers (`quality-tier.ts`) set the pixel ratio, the resolution of the lake's
-reflection (none on the lowest) and whether ambient occlusion runs. drei's `PerformanceMonitor` steps down one tier after a
+reflection (none on the lowest), whether ambient occlusion runs, the size of the sun's
+shadow map (4096² on the high tier, 2048² below) and the composer's multisampling (none
+on the lowest). drei's `PerformanceMonitor` steps down one tier after a
 sustained drop under 30 fps and never back up, so the image does not oscillate;
 `?quality=high|medium|low` pins one, and the tier in use is on the root as `data-quality`.
 Test the unpinned path in a real, headed Chrome: every headless capture that pinned a tier
@@ -192,9 +228,10 @@ the camera. The walker is a pure step (`lib/walk/movement.ts`) over the walk wor
 frame loop writes its position straight into the scene, as the projector does for pins.
 
 **The townsfolk** mount once the scene has drawn its first frame and the walk world has been
-built in an idle moment. Each is a `SkeletonUtils` clone of one of the six people with its
-own materials and mixer; their positions go into a small shared list the walker collides
-with. Off-screen they are culled in every pass; far away they cast no shadow and animate
+built in idle moments. Each is a `SkeletonUtils` clone of one of the six people with its
+own materials and mixer, and with one skeleton for all its parts; their positions go into
+a small shared list the walker collides with. Off-screen they are culled in every pass;
+far away they cast no shadow and animate
 every fourth frame.
 
 `viewport-framing.tsx` widens the vertical field of view by however much the viewport

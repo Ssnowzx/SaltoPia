@@ -20,6 +20,7 @@ decision is marked *Superseded by* and kept.
 | [ADR-0012](0012-photographs-from-briefs.md) | Generate photographs from briefs through a manifest | Accepted | 2026-09-28 |
 | [ADR-0013](0013-quality-tiers-step-down.md) | Adapt quality in tiers that only step down | Accepted | 2026-09-24 |
 | [ADR-0014](0014-walk-heights-from-drawn-geometry.md) | Take walking heights from the drawn geometry | Accepted | 2026-09-24 |
+| [ADR-0015](0015-trees-at-two-levels-of-detail.md) | Draw distant trees in a simpler form of themselves | Accepted | 2026-10-07 |
 
 To add one, copy the structure of an existing record: title, status, date, context,
 decision, consequences. Then link it from the design section it came from.

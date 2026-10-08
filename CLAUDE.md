@@ -220,6 +220,20 @@ Estas existem porque a apresentação roda numa máquina que ninguém testou.
 - **Nunca tire um passe de um EffectComposer em execução.** O composer é recriado por
   nível de qualidade (`key={tier}`). Tirar o AO de um composer vivo congelou o canvas, e os
   pins, que são HTML, continuaram se mexendo por cima — parecia "pins se afastando".
+- **Árvore plantada às centenas tem forma simples.** Araucárias e árvores de copa larga
+  são 92% dos triângulos do mundo. Além de 200 m da câmera elas usam a forma simples
+  (`SIMPLE_MODEL_REGISTRY`, ADR-0015). Modelo novo plantado às centenas ganha a sua, ou
+  pesa em toda vista.
+- **Mixer de animação é do modelo, não do componente.** O `useAnimations` do drei manteve
+  um mixer ao trocar de pessoa no criador. A nova pessoa deslizava com as pernas paradas.
+  Cada modelo cria e libera o seu (`lib/walk/character-animation.ts`).
+- **Pessoa clonada usa um esqueleto só.** O `SkeletonUtils.clone` dá um esqueleto a cada
+  parte, e o three atualiza e reenvia todos a cada render: eram 177 para 15 moradores.
+  `lib/walk/skeletons.ts` junta as partes num esqueleto só.
+- **Trabalho lento vai em fatias.** Nada que leve mais de um quadro roda inteiro durante a
+  visita. O mapa de caminhada e a grade de rotas são preparados em fatias de 4–12 ms
+  (`lib/idle-work.ts`). Rodando de uma vez só, a grade congelou a entrada no modo a pé por
+  um segundo.
 
 ---
 
@@ -233,6 +247,10 @@ Estas existem porque a apresentação roda numa máquina que ninguém testou.
 - `npm test` (dentro de `web/`) roda os testes de `web/tests/` com o test runner do Node via
   tsx. Qualidade automática se testa no Chrome real, com janela e sem `?quality=` fixo:
   captura headless que fixa o nível nunca vê a troca de nível.
+- Desempenho se compara em **build de produção**, com vsync ligado e a CPU limitada para
+  simular máquina fraca. A versão anterior roda ao lado, num worktree de `HEAD`. Rodada sem
+  limite de quadros só mede vazão média. O p90 dela mostra a fila da GPU enchendo e
+  esvaziando, não engasgo: isso já fez culpar os moradores por um engasgo que não existia.
 
 ---
 
@@ -258,6 +276,7 @@ Estas existem porque a apresentação roda numa máquina que ninguém testou.
 cd web
 npm run dev          # desenvolvimento local
 npm run build        # build de produção (gera os tipos de rota)
+npm run start        # serve o build de produção na 3001 — é o que se usa para apresentar
 npm run lint
 npm test             # testes da lógica pura (web/tests/)
 npm run test:coverage    # os mesmos, com cobertura

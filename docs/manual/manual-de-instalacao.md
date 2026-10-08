@@ -78,10 +78,15 @@ no lugar dela, e nunca uma imagem quebrada.
 ### 3.4 Verificar antes de apresentar ou publicar
 
 ```bash
-npm test               # 83 testes da lógica e do conteúdo
+npm test               # 107 testes da lógica e do conteúdo
 npm run check          # layout do mundo, assets, tipos e lint
 npm run build          # build de produção de todas as páginas
 ```
+
+**Apresente com o build de produção**, não com o `npm run dev`: depois do `npm run build`,
+rode `npm run start` e abra `http://localhost:3001`. O servidor de desenvolvimento compila
+cada página na primeira visita e fica disputando a CPU com o navegador. Numa máquina fraca,
+a primeira abertura demora mais e o mapa tem menos fôlego.
 
 Para demonstrar o convite do concurso de novo na mesma sessão, abra qualquer página com
 `?convite` no endereço, por exemplo `http://localhost:3001/?convite`.
@@ -98,6 +103,7 @@ Para demonstrar o convite do concurso de novo na mesma sessão, abra qualquer p�
 | Uma página dá erro 500 depois de mudar o `schema.prisma` | O servidor de desenvolvimento carregou o cliente Prisma antigo | Rode `npx prisma generate` e reinicie o `npm run dev` |
 | O mapa fica em branco num computador | Falta WebGL2, ou a aba está em segundo plano | Use Chrome com aceleração de hardware. O mapa reduz a qualidade sozinho em máquinas lentas |
 | Quero forçar uma qualidade do mapa | Para testes | `?quality=low`, `medium` ou `high` no endereço |
+| O mapa fica lento ou engasga numa máquina fraca | Rodando com `npm run dev`, ou uma placa de vídeo fraca | Use `npm run build` e `npm run start`. O mapa baixa a qualidade sozinho em poucos segundos; para começar já leve, abra com `?quality=low` |
 
 ## 5. Publicação (futura)
 

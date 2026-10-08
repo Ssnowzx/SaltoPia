@@ -211,6 +211,30 @@ matter.
 - [Multisampling off on the lowest tier shows jagged edges] → Only on a machine already
   below 30 fps on the medium tier, where frame rate matters more than edges.
 
+## Implementation record (2026-10-07)
+
+The numbers in Context come from the development build. These come from production builds
+of `HEAD` (2b43b4a) and of this change, served side by side, on the M5 at 1920x1080:
+
+| Measure | Before | After |
+| --- | --- | --- |
+| High tier, vsync on, from the air | 46 fps, 30% of frames missed | 60 fps, none missed |
+| High tier, vsync on, CPU throttled 4x, from the air / in flight / on foot | 34 / 41 / 48 fps | 48 / 48 / 51 fps |
+| Low tier, uncapped, from the air / on foot | 60 / 79 fps | 118 / 147 fps |
+| High tier, uncapped, from the air / on foot | 47 / 53 fps | 59 / 63 fps |
+| Longest frame entering walk mode, vsync on | 317 ms; 1.1-1.2 s throttled | 17 ms; 50-117 ms throttled |
+| Skeleton updates a frame (high tier) | 354, 2.39 ms throttled | 30, 0.27 ms throttled |
+| Tree triangles from the wide shot | 3.82 million | 1.64 million (43%) |
+
+Visual checks were made on 2x captures of the same views, with reduced motion:
+
+- the walk views are pixel-identical before and after;
+- the wide shot and the aimed zoom change 0.9-1.2% of pixels, all on trees beyond 200 m;
+- two captures of the same build differ by about 6%, from the pins, the boats and the UFO.
+
+The tier change was checked unpinned under a heavy throttle: high, then medium, then low.
+The canvas went on drawing and the console reported no GL error.
+
 ## Migration Plan
 
 Nothing to migrate: no data, no storage key and no URL changes. Rollback is reverting the

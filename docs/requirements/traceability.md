@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Document | Requirements traceability matrix (ISO/IEC/IEEE 29148 §5.2.8, bidirectional) |
-| Version | 1.0, 2026-09-28 |
+| Version | 1.1, 2026-10-07 (FR-65 to FR-67, NFR-01) |
 | Related | [`srs.md`](srs.md) · [`../testing/test-plan.md`](../testing/test-plan.md) |
 
 Each row traces an SRS requirement in two directions:
@@ -88,12 +88,15 @@ Each row traces an SRS requirement in two directions:
 | FR-62 | BO-3, FE-5 | add-contest-invitation / contest-invitation | U `invitation`; B (fresh sessions, `?convite`, contest page) | ✅ |
 | FR-63 | FE-5 | add-contest-invitation / contest-invitation | U `invitation` (blocked); B (place card opened first) | ✅ |
 | FR-64 | FE-5 | add-contest-invitation / contest-invitation | B (Esc, backdrop, "Agora não", the CTA's destination, reduced motion) | ✅ |
+| FR-65 | FE-1 | speed-up-the-hub / world-map | U `tree-detail` (triangle counts, outline within 5% of height, near full and far simple, no switch inside the margin, packing); B (2x captures before and after: walk view pixel-identical, wide shot and zoom ≤ 1.2% of pixels changed) | ✅ |
+| FR-66 | FE-4 | speed-up-the-hub / walk-mode | U `walk-preparation` (grid in slices equals the grid at once, a slice stops at its first check, an early call completes it, idle runner), `walk-world-slices` (open places read in slices as at once, an early call completes the world); B (first entry: longest frame 67 ms in development, 17 ms in production) | ✅ |
+| FR-67 | FE-4 | speed-up-the-hub / walk-mode | U `character-animation` (a second rig with the same bones is posed, a new person starts at full weight, disposal frees the bindings); B (after picking two other people the thigh bone turns while walking) | ✅ |
 
 ## Non-functional requirements
 
 | ID | Specification | Verification | Status |
 | --- | --- | --- | --- |
-| NFR-01 | world-map / Performance budget | B (frame times, headless); not yet measured on target hardware | 🟡 |
+| NFR-01 | world-map / Performance budget | B (production builds, vsync on, with and without the CPU throttled 4x, every tier; an unpinned run under heavy throttle steps high → medium → low with the canvas still drawing and no GL error); not yet measured on target hardware | 🟡 |
 | NFR-02 | world-map / Performance budget | R (`dpr` capped per quality tier) | ✅ |
 | NFR-03 | world-map / Loading; world-appearance | B (network inspection) | ✅ |
 | NFR-04 | design-system / Palette tokens | U `colour`, `content`, `palette` (partial set of pairings) | 🟡 |

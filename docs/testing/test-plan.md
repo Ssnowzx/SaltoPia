@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Document | Test plan, structured after ISO/IEC/IEEE 29119-3 (test plan and test completion report, condensed) |
-| Version | 1.0, 2026-09-28 |
+| Version | 1.1, 2026-10-07 (performance level and the `speed-up-the-hub` report) |
 | Related | [`../requirements/srs.md`](../requirements/srs.md) · [`../requirements/traceability.md`](../requirements/traceability.md) |
 
 ## 1. Scope
@@ -43,10 +43,15 @@
 | Integration | Schema and seed applied to a real MariaDB (no mocked database, per `CLAUDE.md` §6) | Prisma migrate, seed | `npx prisma migrate dev`, `npm run db:seed` |
 | System (browser) | Scripted runs of every page at 1440×900 and 390×844: HTTP status, no WebGL context on pages, no horizontal overflow, no failed request, keyboard flows, reduced motion emulated, the invitation across fresh sessions | Playwright driving Chromium; Chrome with GPU for the hub | recorded per change in `tasks.md` |
 | Build | Production build of every static route | `next build` | `npm run build` |
+| Performance (browser) | Frame rate and missed frames of the production build at 1920×1080: vsync on, with and without the CPU throttled 4x, each tier pinned and then unpinned. Parts of the scene are switched off in the page to price them. The original build runs beside the new one from a worktree of `HEAD`, for the comparison | Playwright driving Chrome with the Metal GPU, Chrome DevTools Protocol for the throttle | recorded in the change's `design.md` |
 
 **Principle:** anything that can be decided without a browser is a pure function and gets
 a unit test. A 3D component is not tested by screenshot. The function it uses is tested
 instead.
+
+**Measuring speed:** judge a stutter with vsync on. With vsync and the frame-rate limit off,
+the GPU queue fills and empties in a `9 25 2 3 9` pattern that reads as stutter and is
+not. Uncapped runs only measure average throughput.
 
 ## 4. Pass/fail criteria
 
@@ -89,7 +94,7 @@ verification has been run.
 
 ## 7. Deliverables
 
-- The unit tests in `web/tests/` (15 files).
+- The unit tests in `web/tests/` (20 files).
 - The check scripts in `web/scripts/`.
 - The browser verification results, recorded as checked tasks with their observations in
   each change's `tasks.md` and `design.md` implementation notes.
@@ -121,11 +126,25 @@ tasks name the verification for each task before it is implemented.
 (database) and `lib/public-file.ts` (file system) are covered by the browser runs, not by
 unit tests.
 
+### 9.1 Update for `speed-up-the-hub` (2026-10-07)
+
+| Measure | Result |
+| --- | --- |
+| Unit tests | **107 of 107 pass** (20 files; new: `character-animation`, `walk-preparation`, `walk-world-slices`, `tree-detail`, `skeletons`) |
+| Line, branch and function coverage | **96.9%**, **92.1%**, **71.4%** |
+| Mutation check | Removing the bind-matrix fold from `shareSkeleton` makes its test fail (vertices off by 255 units) |
+| Refactors that must not change a vertex | All 59 models hash identically before and after the builders' change; the faster prop reading gives byte-identical cells for all 14 open places |
+| Browser: frozen legs | After picking two other people the character's thigh bone turns while it walks (it stood still before) |
+| Browser: first entry of walk mode | Longest frame 17 ms in production and 67 ms in development; before, 1.0-1.2 s, and 4.25 s with the CPU throttled 4x in development |
+| Browser: trees | 2x captures before and after: walk view pixel-identical; wide shot and aimed zoom ≤ 1.2% of pixels changed, all on trees beyond 200 m |
+| Browser: production, vsync on, M5 | Every tier 60 fps idle, in flight and on foot (high held 46 fps before). CPU throttled 4x: high 48 fps from the air (34 before), low 60 |
+| Browser: tier change | Unpinned under heavy throttle: high → medium → low, canvas still drawing, no GL error |
+
 ## 10. Risks and contingencies
 
 | Risk | Contingency |
 | --- | --- |
 | The browser verification scripts are not in the repository, so another person cannot re-run them | Move them into an end-to-end suite (Playwright as a dev dependency, `web/tests/e2e/`) as its own OpenSpec change |
 | Function coverage is below 80% | Test the scene-facing factories in `lib/world/` through their outputs |
-| Performance has not been measured on the presentation machine | Run the hub unpinned on integrated graphics before the presentation; the quality tiers are the fallback |
+| Performance has not been measured on the presentation machine | Run the hub unpinned on integrated graphics before the presentation; the quality tiers are the fallback. The M5 numbers in §9.1 are the reference to compare against |
 | No fallback without WebGL | Open item NFR-11. Until it is built, the presentation machine is checked for WebGL2 in advance |

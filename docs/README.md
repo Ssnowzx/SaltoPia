@@ -26,7 +26,7 @@ docs/
 | Document | Standard / template | Contents |
 | --- | --- | --- |
 | [Architecture description](architecture/README.md) | arc42 (v8), C4 model diagrams | Goals, constraints, context (C4-1), containers (C4-2), runtime sequences, deployment, crosscutting concepts, quality, risks |
-| [Architecture Decision Records](architecture/decisions/README.md) | ADR, Nygard format | 14 decisions: context, decision, consequences |
+| [Architecture Decision Records](architecture/decisions/README.md) | ADR, Nygard format | 15 decisions: context, decision, consequences |
 | [Data model](architecture/data-model.md) | ER diagram and data dictionary | Tables, columns, constraints, domain types, content sources, browser storage, invariants, the path to a product's model |
 | [Building blocks](architecture/building-blocks.md) | arc42 §5 detail | The world's modules and their order, the rules that cost the most, the checks, the pages |
 
@@ -34,7 +34,7 @@ docs/
 
 | Document | Standard / template | Contents |
 | --- | --- | --- |
-| [Test plan and completion report](testing/test-plan.md) | ISO/IEC/IEEE 29119-3 (condensed) | Scope, levels, criteria, environment, results (83 tests, coverage), risks |
+| [Test plan and completion report](testing/test-plan.md) | ISO/IEC/IEEE 29119-3 (condensed) | Scope, levels, criteria, environment, results (107 tests, coverage, performance), risks |
 
 ## Manuals (Portuguese)
 
