@@ -53,7 +53,7 @@ function obstacleFor(placement: Placement): Circle | null {
 }
 
 /** A cell of walkable floor raised above the ground - paving, boards, a platform. */
-interface Floor {
+export interface Floor {
   readonly x: number;
   readonly z: number;
   readonly height: number;
@@ -66,23 +66,46 @@ function toWorld(placement: Placement, x: number, z: number): { x: number; z: nu
   return { x: placement.x + (x * cos + z * sin) * placement.scale, z: placement.z + (-x * sin + z * cos) * placement.scale };
 }
 
-/** The props and floors inside the open places, read from their geometry. */
-function openGroundDetail(): { readonly circles: readonly Circle[]; readonly floors: readonly Floor[] } {
-  const circles: Circle[] = [];
-  const floors: Floor[] = [];
-  for (const placement of LANDMARKS.filter((candidate) => OPEN_GROUND.has(candidate.model) && !candidate.afloat)) {
-    const geometry = MODEL_REGISTRY[placement.model]();
-    const detail = occupancyOf(geometry, WALK_OCCUPANCY);
-    geometry.dispose();
-    const base = groundHeightFor(placement);
-    for (const cell of detail.occupied) circles.push({ ...toWorld(placement, cell.x, cell.z), radius: WALK_OCCUPANCY.cell * 0.6 * placement.scale });
-    for (const floor of detail.floors) floors.push({ ...toWorld(placement, floor.x, floor.z), height: base + floor.height * placement.scale });
-  }
-  return { circles, floors };
-}
-
 /** How the open places are read: half-metre cells, body height from the knee up. */
 const WALK_OCCUPANCY = { cell: 0.5, bodyFrom: 0.62, bodyTo: 1.7, stepHeight: 0.7, floorMinArea: 1 } as const;
+
+/** The places whose props and floors are read from their geometry. */
+const OPEN_PLACES: readonly Placement[] = LANDMARKS.filter((candidate) => OPEN_GROUND.has(candidate.model) && !candidate.afloat);
+
+/**
+ * The props and floors inside the open places, read so far. Reading one place takes up to
+ * 65 ms (the fairground, the UFO port), all of them about 125 ms, so they are read one place
+ * at a time - design.md D2 of speed-up-the-hub.
+ */
+export interface OpenGroundReading {
+  readonly circles: Circle[];
+  readonly floors: Floor[];
+  /** How many of the open places have been read. */
+  read: number;
+}
+
+export function startOpenGroundReading(): OpenGroundReading {
+  return { circles: [], floors: [], read: 0 };
+}
+
+function readOpenPlace(placement: Placement, reading: OpenGroundReading): void {
+  const geometry = MODEL_REGISTRY[placement.model]();
+  const detail = occupancyOf(geometry, WALK_OCCUPANCY);
+  geometry.dispose();
+  const base = groundHeightFor(placement);
+  for (const cell of detail.occupied) reading.circles.push({ ...toWorld(placement, cell.x, cell.z), radius: WALK_OCCUPANCY.cell * 0.6 * placement.scale });
+  for (const floor of detail.floors) reading.floors.push({ ...toWorld(placement, floor.x, floor.z), height: base + floor.height * placement.scale });
+}
+
+/** Reads open places one at a time until `hasTime` says stop; true once all are read. */
+export function continueOpenGroundReading(reading: OpenGroundReading, hasTime: () => boolean): boolean {
+  while (reading.read < OPEN_PLACES.length) {
+    readOpenPlace(OPEN_PLACES[reading.read], reading);
+    reading.read += 1;
+    if (reading.read < OPEN_PLACES.length && !hasTime()) return false;
+  }
+  return true;
+}
 
 /** The fairground's rides turn as meshes of their own, outside the park's geometry. */
 function rideCircles(): readonly Circle[] {
@@ -94,11 +117,19 @@ function rideCircles(): readonly Circle[] {
   ];
 }
 
-let detailCache: { readonly circles: readonly Circle[]; readonly floors: readonly Floor[] } | null = null;
+let reading: OpenGroundReading | null = null;
 
-function detail(): { readonly circles: readonly Circle[]; readonly floors: readonly Floor[] } {
-  detailCache ??= openGroundDetail();
-  return detailCache;
+/** Reads the open places in slices; true once all are read. The layout is seeded and does not change. */
+export function readOpenGround(hasTime: () => boolean): boolean {
+  reading ??= startOpenGroundReading();
+  return continueOpenGroundReading(reading, hasTime);
+}
+
+/** The open places' props and floors, reading whatever is left at once. */
+function detail(): OpenGroundReading {
+  reading ??= startOpenGroundReading();
+  continueOpenGroundReading(reading, () => true);
+  return reading;
 }
 
 /** Every obstacle in the world. Built once; the layout is seeded and does not change. */

@@ -7,9 +7,10 @@ import { ErrorBoundary } from "react-error-boundary";
 import { type AnimationAction, type AnimationClip, AnimationMixer, type Group, type Material, Mesh, type Object3D, SkinnedMesh } from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 
+import { runWhenIdle } from "@/lib/idle-work";
 import { CHARACTERS, CHARACTER_KEYS, type CharacterKey } from "@/lib/walk/characters";
 import { leaveCrowd, placeInCrowd, visitorPosition } from "@/lib/walk/crowd";
-import { walkWorld } from "@/lib/walk/navigator";
+import { prepareWalkWorld, walkWorld } from "@/lib/walk/navigator";
 import { type TownsfolkClip, type TownspersonSpec, type TownspersonState, initialState, stepTownsperson, townsfolkPlans } from "@/lib/walk/townsfolk";
 import { WALK } from "@/lib/world/constants";
 
@@ -201,23 +202,13 @@ function ModelCrowd({ model, people, reducedMotion }: { readonly model: Characte
   );
 }
 
-/** Waits for an idle moment to build the walk world the townsfolk stand on: half a second of work. */
+/**
+ * Builds the walk world the townsfolk stand on in idle moments, a slice at a time - built in
+ * one go it held a frame for 140 ms - and reports when it is ready.
+ */
 function useWalkWorldReady(): boolean {
   const [ready, setReady] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    const build = (): void => {
-      walkWorld();
-      if (!cancelled) setReady(true);
-    };
-    // Safari has no requestIdleCallback; a short timeout does the same job there.
-    const handle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(build, { timeout: 2000 }) : window.setTimeout(build, 400);
-    return () => {
-      cancelled = true;
-      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(handle);
-      else window.clearTimeout(handle);
-    };
-  }, []);
+  useEffect(() => runWhenIdle(prepareWalkWorld, () => setReady(true)), []);
   return ready;
 }
 

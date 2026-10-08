@@ -38,8 +38,53 @@ export interface Occupancy {
   readonly floors: readonly LocalFloor[];
 }
 
-function key(column: number, row: number): string {
-  return `${column},${row}`;
+/** Cells are keyed by column and row packed into one number; offsets keep both positive. */
+const OFFSET = 32768;
+const SPAN = 65536;
+
+function key(column: number, row: number): number {
+  return (column + OFFSET) * SPAN + (row + OFFSET);
+}
+
+type Corner = readonly [number, number, number];
+
+/**
+ * Samples one triangle into the cells it marks. Only a sample at body height or on a floor
+ * can mark a cell, so a triangle wholly above, below or between them is passed over - most
+ * of a tall ride or a tower is, which kept reading the fairground at 50 ms.
+ */
+function sampleTriangle(a: Corner, b: Corner, c: Corner, options: OccupancyOptions, occupied: Set<number>, floors: Map<number, number>): void {
+  const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+  const ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+  const nx = ab[1] * ac[2] - ab[2] * ac[1];
+  const ny = ab[2] * ac[0] - ab[0] * ac[2];
+  const nz = ab[0] * ac[1] - ab[1] * ac[0];
+  const doubleArea = Math.hypot(nx, ny, nz);
+  if (doubleArea === 0) return;
+
+  const flat = Math.abs(ny) / doubleArea > 0.95;
+  const floorCandidate = flat && doubleArea / 2 >= options.floorMinArea;
+  const low = Math.min(a[1], b[1], c[1]);
+  const high = Math.max(a[1], b[1], c[1]);
+  const reachesBody = high >= options.bodyFrom && low <= options.bodyTo;
+  const reachesFloor = floorCandidate && low <= options.stepHeight;
+  if (!reachesBody && !reachesFloor) return;
+
+  const longest = Math.max(Math.hypot(...ab), Math.hypot(...ac), Math.hypot(b[0] - c[0], b[1] - c[1], b[2] - c[2]));
+  const steps = Math.max(1, Math.ceil(longest / (options.cell * 0.5)));
+  for (let i = 0; i <= steps; i += 1) {
+    for (let j = 0; j <= steps - i; j += 1) {
+      const u = i / steps;
+      const v = j / steps;
+      const y = a[1] + ab[1] * u + ac[1] * v;
+      const body = y >= options.bodyFrom && y <= options.bodyTo;
+      const floor = floorCandidate && y <= options.stepHeight;
+      if (!body && !floor) continue;
+      const cellKey = key(Math.floor((a[0] + ab[0] * u + ac[0] * v) / options.cell), Math.floor((a[2] + ab[2] * u + ac[2] * v) / options.cell));
+      if (body) occupied.add(cellKey);
+      if (floor) floors.set(cellKey, Math.max(floors.get(cellKey) ?? Number.NEGATIVE_INFINITY, y));
+    }
+  }
 }
 
 /** Rasterises a geometry, in its own frame, into occupied and floor cells. */
@@ -47,45 +92,20 @@ export function occupancyOf(geometry: BufferGeometry, options: OccupancyOptions)
   const position = geometry.getAttribute("position");
   const index = geometry.getIndex();
   const triangles = index ? index.count / 3 : position.count / 3;
-  const occupied = new Set<string>();
-  const floors = new Map<string, number>();
-  const cellOf = (value: number): number => Math.floor(value / options.cell);
+  const occupied = new Set<number>();
+  const floors = new Map<number, number>();
 
   for (let triangle = 0; triangle < triangles; triangle += 1) {
-    const corner = (n: number): readonly [number, number, number] => {
+    const corner = (n: number): Corner => {
       const vertex = index ? index.getX(triangle * 3 + n) : triangle * 3 + n;
       return [position.getX(vertex), position.getY(vertex), position.getZ(vertex)];
     };
-    const [a, b, c] = [corner(0), corner(1), corner(2)];
-    const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
-    const ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-    const nx = ab[1] * ac[2] - ab[2] * ac[1];
-    const ny = ab[2] * ac[0] - ab[0] * ac[2];
-    const nz = ab[0] * ac[1] - ab[1] * ac[0];
-    const doubleArea = Math.hypot(nx, ny, nz);
-    if (doubleArea === 0) continue;
-
-    const flat = Math.abs(ny) / doubleArea > 0.95;
-    const floorCandidate = flat && doubleArea / 2 >= options.floorMinArea;
-    const longest = Math.max(Math.hypot(...ab), Math.hypot(...ac), Math.hypot(b[0] - c[0], b[1] - c[1], b[2] - c[2]));
-    const steps = Math.max(1, Math.ceil(longest / (options.cell * 0.5)));
-
-    for (let i = 0; i <= steps; i += 1) {
-      for (let j = 0; j <= steps - i; j += 1) {
-        const u = i / steps;
-        const v = j / steps;
-        const x = a[0] + ab[0] * u + ac[0] * v;
-        const y = a[1] + ab[1] * u + ac[1] * v;
-        const z = a[2] + ab[2] * u + ac[2] * v;
-        const cellKey = key(cellOf(x), cellOf(z));
-        if (y >= options.bodyFrom && y <= options.bodyTo) occupied.add(cellKey);
-        if (floorCandidate && y <= options.stepHeight) floors.set(cellKey, Math.max(floors.get(cellKey) ?? Number.NEGATIVE_INFINITY, y));
-      }
-    }
+    sampleTriangle(corner(0), corner(1), corner(2), options, occupied, floors);
   }
 
-  const centre = (cellKey: string): LocalCell => {
-    const [column, row] = cellKey.split(",").map(Number);
+  const centre = (cellKey: number): LocalCell => {
+    const column = Math.floor(cellKey / SPAN) - OFFSET;
+    const row = (cellKey % SPAN) - OFFSET;
     return { x: (column + 0.5) * options.cell, z: (row + 0.5) * options.cell };
   };
   return {

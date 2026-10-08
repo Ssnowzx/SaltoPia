@@ -19,17 +19,46 @@ export interface WalkGrid {
   readonly walkable: Uint8Array;
 }
 
-/** Samples `isWalkable` at the centre of every cell of a square region. */
-export function buildWalkGrid(minX: number, minZ: number, size: number, cell: number, isWalkable: (x: number, z: number) => boolean): WalkGrid {
+/** A grid filled a slice at a time, so building it never holds a frame for long. */
+export interface WalkGridBuilder {
+  /** The grid, complete once `fill` has returned true. */
+  readonly grid: WalkGrid;
+  /**
+   * Samples cells until `hasTime` says stop or every cell is done, resuming where the last
+   * call stopped; true once the grid is complete. Each call samples at least one batch.
+   */
+  readonly fill: (hasTime: () => boolean) => boolean;
+}
+
+/** How many cells are sampled between two looks at the clock. */
+export const GRID_CELLS_PER_CHECK = 64;
+
+/** Samples `isWalkable` at the centre of every cell of a square region, in slices. */
+export function createWalkGridBuilder(minX: number, minZ: number, size: number, cell: number, isWalkable: (x: number, z: number) => boolean): WalkGridBuilder {
   const columns = Math.ceil(size / cell);
   const rows = columns;
   const walkable = new Uint8Array(columns * rows);
-  for (let row = 0; row < rows; row += 1) {
-    for (let column = 0; column < columns; column += 1) {
-      walkable[row * columns + column] = isWalkable(minX + (column + 0.5) * cell, minZ + (row + 0.5) * cell) ? 1 : 0;
+  let next = 0;
+  const fill = (hasTime: () => boolean): boolean => {
+    while (next < walkable.length) {
+      const end = Math.min(walkable.length, next + GRID_CELLS_PER_CHECK);
+      for (; next < end; next += 1) {
+        const column = next % columns;
+        const row = (next - column) / columns;
+        walkable[next] = isWalkable(minX + (column + 0.5) * cell, minZ + (row + 0.5) * cell) ? 1 : 0;
+      }
+      if (next < walkable.length && !hasTime()) return false;
     }
-  }
-  return { cell, originX: minX, originZ: minZ, columns, rows, walkable };
+    return true;
+  };
+  return { grid: { cell, originX: minX, originZ: minZ, columns, rows, walkable }, fill };
+}
+
+/** Samples `isWalkable` at the centre of every cell of a square region, all at once. */
+export function buildWalkGrid(minX: number, minZ: number, size: number, cell: number, isWalkable: (x: number, z: number) => boolean): WalkGrid {
+  const builder = createWalkGridBuilder(minX, minZ, size, cell, isWalkable);
+  builder.fill(() => true);
+  return builder.grid;
 }
 
 function cellOf(grid: WalkGrid, point: Point): readonly [number, number] {
