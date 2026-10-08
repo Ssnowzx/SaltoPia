@@ -1,10 +1,18 @@
 "use client";
 
-import { Html, useAnimations, useGLTF } from "@react-three/drei";
+import { Html, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { type AnimationAction, Box3, type Group, LoopOnce, Mesh, type Object3D, Vector3 } from "three";
+import { Box3, Mesh, type Object3D, Vector3 } from "three";
 
+import {
+  type CharacterAnimation,
+  advanceCharacterAnimation,
+  createCharacterAnimation,
+  disposeCharacterAnimation,
+  playWave,
+  updateLocomotion,
+} from "@/lib/walk/character-animation";
 import { CHARACTERS, type CharacterConfig, displayName } from "@/lib/walk/characters";
 import type { Walker } from "@/lib/walk/movement";
 import { WALK } from "@/lib/world/constants";
@@ -14,7 +22,7 @@ import { applyColours } from "./recolour";
 /**
  * The visitor's character: a CC0 person loaded when walk mode opens, recoloured to the
  * visitor's choices, scaled to 1.75 m, and animated standing, walking or running to match
- * its speed. See design.md D1 of add-walking-character.
+ * its speed. See design.md D1 of add-walking-character and D1 of speed-up-the-hub.
  */
 
 interface WalkCharacterProps {
@@ -27,21 +35,6 @@ interface WalkCharacterProps {
 
 /** How far over the head the name floats, in metres. */
 const NAME_TAG_LIFT = 0.3;
-
-/** How long a crossfade between clips takes, in seconds. */
-const CROSSFADE = 0.25;
-
-function clipFor(speed: number): "Idle" | "Walk" | "Run" {
-  if (speed < 0.25) return "Idle";
-  return speed < (WALK.walkSpeed + WALK.runSpeed) / 2 ? "Walk" : "Run";
-}
-
-/** The animation state, mutated by the frame loop - three's business, not React's. */
-interface AnimationState {
-  actions: Partial<Record<string, AnimationAction | null>>;
-  playing: AnimationAction | null;
-  waveUntil: number;
-}
 
 /** The scale that makes a character's model its height, from the model's own bounds. */
 export function characterScale(scene: Object3D): number {
@@ -59,57 +52,42 @@ function prepareScene(scene: Object3D): void {
   });
 }
 
-function playWave(state: AnimationState): void {
-  const wave = state.actions.Wave;
-  if (!wave) return;
-  wave.reset().setLoop(LoopOnce, 1).fadeIn(CROSSFADE).play();
-  wave.clampWhenFinished = true;
-  state.playing?.fadeOut(CROSSFADE);
-  state.playing = wave;
-  state.waveUntil = performance.now() + wave.getClip().duration * 1000;
-}
-
-function updateLocomotion(state: AnimationState, speed: number): void {
-  if (performance.now() < state.waveUntil && speed < 0.25) return;
-  const clip = clipFor(speed);
-  const next = state.actions[clip];
-  if (!next) return;
-  if (state.playing !== next) {
-    next.reset().fadeIn(CROSSFADE).play();
-    state.playing?.fadeOut(CROSSFADE);
-    state.playing = next;
-  }
-  if (clip === "Walk") next.timeScale = Math.min(1.4, Math.max(0.6, speed / WALK.walkSpeed));
-  if (clip === "Run") next.timeScale = Math.min(1.3, Math.max(0.8, speed / WALK.runSpeed));
-}
-
 export function WalkCharacter({ config, walker, greeting }: WalkCharacterProps): React.ReactElement {
   // Draco off: drei would fetch its decoder from a CDN. The files are meshopt-compressed,
   // and that decoder ships in the bundle.
   const gltf = useGLTF(CHARACTERS[config.model].path, false, true);
-  const rig = useRef<Group>(null);
-  const { actions } = useAnimations(gltf.animations, rig);
-  const animation = useRef<AnimationState>({ actions, playing: null, waveUntil: 0 });
+  const animation = useRef<CharacterAnimation | null>(null);
 
   const scale = useMemo(() => characterScale(gltf.scene), [gltf.scene]);
 
   useLayoutEffect(() => prepareScene(gltf.scene), [gltf.scene]);
   useLayoutEffect(() => applyColours(gltf.materials, config.model, config.outfit, config.skin), [gltf.materials, config]);
 
-  useEffect(() => {
-    animation.current.actions = actions;
-    animation.current.playing = null;
-  }, [actions]);
+  // A mixer of its own for each person, let go with it: one kept across a change of person
+  // went on posing the previous person's bones.
+  useLayoutEffect(() => {
+    const created = createCharacterAnimation(gltf.scene, gltf.animations);
+    animation.current = created;
+    return () => {
+      disposeCharacterAnimation(created);
+      animation.current = null;
+    };
+  }, [gltf.scene, gltf.animations]);
 
   useEffect(() => {
-    if (greeting > 0) playWave(animation.current);
+    if (greeting > 0 && animation.current) playWave(animation.current, performance.now());
   }, [greeting]);
 
-  useFrame(() => updateLocomotion(animation.current, walker.current.speed));
+  useFrame((_, delta) => {
+    const current = animation.current;
+    if (!current) return;
+    updateLocomotion(current, walker.current.speed, performance.now());
+    advanceCharacterAnimation(current, delta);
+  });
 
   return (
     <group>
-      <group ref={rig} scale={scale}>
+      <group scale={scale}>
         <primitive object={gltf.scene} />
       </group>
       <Html position={[0, WALK.height + NAME_TAG_LIFT, 0]} center zIndexRange={[5, 0]} style={{ pointerEvents: "none" }}>
